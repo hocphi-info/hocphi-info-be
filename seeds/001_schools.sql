@@ -1,0 +1,60 @@
+-- seeds/001_schools — 50 trường pilot (yeu-cau-san-pham.md §5.2 / y-tuong §5.2)
+--
+-- KHÔNG phải migration. Chạy sau khi đã migrate, để có dữ liệu khung cho
+-- bước 4 (xây API). `category` và `short_name` là PHỎNG ĐOÁN, cần đối chiếu
+-- lại ở bước 3 (thu thập dữ liệu). Idempotent qua ON CONFLICT (slug).
+
+INSERT INTO schools (slug, name, short_name, city_code, category) VALUES
+-- ── TP.HCM (25) ──────────────────────────────────────────────────────────────
+  ('dh-bach-khoa-tphcm',        'ĐH Bách Khoa TP.HCM',                     'HCMUT',   'HCM', 'cong_lap_tu_chu'),
+  ('dh-khoa-hoc-tu-nhien-tphcm','ĐH Khoa học Tự nhiên TP.HCM',             'HCMUS',   'HCM', 'cong_lap_tu_chu'),
+  ('uit',                       'ĐH Công nghệ Thông tin (ĐHQG-HCM)',       'UIT',     'HCM', 'cong_lap_tu_chu'),
+  ('uel',                       'ĐH Kinh tế – Luật (ĐHQG-HCM)',            'UEL',     'HCM', 'cong_lap_tu_chu'),
+  ('dh-quoc-te-tphcm',          'ĐH Quốc tế (ĐHQG-HCM)',                   'IU',      'HCM', 'cong_lap_tu_chu'),
+  ('ueh',                       'ĐH Kinh tế TP.HCM',                       'UEH',     'HCM', 'cong_lap_tu_chu'),
+  ('ftu2',                      'ĐH Ngoại thương CS2 TP.HCM',              'FTU2',    'HCM', 'cong_lap_tu_chu'),
+  ('hcmute',                    'ĐH Sư phạm Kỹ thuật TP.HCM',              'HCMUTE',  'HCM', 'cong_lap_tu_chu'),
+  ('tdtu',                      'ĐH Tôn Đức Thắng',                        'TDTU',    'HCM', 'cong_lap_tu_chu'),
+  ('hutech',                    'ĐH Công nghệ TP.HCM',                     'HUTECH',  'HCM', 'tu_thuc'),
+  ('dh-van-lang',               'ĐH Văn Lang',                            'VLU',     'HCM', 'tu_thuc'),
+  ('dh-nguyen-tat-thanh',       'ĐH Nguyễn Tất Thành',                    'NTTU',    'HCM', 'tu_thuc'),
+  ('iuh',                       'ĐH Công nghiệp TP.HCM',                   'IUH',     'HCM', 'cong_lap_tu_chu'),
+  ('buh',                       'ĐH Ngân hàng TP.HCM',                     'BUH',     'HCM', 'cong_lap_tu_chu'),
+  ('ufm',                       'ĐH Tài chính – Marketing',                'UFM',     'HCM', 'cong_lap_tu_chu'),
+  ('ou-tphcm',                  'ĐH Mở TP.HCM',                           'OU',      'HCM', 'cong_lap_tu_chu'),
+  ('dh-luat-tphcm',             'ĐH Luật TP.HCM',                         'ULAW',    'HCM', 'cong_lap_tu_chu'),
+  ('ump',                       'ĐH Y Dược TP.HCM',                       'UMP',     'HCM', 'cong_lap_tu_chu'),
+  ('dh-y-khoa-pham-ngoc-thach', 'ĐH Y khoa Phạm Ngọc Thạch',              'PNTU',    'HCM', 'cong_lap'),
+  ('ussh-tphcm',                'ĐH KHXH&NV TP.HCM (ĐHQG-HCM)',           'USSH',    'HCM', 'cong_lap'),
+  ('dh-gtvt-tphcm',             'ĐH Giao thông Vận tải TP.HCM',            'UT-HCMC', 'HCM', 'cong_lap'),
+  ('huit',                      'ĐH Công Thương TP.HCM',                   'HUIT',    'HCM', 'cong_lap_tu_chu'),
+  ('dh-fpt-tphcm',              'ĐH FPT TP.HCM',                          'FPTU-HCM','HCM', 'tu_thuc'),
+  ('rmit-vietnam',              'ĐH RMIT Việt Nam',                       'RMIT',    'HCM', 'tu_thuc_von_nuoc_ngoai'),
+  ('dh-hoa-sen',                'ĐH Hoa Sen',                            'HSU',     'HCM', 'tu_thuc'),
+-- ── Hà Nội (25) ──────────────────────────────────────────────────────────────
+  ('hust',                      'ĐH Bách Khoa Hà Nội',                    'HUST',    'HN',  'cong_lap_tu_chu'),
+  ('uet',                       'ĐH Công nghệ (ĐHQGHN)',                  'UET',     'HN',  'cong_lap'),
+  ('hus',                       'ĐH Khoa học Tự nhiên (ĐHQGHN)',          'HUS',     'HN',  'cong_lap'),
+  ('neu',                       'ĐH Kinh tế Quốc dân',                    'NEU',     'HN',  'cong_lap_tu_chu'),
+  ('ftu',                       'ĐH Ngoại thương',                       'FTU',     'HN',  'cong_lap_tu_chu'),
+  ('bav',                       'Học viện Ngân hàng',                     'BAV',     'HN',  'cong_lap'),
+  ('aof',                       'Học viện Tài chính',                     'AOF',     'HN',  'cong_lap'),
+  ('tmu',                       'ĐH Thương mại',                         'TMU',     'HN',  'cong_lap_tu_chu'),
+  ('ptit',                      'Học viện Công nghệ Bưu chính Viễn thông','PTIT',    'HN',  'cong_lap_tu_chu'),
+  ('hlu',                       'ĐH Luật Hà Nội',                        'HLU',     'HN',  'cong_lap'),
+  ('hmu',                       'ĐH Y Hà Nội',                          'HMU',     'HN',  'cong_lap'),
+  ('hup',                       'ĐH Dược Hà Nội',                        'HUP',     'HN',  'cong_lap'),
+  ('huce',                      'ĐH Xây dựng Hà Nội',                    'HUCE',    'HN',  'cong_lap'),
+  ('utc',                       'ĐH Giao thông Vận tải',                 'UTC',     'HN',  'cong_lap'),
+  ('ussh-hn',                   'ĐH KHXH&NV (ĐHQGHN)',                   'USSH-HN', 'HN',  'cong_lap'),
+  ('ulis',                      'ĐH Ngoại ngữ (ĐHQGHN)',                 'ULIS',    'HN',  'cong_lap'),
+  ('ueb',                       'ĐH Kinh tế (ĐHQGHN)',                   'UEB',     'HN',  'cong_lap_tu_chu'),
+  ('haui',                      'ĐH Công nghiệp Hà Nội',                 'HaUI',    'HN',  'cong_lap_tu_chu'),
+  ('tlu',                       'ĐH Thủy Lợi',                          'TLU',     'HN',  'cong_lap'),
+  ('humg',                      'ĐH Mỏ – Địa chất',                     'HUMG',    'HN',  'cong_lap'),
+  ('epu',                       'ĐH Điện lực',                          'EPU',     'HN',  'cong_lap'),
+  ('dh-fpt-ha-noi',             'ĐH FPT Hà Nội',                        'FPTU-HN', 'HN',  'tu_thuc'),
+  ('hanu',                      'ĐH Hà Nội',                           'HANU',    'HN',  'cong_lap'),
+  ('dh-thang-long',             'ĐH Thăng Long',                       'TLU-TL',  'HN',  'tu_thuc'),
+  ('vnua',                      'Học viện Nông nghiệp Việt Nam',        'VNUA',    'HN',  'cong_lap')
+ON CONFLICT (slug) DO NOTHING;
