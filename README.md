@@ -18,16 +18,21 @@ Backend cho **hocphi.info** — tra cứu & so sánh học phí đại học Vi�
 ## Cấu trúc
 
 ```
-migrations/   # golang-migrate, SQL thuần (.up.sql / .down.sql)
-  000001_init.*             schema + view school_track_stats
-  000002_seed_reference.*   cities, major_groups, app_settings
+migrations/            # golang-migrate, SQL thuần (.up.sql / .down.sql)
+                        # đang trống — sẽ viết lại theo docs/schema.md (ULID + soft delete)
 seeds/
-  001_schools.sql           50 trường pilot (category/short_name còn phỏng đoán)
+  001_schools.sql       # 50 trường pilot (category/short_name còn phỏng đoán)
 docs/
-  schema.md                 thuyết minh thiết kế + ERD
+  schema.md             # thuyết minh thiết kế + ERD
+deployment/docker/
+  Dockerfile            # placeholder — chưa có code Go để build (bước 4)
+docker-compose.yml      # Postgres cho dev cục bộ
 ```
 
 ## Chạy migration
+
+> Migration hiện đang trống (xem `docs/schema.md` §7). Quy trình dưới đây áp
+> dụng khi migration mới được thêm vào.
 
 ```bash
 brew install golang-migrate
@@ -38,3 +43,11 @@ psql "$DATABASE_URL" -f seeds/001_schools.sql   # tuỳ chọn
 ```
 
 Yêu cầu PostgreSQL >= 14.
+
+## Chạy Postgres cục bộ (Docker)
+
+```bash
+docker compose up -d postgres
+```
+
+Xem biến kết nối trong [`docker-compose.yml`](docker-compose.yml).

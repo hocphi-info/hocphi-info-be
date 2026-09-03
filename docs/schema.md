@@ -1,9 +1,9 @@
 # Thiết kế schema dữ liệu — hocphi.info (Bước 3)
 
-> Phiên bản 0.1 — MVP pilot 50 trường TP.HCM & Hà Nội.
+> Phiên bản 0.2 — MVP pilot 50 trường TP.HCM & Hà Nội.
 > Nguồn yêu cầu: [`yeu-cau-san-pham.md`](../../hocphi-info/yeu-cau-san-pham.md) §2, §8, §9 và
 > [`y-tuong-hoc-phi-dai-hoc.md`](../../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §6.
-> DDL: [`migrations/000001_init.up.sql`](../migrations/000001_init.up.sql).
+> DDL: chưa có — migration sẽ viết lại sau khi chốt thiết kế này (xem README).
 
 ## 1. Nguyên tắc thiết kế
 
@@ -19,8 +19,13 @@
    `verified_by/at` trên bản ghi.
 6. **Enum cho bộ giá trị ổn định** (hệ đào tạo, độ tin cậy, loại tài liệu…);
    **bảng tra cứu** cho thứ sẽ mở rộng (thành phố, nhóm ngành).
-7. **Khoá công khai là `slug`** (tiếng Việt không dấu, ổn định) cho `schools` và
-   `majors` — phục vụ URL SEO ở §11 yêu cầu. `id` bigint chỉ dùng nội bộ / FK.
+7. **Khoá chính là ULID dạng `text`** (26 ký tự, Crockford base32, sinh ở DB qua
+   hàm `gen_ulid()`) cho mọi bảng có `id` — sắp xếp được theo thời gian tạo, không
+   lộ số lượng bản ghi như serial, không cần round-trip lấy id trước khi tạo bản
+   ghi liên quan. `slug` vẫn là khoá công khai/URL cho `schools` và `majors`.
+8. **Soft delete đồng nhất** — mọi bảng nghiệp vụ có `created_at`, `updated_at`,
+   `deleted_at` (nullable). Xoá = set `deleted_at`; query mặc định lọc
+   `WHERE deleted_at IS NULL`. Không xoá cứng để giữ vết lịch sử/audit.
 
 ## 2. Sơ đồ quan hệ
 
@@ -38,7 +43,7 @@ erDiagram
   sources ||--o{ post_grad_requirements : "source_id (nullable)"
 
   schools {
-    bigint id PK
+    text   id PK "ULID"
     text   slug UK
     text   name
     text   short_name
@@ -46,30 +51,38 @@ erDiagram
     enum   category "cong_lap | cong_lap_tu_chu | tu_thuc | tu_thuc_von_nuoc_ngoai"
     text   website
     text   logo_url
-    smallint established_year
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at "soft delete"
   }
   majors {
-    bigint  id PK
+    text    id PK "ULID"
     text    slug UK
     text    name
     text    code "mã ngành cấp IV, không unique"
     text    group_code FK
     boolean requires_practice_license
     text    practice_profession
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
   programs {
-    bigint  id PK
-    bigint  school_id FK
-    bigint  major_id FK
+    text    id PK "ULID"
+    text    school_id FK
+    text    major_id FK
     enum    track "dai_tra | chat_luong_cao | tien_tien | quoc_te"
-    text    language "vi | en | vi_en …"
+    text    language "vi | en | vi_en"
     text    campus "NULL = cơ sở chính"
     text    display_name
     boolean is_active
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
   tuition_records {
-    bigint   id PK
-    bigint   program_id FK
+    text     id PK "ULID"
+    text     program_id FK
     text     academic_year "YYYY-YYYY"
     smallint academic_year_start "generated"
     bigint   amount_per_year "đồng/năm, chuẩn hoá"
@@ -78,20 +91,26 @@ erDiagram
     smallint credits_per_year_assumed
     boolean  is_projected
     enum     confidence "verified | published_unverified | estimated"
-    bigint   source_id FK
+    text     source_id FK
     text     verified_by
     timestamptz verified_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
   program_increase {
-    bigint  program_id PK_FK
+    text    program_id PK, FK
     numeric annual_increase_pct
     enum    increase_source "published_roadmap | default_estimate"
     smallint roadmap_years_known
-    bigint  source_id FK
+    text    source_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
   post_grad_requirements {
-    bigint   id PK
-    bigint   major_id FK
+    text     id PK "ULID"
+    text     major_id FK
     smallint step_order
     text     step_name
     text     provider
@@ -100,10 +119,13 @@ erDiagram
     bigint   cost_max
     enum     confidence
     boolean  verified
-    bigint   source_id FK
+    text     source_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
   sources {
-    bigint id PK
+    text   id PK "ULID"
     text   url
     enum   doc_type "de_an_tuyen_sinh | thong_bao_hoc_phi | quy_dinh_nghe | khac"
     text   page_ref
@@ -111,31 +133,52 @@ erDiagram
     timestamptz fetched_at
     text   checked_by
     timestamptz checked_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
   }
 ```
 
-Bảng phụ không vẽ: `app_settings` (key/value), `data_issue_reports` (F17).
+Bảng phụ không vẽ: `app_settings` (key/value), `data_issue_reports` (F17, cũng có
+`id` ULID + `created_at/updated_at/deleted_at`).
 
 ## 3. Từ điển bảng
 
+### Quy ước chung: `id`, `created_at`, `updated_at`, `deleted_at`
+Mọi bảng nghiệp vụ (không phải bảng tra cứu key/value) dùng:
+- `id text PRIMARY KEY DEFAULT gen_ulid()` — ULID 26 ký tự, sinh ở DB.
+- `created_at timestamptz NOT NULL DEFAULT now()`.
+- `updated_at timestamptz NOT NULL DEFAULT now()` — cập nhật qua trigger
+  `set_updated_at()` (như v0.1).
+- `deleted_at timestamptz` — nullable, set khi soft-delete. Query mặc định thêm
+  `WHERE deleted_at IS NULL`; UNIQUE constraint có cột nghiệp vụ (vd. `slug`) cần
+  tính đến bản ghi đã xoá mềm (partial unique index `WHERE deleted_at IS NULL`)
+  để cho phép tạo lại slug/tổ hợp trùng sau khi bản ghi cũ đã bị xoá.
+
+`cities`, `major_groups`, `app_settings` là bảng tra cứu tĩnh khoá bằng `code`/`key`
+— **không** áp quy ước này (không cần ULID, không cần soft delete).
+
 ### `cities`, `major_groups` — tra cứu
-Seed cố định ở [`000002_seed_reference.up.sql`](../migrations/000002_seed_reference.up.sql):
+Seed cố định (sẽ đưa lại vào migration seed khi viết lại):
 `HCM`, `HN`; 6 nhóm ngành (`CNTT`, `KY_THUAT`, `KINH_TE`, `Y_DUOC`, `LUAT`, `LOGISTICS`).
+Khoá vẫn là `code` (text ngắn, không phải ULID) — đây là bảng tra cứu tĩnh, không
+cần sắp xếp theo thời gian tạo.
 
 ### `app_settings` — cấu hình dẫn xuất
-| key | mặc định | ý nghĩa |
-|---|---|---|
-| `current_intake_year` | `2026` | Năm nhập học của "Năm đầu" đang hiển thị |
-| `course_years_default` | `4` | Số năm khoá cử nhân mặc định (máy tính ước lượng cho chọn 4/5) |
-| `default_increase_pct` | `10` | % tăng/năm khi trường không công bố lộ trình |
-| `default_increase_band_pct` | `3` | Biên ± cho khoảng min–max khi dùng ước lượng |
+| key                         | mặc định | ý nghĩa                                                        |
+| --------------------------- | -------- | -------------------------------------------------------------- |
+| `current_intake_year`       | `2026`   | Năm nhập học của "Năm đầu" đang hiển thị                       |
+| `course_years_default`      | `4`      | Số năm khoá cử nhân mặc định (máy tính ước lượng cho chọn 4/5) |
+| `default_increase_pct`      | `10`     | % tăng/năm khi trường không công bố lộ trình                   |
+| `default_increase_band_pct` | `3`      | Biên ± cho khoảng min–max khi dùng ước lượng                   |
 
 ### `schools`
 Hồ sơ trường. `category` gộp `type` + `autonomy_status` của brief thành **một** enum
 4 giá trị — ánh xạ thẳng sang badge loại trường ở UI; `tu_thuc_von_nuoc_ngoai`
 (RMIT) tách riêng để loại khỏi phép trung vị đại trà (§9 outlier).
 `campus` **không** ở đây — cơ sở gắn theo `programs` vì học phí có thể khác nhau
-giữa các cơ sở.
+giữa các cơ sở. Không lưu `established_year` — thông tin không cần thiết cho MVP,
+có thể bổ sung lại sau nếu cần hiển thị "thành lập năm…".
 
 ### `majors`
 Danh mục ngành **dùng chung** mọi trường; cặp "ngành – trường" (F1) hình thành ở
@@ -231,6 +274,11 @@ chưa công bố thì lấy năm gần nhất rồi dự phóng tới `current_i
 
 ## 7. Cách chạy
 
+> **Trạng thái hiện tại**: `migrations/` đang **trống** — các file migration của
+> v0.1 (bigint identity) đã bị xoá để viết lại theo thiết kế ULID + soft delete ở
+> trên. Chưa có migration nào để chạy; mục này giữ lại quy trình dự kiến khi
+> migration mới được thêm vào.
+
 ```bash
 # cần golang-migrate: brew install golang-migrate
 export DATABASE_URL="postgres://user:pass@localhost:5432/hocphi?sslmode=disable"
@@ -239,4 +287,10 @@ migrate -path migrations -database "$DATABASE_URL" up      # tạo schema + seed
 psql "$DATABASE_URL" -f seeds/001_schools.sql              # 50 trường (tuỳ chọn)
 
 migrate -path migrations -database "$DATABASE_URL" down 1   # rollback 1 bước
+```
+
+Chạy Postgres cục bộ nhanh qua Docker Compose (xem [`docker-compose.yml`](../docker-compose.yml)):
+
+```bash
+docker compose up -d postgres
 ```
