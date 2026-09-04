@@ -1,4 +1,4 @@
-# Go
+# Go (legacy — stack chuyển sang Python/FastAPI, xem README)
 /bin/
 /tmp/
 *.exe
@@ -6,10 +6,22 @@
 *.out
 vendor/
 
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
 # Env / secrets
 .env
 .env.*
 !.env.example
+
+# Docs (local-only — brainstorms & plans không commit)
+docs/
 
 # Editor / OS
 .DS_Store

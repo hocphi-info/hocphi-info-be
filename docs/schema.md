@@ -56,13 +56,14 @@ erDiagram
     timestamptz deleted_at "soft delete"
   }
   majors {
-    text    id PK "ULID"
-    text    slug UK
-    text    name
-    text    code "mã ngành cấp IV, không unique"
-    text    group_code FK
-    boolean requires_practice_license
-    text    practice_profession
+    text     id PK "ULID"
+    text     slug UK
+    text     name
+    text     code "mã ngành cấp IV, không unique"
+    text     group_code FK
+    smallint standard_years "số năm chuẩn của khoá, 3..7, mặc định 4"
+    boolean  requires_practice_license
+    text     practice_profession
     timestamptz created_at
     timestamptz updated_at
     timestamptz deleted_at
@@ -186,6 +187,11 @@ Danh mục ngành **dùng chung** mọi trường; cặp "ngành – trường" 
 nullable (ngành mới như "Khoa học dữ liệu" có thể chưa có mã). `slug` là khoá thật.
 `requires_practice_license = true` bắt buộc có `practice_profession` (CHECK) →
 bật khối "Chi phí sau tốt nghiệp" ở S3.
+`standard_years smallint NOT NULL DEFAULT 4 CHECK (standard_years BETWEEN 3 AND 7)`
+— số năm chuẩn của khoá cử nhân/bác sĩ ngành này; máy tính `total_course` dùng
+làm `years` mặc định thay cho `app_settings.course_years_default`. Gắn ở `majors`
+(không ở `programs`) vì độ dài khoá do ngành quyết định, `track` chỉ khác học phí.
+Seed: nhóm `Y_DUOC` (Y khoa, Răng–Hàm–Mặt, Dược…) = 6, còn lại = 4.
 
 ### `programs` — đơn vị nhỏ nhất có một mức học phí
 Tổ hợp `school × major × track × language × campus`. UNIQUE trên
@@ -247,7 +253,10 @@ Từ [`yeu-cau-san-pham.md`](../../hocphi-info/yeu-cau-san-pham.md) §8:
 - `amount_year_i = amount_year_1 × (1 + r)^(i-1)`
   với `r` = `program_increase.annual_increase_pct / 100`
   (ưu tiên `published_roadmap`; nếu không có bản ghi → `default_increase_pct`).
-- `total_course(program, years)` = Σ `amount_year_i`, `i = 1..years` (years ∈ {4,5}).
+- `total_course(program, years)` = Σ `amount_year_i`, `i = 1..years` (years ∈ {4,5,6}).
+  `years` mặc định = `majors.standard_years` của ngành (fallback
+  `app_settings.course_years_default` nếu vì lý do nào đó thiếu — cột NOT NULL nên
+  thực tế luôn có).
 - `median_per_year_over_course` = `total_course / years`.
 - `total_course_range` = tính lại với `r_low`, `r_high`:
   - `published_roadmap` → biên hẹp (theo `roadmap_years_known`);
@@ -269,6 +278,10 @@ chưa công bố thì lấy năm gần nhất rồi dự phóng tới `current_i
 - **Nhiều cơ sở, học phí khác nhau**: đã hỗ trợ qua `programs.campus`; UI S4 gom
   theo tab cơ sở.
 - **`category` của 50 trường trong seed là phỏng đoán** — chốt lại ở bước 3.
+- **`majors.standard_years` chưa có seed** — migration bước 4 tạo cột (NOT NULL
+  DEFAULT 4). Khi viết seed `majors`: nhóm `Y_DUOC` = 6 (Y khoa, Răng–Hàm–Mặt,
+  Dược, YHCT…), Kiến trúc = 5 nếu có, còn lại = 4. Kiểm lại số năm thực tế theo
+  đề án tuyển sinh từng ngành.
 - **Snapshot dữ liệu để chia sẻ link** (§11): chưa mô hình hoá; MVP mã hoá trạng
   thái bộ lọc trong URL, không cần bảng.
 
