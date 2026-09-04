@@ -37,11 +37,17 @@ from app.db import Base
 
 # ── Helper: ENUM Postgres dung lai type da tao trong migration ────────────────
 # create_type=False -> SQLAlchemy KHONG tu CREATE TYPE (migration 0001 lo viec do).
-# Neu de mac dinh, SQLAlchemy se thu tao type khi create_all -> trung voi migration.
+# values_callable -> luu GIA TRI cua enum ('cong_lap') chu khong TEN thanh vien
+# ('CONG_LAP'). Quan trong: FE (domain.ts) va query Tuan 2 xai dung gia tri nay.
 
 
 def _pg_enum(py_enum: type, name: str) -> PgEnum:
-    return PgEnum(py_enum, name=name, create_type=False)
+    return PgEnum(
+        py_enum,
+        name=name,
+        create_type=False,
+        values_callable=lambda e: [member.value for member in e],
+    )
 
 
 # ── Quy uoc chung cho bang nghiep vu (schema.md §3) ──────────────────────────
