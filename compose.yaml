@@ -1,0 +1,65 @@
+# Doi ten tu docker-compose.yml — Compose v2 khong can key `version:` nua.
+#
+# Thu tu khoi dong: postgres/redis healthy -> migrate chay xong -> api. `migrate`
+# la service one-shot (restart: "no") thay vi entrypoint script — log rieng, an
+# toan khi co nhieu replica api, khop CI (cung 1 chuoi lenh).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hocphi
+      POSTGRES_PASSWORD: hocphi
+      POSTGRES_DB: hocphi
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hocphi -d hocphi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hocphi:hocphi@postgres:5432/hocphi
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    # --host 0.0.0.0: de Next.js server-fetch cua FE cham toi container duoc
+    # (FE ep //localhost: -> //127.0.0.1: vi Node resolve IPv6 — memory
+    # nextjs-server-fetch-localhost-ipv6).
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hocphi:hocphi@postgres:5432/hocphi
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
