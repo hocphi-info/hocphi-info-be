@@ -65,5 +65,9 @@ warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Fixture VA test phai dung CHUNG 1 event loop (session) — nguoc lai engine
+# (asyncpg pool tao o loop cua fixture session) bi dung tu test o loop khac
+# ("attached to a different loop"). pytest-asyncio 1.x tach 2 tuy chon nay.
 asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
