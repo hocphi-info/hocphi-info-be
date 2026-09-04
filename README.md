@@ -1,3 +1,9 @@
+<p align="right">
+  <a href="README-en.md"><img src="https://flagcdn.com/20x15/gb.png" width="20" height="15" alt="Cờ Anh"> English</a>
+  &nbsp;|&nbsp;
+  <a href="README.md"><img src="https://flagcdn.com/20x15/vn.png" width="20" height="15" alt="Cờ Việt Nam"> Tiếng Việt</a>
+</p>
+
 # hocphi-info-be
 
 **Backend cho [hocphi.info](../hocphi-info) — thống kê học phí của 100+ trường Đại Học/Cao Đẳng tại Việt Nam.**
