@@ -1,14 +1,9 @@
 # hocphi-info-be
 
-**Backend cho [hocphi.info](../hocphi-info) — tra cứu & so sánh học phí đại học Việt Nam.**
+**Backend cho [hocphi.info](../hocphi-info) — thống kê học phí của 100+ trường Đại Học/Cao Đẳng tại Việt Nam.**
 
-Chuẩn hoá học phí từng ngành–trường về `đồng/năm`, tách theo hệ đào tạo, và ước lượng
-tổng chi phí cả khoá (4–6 năm) dựa trên % tăng học phí hàng năm. MVP pilot **50 trường**
-ở TP.HCM & Hà Nội, 6 nhóm ngành hot mùa tuyển sinh 2026 (CNTT, Kỹ thuật, Kinh tế, Y–Dược,
-Luật, Logistics).
-
-> Ngữ cảnh sản phẩm & UI: repo [`hocphi-info`](../hocphi-info) (`yeu-cau-san-pham.md`,
-> mockup `*.dc.html`). Frontend: [`hocphi-info-fe`](../hocphi-info-fe) (Next.js, đang chờ API này).
+Thống kê học phí từng ngành–trường về `đồng/năm`, tách theo hệ đào tạo, và ước lượng
+tổng chi phí cả khoá (4–6 năm) dựa trên % tăng học phí hàng năm.
 
 - [hocphi-info-be](#hocphi-info-be)
   - [I. Cách hoạt động](#i-cách-hoạt-động)
