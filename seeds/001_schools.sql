@@ -57,4 +57,7 @@ INSERT INTO schools (slug, name, short_name, city_code, category) VALUES
   ('hanu',                      'ĐH Hà Nội',                           'HANU',    'HN',  'cong_lap'),
   ('dh-thang-long',             'ĐH Thăng Long',                       'TLU-TL',  'HN',  'tu_thuc'),
   ('vnua',                      'Học viện Nông nghiệp Việt Nam',        'VNUA',    'HN',  'cong_lap')
-ON CONFLICT (slug) DO NOTHING;
+-- Partial unique index uq_schools_slug la ... WHERE deleted_at IS NULL, nen
+-- ON CONFLICT phai kem dung predicate do (ON CONFLICT (slug) tran se bao loi
+-- "no unique or exclusion constraint matching").
+ON CONFLICT (slug) WHERE deleted_at IS NULL DO NOTHING;

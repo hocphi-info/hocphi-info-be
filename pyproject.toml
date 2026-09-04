@@ -38,7 +38,9 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "ASYNC", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "alembic/versions/*" = ["E501"]  # dong SQL trong migration dai la binh thuong
-"tests/*" = ["B008"]             # FastAPI Depends() o default arg
+# B008: Depends()/Query() o default arg la idiom chuan cua FastAPI.
+"app/*" = ["B008"]
+"tests/*" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"
