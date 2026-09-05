@@ -7,7 +7,7 @@ Thu tu upgrade() (= thu tu Postgres dung schema):
   1. CREATE EXTENSION pgcrypto        — gen_random_bytes() cho gen_ulid()
   2. CREATE FUNCTION gen_ulid()       — ULID 26 ky tu, sinh o DB (geckoboard/pgulid)
   3. CREATE FUNCTION set_updated_at() + CREATE TYPE ... ENUM x7
-  4. op.create_table x11              — kem Computed, named CHECK, partial unique index
+  4. op.create_table x10              — kem Computed, named CHECK, partial unique index
   5. trigger set_updated_at cho moi bang co cot updated_at
   6. CREATE VIEW school_track_stats   — Min-Max/trung vi/so nganh theo (truong, he) (schema.md §4)
   7. seed cities / major_groups / app_settings (schema.md §3)
@@ -115,7 +115,6 @@ ENUM_TYPES: list[tuple[str, list[str]]] = [
         "source_doc_type",
         ["de_an_tuyen_sinh", "thong_bao_hoc_phi", "quy_dinh_nghe", "khac"],
     ),
-    ("data_issue_status", ["new", "reviewing", "resolved", "rejected"]),
 ]
 
 # Bang co cot updated_at -> gan trigger set_updated_at.
@@ -127,7 +126,6 @@ TABLES_WITH_UPDATED_AT = [
     "tuition_records",
     "program_increase",
     "post_grad_requirements",
-    "data_issue_reports",
 ]
 
 # VIEW S2 (schema.md §4): Min-Max / trung vi / so nganh cho moi (school, track),
@@ -214,35 +212,6 @@ def upgrade() -> None:
         sa.Column("code", sa.Text(), nullable=False),
         sa.Column("name", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("code"),
-    )
-    op.create_table(
-        "data_issue_reports",
-        sa.Column("reported_url", sa.Text(), nullable=False),
-        sa.Column("note", sa.Text(), nullable=False),
-        sa.Column("reporter_contact", sa.Text(), nullable=True),
-        sa.Column(
-            "status",
-            _enum("data_issue_status"),
-            server_default=sa.text("'new'"),
-            nullable=False,
-        ),
-        sa.Column(
-            "id", sa.Text(), server_default=sa.text("gen_ulid()"), nullable=False
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "sources",
@@ -658,7 +627,6 @@ def downgrade() -> None:
     )
     op.drop_table("majors")
     op.drop_table("sources")
-    op.drop_table("data_issue_reports")
     op.drop_table("major_groups")
     op.drop_table("cities")
     op.drop_table("app_settings")

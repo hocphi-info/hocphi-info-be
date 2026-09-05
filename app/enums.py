@@ -20,7 +20,6 @@ TUITION_UNIT = "tuition_unit"
 CONFIDENCE_LEVEL = "confidence_level"
 INCREASE_SOURCE_KIND = "increase_source_kind"
 SOURCE_DOC_TYPE = "source_doc_type"
-DATA_ISSUE_STATUS = "data_issue_status"
 
 # Tat ca ten type ENUM — migration 0001 lap qua day de CREATE/DROP.
 ALL_ENUM_TYPES = (
@@ -30,7 +29,6 @@ ALL_ENUM_TYPES = (
     CONFIDENCE_LEVEL,
     INCREASE_SOURCE_KIND,
     SOURCE_DOC_TYPE,
-    DATA_ISSUE_STATUS,
 )
 
 
@@ -87,11 +85,3 @@ class SourceDocType(StrEnum):
     QUY_DINH_NGHE = "quy_dinh_nghe"
     KHAC = "khac"
 
-
-class DataIssueStatus(StrEnum):
-    """F17 vong doi: new -> reviewing -> resolved | rejected."""
-
-    NEW = "new"
-    REVIEWING = "reviewing"
-    RESOLVED = "resolved"
-    REJECTED = "rejected"

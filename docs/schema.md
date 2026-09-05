@@ -140,8 +140,7 @@ erDiagram
   }
 ```
 
-Bảng phụ không vẽ: `app_settings` (key/value), `data_issue_reports` (F17, cũng có
-`id` ULID + `created_at/updated_at/deleted_at`).
+Bảng phụ không vẽ: `app_settings` (key/value).
 
 ## 3. Từ điển bảng
 
@@ -229,9 +228,9 @@ Tài liệu gốc: `url`, `doc_type`, `page_ref`, `published_date`, `fetched_at`
 `checked_by`, `checked_at`. Dùng chung cho `tuition_records`, `program_increase`,
 `post_grad_requirements`.
 
-### `data_issue_reports` — F17 "Báo số liệu chưa đúng" (ưu tiên S)
-Không bắt buộc thông tin định danh (`reporter_contact` nullable) theo §11 quyền
-riêng tư. `status`: `new → reviewing → resolved | rejected`.
+> **Đã bỏ (2026-09-04):** bảng `data_issue_reports` (F17 "Báo số liệu chưa đúng").
+> MVP không tự nhận báo lỗi qua API — người dùng phản hồi qua email / GitHub issue /
+> Facebook. Xem README §I.
 
 ## 4. View `school_track_stats` — phục vụ S2
 

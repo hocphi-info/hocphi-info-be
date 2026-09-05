@@ -22,17 +22,25 @@ tổng chi phí cả khoá (4–6 năm) dựa trên % tăng học phí hàng nă
 
 ## I. Cách hoạt động
 
+Backend này **chỉ đọc**. Dữ liệu vào bằng một đường duy nhất: **AI-crawler** (repo
+riêng) sinh ra file seed, người vận hành duyệt, rồi `scripts/seed.py` nạp vào DB.
+
 ```mermaid
 flowchart TD
-    subgraph INGEST["Nhập liệu (thủ công — không admin API)"]
-        PDF["Đề án tuyển sinh /<br/>thông báo học phí (PDF)"] --> HUMAN["Con người trích số +<br/>chuẩn hoá về đồng/năm"]
-        HUMAN --> SQL["seeds/*.sql + CSV/JSON"]
-        SQL --> SEED["scripts/seed.py<br/>(chạy tay sau migrate)"]
+    subgraph CRAWL["AI-crawler — repo riêng, chạy theo đợt (không phải service)"]
+        LIST["50 trường pilot<br/>+ domain chính thức"] --> DISC["1 · Tìm nguồn<br/>sitemap + site-search + heuristic URL<br/>→ ứng viên 'đề án tuyển sinh' / 'học phí'"]
+        DISC --> FETCH["2 · Tải & chuẩn hoá về text<br/>HTML → trafilatura · PDF text → pypdf<br/>PDF scan → OCR/VLM"]
+        FETCH --> SLICE["3 · Cắt lát KHÔNG dùng LLM<br/>regex + BM25 giữ lại đoạn có học phí<br/>~40k token → ~3k token/tài liệu"]
+        SLICE --> LLM["4 · LLM trích xuất<br/>structured output theo schema Pydantic<br/>mỗi mức phí = 1 record + câu trích gốc + số trang"]
+        LLM --> CHECK["5 · Kiểm tự động (code, không LLM)<br/>đơn vị · biên độ hợp lý · ngành có trong danh mục<br/>· chạy 2 lượt phải khớp"]
+        CHECK --> REVIEW["6 · Người duyệt<br/>chỉ xem phần máy tự đánh dấu 'chưa chắc'"]
+        REVIEW --> OUT["seeds/*.jsonl<br/>programs · tuition_records · sources"]
     end
 
+    OUT -->|"pull request sang repo này"| SEED["scripts/seed.py<br/>(idempotent, chạy tay sau migrate)"]
     SEED --> DB[("PostgreSQL<br/>schools · majors · programs ·<br/>tuition_records · program_increase ·<br/>post_grad_requirements · sources")]
 
-    subgraph API["FastAPI (đọc — unblock FE)"]
+    subgraph API["FastAPI (chỉ đọc — không endpoint ghi)"]
         DB --> Q["query lọc / sắp xếp / tìm không dấu"]
         DB --> VIEW[("VIEW school_track_stats<br/>Min–Max / trung vị / số ngành<br/>theo (trường, hệ)")]
         Q --> DERIVE["Giá trị dẫn xuất tính lúc query<br/>(schema.md §5): amount_year_i =<br/>year_1 × (1+r)^(i-1), total_course,<br/>median_per_year, total_with_license"]
@@ -42,22 +50,25 @@ flowchart TD
 
     RESP --> FE["hocphi-info-fe<br/>S1 theo ngành · S2 theo trường ·<br/>S3 chi tiết ngành–trường · F13 tìm nhanh"]
 
-    subgraph REPORT["F17 — báo số liệu chưa đúng"]
-        USER["Người dùng cuối"] -->|"POST url + ghi chú<br/>(không bắt buộc định danh)"| RB["data_issue_reports (status: new)"]
-        RB -.->|"BackgroundTask"| LOG["log / thông báo<br/>(không chặn response)"]
+    subgraph FB["Phản hồi số liệu sai — không có API, chỉ là link"]
+        USER["Người dùng cuối"] --> CH["mailto:example@mail.com<br/>· GitHub issue · Facebook"]
+        CH --> OWNER["Người vận hành sửa seeds<br/>→ chạy lại scripts/seed.py"]
     end
 ```
 
 Số gốc lưu trong DB (một mức học phí / chương trình / năm học); **mọi con số dẫn xuất**
 — tổng cả khoá, trung vị/năm, khoảng Min–Max — tính lúc query, không lưu, để tránh dữ
-liệu lệch nhau. Mọi con số truy được về một `sources` có ngày.
+liệu lệch nhau. Mọi con số truy được về một `sources` có ngày, kèm câu trích nguyên văn
+và số trang trong tài liệu gốc.
 
 ## II. Vì sao thiết kế thế này
 
 **1. Chuẩn hoá đơn vị ngay lúc nhập.** Mỗi trường công bố học phí một kiểu (đồng/tháng,
-đồng/tín chỉ, đồng/năm) trong PDF đề án tuyển sinh — không có nguồn chuẩn hoá bắt buộc
-kiểu IPEDS (Mỹ). Backend quy tất cả về `amount_per_year`, giữ `amount_original` +
-`unit_original` để đối chiếu khi tranh chấp số liệu.
+đồng/tín chỉ, đồng/năm) trong PDF đề án tuyển sinh — Việt Nam không có nguồn chuẩn hoá
+bắt buộc kiểu [IPEDS](https://nces.ed.gov/ipeds/) (Mỹ) hay
+[Discover Uni](https://discoveruni.gov.uk/) (Anh). Đây chính là lý do dự án phải tự
+crawl: không có API nào để gọi. Backend quy tất cả về `amount_per_year`, giữ
+`amount_original` + `unit_original` để đối chiếu khi tranh chấp số liệu.
 
 **2. "Hệ đào tạo" là một thực thể riêng (`programs`), không phải cột.** Học phí hệ chất
 lượng cao / tiên tiến / quốc tế gấp 3–5 lần hệ đại trà. Trộn chung khi tính trung vị sẽ
@@ -72,12 +83,20 @@ nhau. VIEW `school_track_stats` và công thức `schema.md` §5 làm việc nà
 `tuition_records` — "Năm 1" là số trường công bố, "Năm 2..N" là dự phóng theo % tăng.
 UI luôn gắn nhãn, không suy đoán.
 
-**5. Nhập liệu bằng script thủ công, không admin CRUD / auth.** Phần khó nhất của dự án
-là thu thập dữ liệu, không phải viết code. MVP không cần CMS — người vận hành sửa trực
-tiếp `seeds/*.sql` rồi chạy `scripts/seed.py`. Đầu vào duy nhất từ ngoài là F17 (báo lỗi
-số liệu của người dùng cuối) — công khai, validate bằng Pydantic, xử lý qua `BackgroundTask`.
+**5. Nhập liệu bằng AI-crawler + người duyệt, không admin CRUD / auth.** Phần khó nhất
+của dự án là thu thập dữ liệu, không phải viết code — nên chỗ đó được tự động hoá, còn
+API thì giữ nguyên hình dạng đơn giản nhất: **không có endpoint ghi nào cả**. Crawler
+nằm ở repo riêng (deps nặng: trình duyệt headless, OCR, model), chạy theo đợt, và giao
+tiếp với repo này bằng **file** (`seeds/*.jsonl`) qua pull request — không phải bằng
+kết nối DB chung. Người vận hành là cổng cuối: máy đề xuất, người duyệt, `seed.py` nạp.
 
-**6. ULID `text` làm khoá chính, sinh ở DB.** Sắp xếp được theo thời gian tạo, không lộ
+**6. Không nhận báo lỗi qua API.** Bảng `data_issue_reports` (F17) đã bị gỡ (2026-09-04).
+Một endpoint công khai nhận ghi = phải lo spam, rate-limit, kiểm duyệt, quyền riêng tư —
+đổi lại vài chục report mỗi năm. Ở quy mô MVP, `mailto:` + GitHub issue + comment
+Facebook làm đúng việc đó với chi phí bằng 0, và người vận hành vẫn phải sửa `seeds/`
+bằng tay trong cả hai trường hợp.
+
+**7. ULID `text` làm khoá chính, sinh ở DB.** Sắp xếp được theo thời gian tạo, không lộ
 số lượng bản ghi như serial, không cần round-trip lấy id trước khi tạo bản ghi liên quan.
 `slug` vẫn là khoá công khai/URL cho `schools` và `majors`.
 
@@ -110,9 +129,10 @@ alembic/
   versions/
     0001_initial_schema.py   # viết tay: gen_ulid(), ENUM, bảng, VIEW, seed bảng tra cứu
 scripts/
-  seed.py            # nhập liệu thủ công — đọc seeds/*.sql qua AsyncSession
+  seed.py            # nạp seeds/*.sql|jsonl qua AsyncSession (idempotent)
 seeds/
   001_schools.sql    # 50 trường pilot (category/short_name còn phỏng đoán)
+  # (Tuần 4+) *.jsonl — output đã duyệt của repo AI-crawler
 tests/
   conftest.py        # fixture _schema (alembic upgrade), engine, db (SAVEPOINT rollback)
   test_migrations.py # upgrade head → downgrade base → upgrade head
@@ -199,8 +219,8 @@ erDiagram
     }
 ```
 
-Bảng phụ: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…),
-`data_issue_reports` (F17). VIEW `school_track_stats` (Min–Max / trung vị / số ngành theo
+Bảng phụ: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…).
+VIEW `school_track_stats` (Min–Max / trung vị / số ngành theo
 `(trường, hệ)`) phục vụ màn hình S2. `cities` / `major_groups` / `app_settings` là bảng
 tra cứu tĩnh khoá bằng `code` / `key` — không ULID, không soft-delete. Các bảng nghiệp vụ
 đều có `created_at` / `updated_at` / `deleted_at` (soft delete: query mặc định lọc
@@ -248,8 +268,13 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
   - [ ] **Tuần 1** — nền tảng: schema + Alembic + seed + Docker Compose + `GET /health` + `/docs`
   - [ ] **Tuần 2** — endpoint đọc S1 (theo ngành) / S2 (theo trường) / F13 (tìm nhanh) + Pydantic response models
   - [ ] **Tuần 3** — endpoint chi tiết ngành–trường (S3) + giá trị dẫn xuất (`schema.md` §5)
-  - [ ] **Tuần 4** — F17 báo lỗi số liệu + `BackgroundTasks`
+  - [ ] **Tuần 4** — hợp đồng dữ liệu với AI-crawler: định dạng `seeds/*.jsonl`,
+        `scripts/seed.py` nạp JSONL + validate bằng Pydantic + upsert idempotent theo
+        `(program, academic_year)`
   - [ ] **Tuần 5** — caching (Redis) + rate-limit + middleware request-id + structured logging
+- [ ] **B4b** **AI-crawler** — chạy bằng chính Claude Code (ngân sách API = 0), song song
+      với B4. Skill `/crawl-truong` → `seeds/*.jsonl` cho 50 trường pilot;
+      xem [`docs/ai-crawler.md`](docs/ai-crawler.md)
 - [ ] **B5** Frontend React — [`hocphi-info-fe`](../hocphi-info-fe) (Tuần 1–3 xong, chạy mock, chờ API này)
 - [ ] **B6** Deploy
 - [ ] **B7** Người dùng thử

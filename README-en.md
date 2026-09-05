@@ -22,17 +22,26 @@ estimates the **full-course cost** (4–6 years) from the annual tuition-increas
 
 ## I. How it works
 
+This backend is **read-only**. Data comes in through exactly one path: the **AI-crawler**
+(separate repo) produces seed files, an operator reviews them, and `scripts/seed.py` loads
+them into the DB.
+
 ```mermaid
 flowchart TD
-    subgraph INGEST["Ingestion (manual — no admin API)"]
-        PDF["Admissions plan /<br/>tuition announcement (PDF)"] --> HUMAN["Human extracts numbers +<br/>normalizes to VND/year"]
-        HUMAN --> SQL["seeds/*.sql + CSV/JSON"]
-        SQL --> SEED["scripts/seed.py<br/>(run by hand after migrate)"]
+    subgraph CRAWL["AI-crawler — separate repo, batch job (not a service)"]
+        LIST["50 pilot schools<br/>+ official domains"] --> DISC["1 · Discover sources<br/>sitemap + site-search + URL heuristics<br/>→ candidate 'admissions plan' / 'tuition' docs"]
+        DISC --> FETCH["2 · Fetch & normalize to text<br/>HTML → trafilatura · text PDF → pypdf<br/>scanned PDF → OCR/VLM"]
+        FETCH --> SLICE["3 · Slice, NO LLM<br/>regex + BM25 keep only tuition passages<br/>~40k tokens → ~3k tokens per doc"]
+        SLICE --> LLM["4 · LLM extraction<br/>structured output against a Pydantic schema<br/>each figure = 1 record + verbatim quote + page"]
+        LLM --> CHECK["5 · Automated checks (code, no LLM)<br/>units · plausible range · major exists in catalog<br/>· two runs must agree"]
+        CHECK --> REVIEW["6 · Human review<br/>only rows the machine flagged as uncertain"]
+        REVIEW --> OUT["seeds/*.jsonl<br/>programs · tuition_records · sources"]
     end
 
+    OUT -->|"pull request into this repo"| SEED["scripts/seed.py<br/>(idempotent, run by hand after migrate)"]
     SEED --> DB[("PostgreSQL<br/>schools · majors · programs ·<br/>tuition_records · program_increase ·<br/>post_grad_requirements · sources")]
 
-    subgraph API["FastAPI (read — unblocks the FE)"]
+    subgraph API["FastAPI (read-only — no write endpoints)"]
         DB --> Q["queries: filter / sort / accent-insensitive search"]
         DB --> VIEW[("VIEW school_track_stats<br/>Min–Max / median / #majors<br/>per (school, track)")]
         Q --> DERIVE["Derived values computed at query time<br/>(schema.md §5): amount_year_i =<br/>year_1 × (1+r)^(i-1), total_course,<br/>median_per_year, total_with_license"]
@@ -42,22 +51,24 @@ flowchart TD
 
     RESP --> FE["hocphi-info-fe<br/>S1 by major · S2 by school ·<br/>S3 major–school detail · F13 quick search"]
 
-    subgraph REPORT["F17 — report incorrect data"]
-        USER["End user"] -->|"POST url + note<br/>(identity optional)"| RB["data_issue_reports (status: new)"]
-        RB -.->|"BackgroundTask"| LOG["log / notify<br/>(does not block the response)"]
+    subgraph FB["Reporting bad data — no API, just links"]
+        USER["End user"] --> CH["mailto:example@mail.com<br/>· GitHub issue · Facebook"]
+        CH --> OWNER["Operator edits seeds<br/>→ re-runs scripts/seed.py"]
     end
 ```
 
 The DB stores the source numbers (one tuition figure per program per academic year); **every
 derived number** — full-course total, median per year, Min–Max range — is computed at query
 time, never stored, to avoid figures drifting out of sync. Every number traces back to a
-dated row in `sources`.
+dated row in `sources`, with the verbatim quote and page number from the original document.
 
 ## II. Why it's designed this way
 
 **1. Normalize units at ingestion time.** Each school publishes tuition differently
-(VND/month, VND/credit, VND/year) inside a PDF admissions plan — there is no mandatory
-standardized source like IPEDS (US). The backend converts everything to `amount_per_year` and
+(VND/month, VND/credit, VND/year) inside a PDF admissions plan — Vietnam has no mandatory
+standardized source like [IPEDS](https://nces.ed.gov/ipeds/) (US) or
+[Discover Uni](https://discoveruni.gov.uk/) (UK). That is precisely why this project has to
+crawl: there is no API to call. The backend converts everything to `amount_per_year` and
 keeps `amount_original` + `unit_original` for reconciliation when figures are disputed.
 
 **2. "Program track" is its own entity (`programs`), not a column.** Tuition for
@@ -74,12 +85,21 @@ formulas in `schema.md` §5 do this at query time.
 each `tuition_records` row — "Year 1" is the school's published figure, "Years 2..N" are
 projections from the increase rate. The UI always labels this and never guesses.
 
-**5. Ingestion via a manual script, no admin CRUD / auth.** The hardest part of the project
-is collecting data, not writing code. The MVP needs no CMS — an operator edits `seeds/*.sql`
-directly and runs `scripts/seed.py`. The only external input is F17 (end-user data-issue
-reports) — public, validated by Pydantic, processed via `BackgroundTask`.
+**5. Ingestion via AI-crawler + human review, no admin CRUD / auth.** The hardest part of
+the project is collecting data, not writing code — so that is what gets automated, while the
+API keeps its simplest possible shape: **no write endpoints at all**. The crawler lives in a
+separate repo (heavy deps: headless browser, OCR, models), runs as a batch job, and talks to
+this repo through **files** (`seeds/*.jsonl`) via pull request — not through a shared DB
+connection. The operator is the final gate: the machine proposes, a human approves,
+`seed.py` loads.
 
-**6. ULID `text` primary keys, generated in the DB.** Time-sortable, don't leak row counts
+**6. No API for reporting bad data.** The `data_issue_reports` table (F17) was dropped
+(2026-09-04). A public write endpoint means spam handling, rate limiting, moderation and
+privacy work — in exchange for a few dozen reports a year. At MVP scale, `mailto:` + GitHub
+issues + Facebook comments do the same job at zero cost, and the operator has to edit
+`seeds/` by hand either way.
+
+**7. ULID `text` primary keys, generated in the DB.** Time-sortable, don't leak row counts
 like a serial, and avoid a round-trip to fetch an id before inserting related rows. `slug`
 remains the public/URL key for `schools` and `majors`.
 
@@ -113,9 +133,10 @@ alembic/
   versions/
     0001_initial_schema.py   # hand-written: gen_ulid(), ENUMs, tables, VIEW, lookup-table seed
 scripts/
-  seed.py            # manual ingestion — reads seeds/*.sql via AsyncSession
+  seed.py            # loads seeds/*.sql|jsonl via AsyncSession (idempotent)
 seeds/
   001_schools.sql    # 50 pilot schools (category/short_name still tentative)
+  # (Week 4+) *.jsonl — reviewed output of the AI-crawler repo
 tests/
   conftest.py        # fixtures: _schema (alembic upgrade), engine, db (SAVEPOINT rollback)
   test_migrations.py # upgrade head → downgrade base → upgrade head
@@ -203,8 +224,8 @@ erDiagram
     }
 ```
 
-Supporting tables: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…),
-`data_issue_reports` (F17). The `school_track_stats` VIEW (Min–Max / median / #majors per
+Supporting tables: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…).
+The `school_track_stats` VIEW (Min–Max / median / #majors per
 `(school, track)`) powers screen S2. `cities` / `major_groups` / `app_settings` are static
 lookup tables keyed by `code` / `key` — no ULID, no soft delete. Business tables all carry
 `created_at` / `updated_at` / `deleted_at` (soft delete: queries default to
@@ -252,8 +273,13 @@ columns). `pgcrypto` ships with the `postgres:16-alpine` image.
   - [ ] **Week 1** — foundation: schema + Alembic + seed + Docker Compose + `GET /health` + `/docs`
   - [ ] **Week 2** — read endpoints for S1 (by major) / S2 (by school) / F13 (quick search) + Pydantic response models
   - [ ] **Week 3** — major–school detail endpoint (S3) + derived values (`schema.md` §5)
-  - [ ] **Week 4** — F17 data-issue reports + `BackgroundTasks`
+  - [ ] **Week 4** — data contract with the AI-crawler: `seeds/*.jsonl` format,
+        `scripts/seed.py` loads JSONL + Pydantic validation + idempotent upsert on
+        `(program, academic_year)`
   - [ ] **Week 5** — caching (Redis) + rate limiting + request-id middleware + structured logging
+- [ ] **B4b** **AI-crawler** — driven by Claude Code itself (zero API budget), in parallel
+      with B4. A `/crawl-truong` skill produces `seeds/*.jsonl` for the 50 pilot schools;
+      see [`docs/ai-crawler.md`](docs/ai-crawler.md)
 - [ ] **B5** React frontend — [`hocphi-info-fe`](../hocphi-info-fe) (Weeks 1–3 done, running on mock, waiting on this API)
 - [ ] **B6** Deploy
 - [ ] **B7** User testing

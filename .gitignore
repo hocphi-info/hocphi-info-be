@@ -23,6 +23,12 @@ __pycache__/
 # Docs (local-only — brainstorms & plans không commit)
 docs/
 
+# Crawler — snapshot tài liệu tải về, không commit (chỉ commit seeds/*.jsonl đã duyệt)
+crawler/work/
+
+# Claude Code — skill co commit, settings ca nhan thi khong
+.claude/settings.local.json
+
 # Editor / OS
 .DS_Store
 .idea/

@@ -382,18 +382,3 @@ class PostGradRequirement(Base, TimestampSoftDelete):
     )
 
     major: Mapped[Major] = relationship(back_populates="post_grad_requirements")
-
-
-class DataIssueReport(Base, TimestampSoftDelete):
-    """F17 "Bao so lieu chua dung". Khong bat buoc dinh danh (§11 quyen rieng tu)."""
-
-    __tablename__ = "data_issue_reports"
-
-    reported_url: Mapped[str] = mapped_column(Text, nullable=False)
-    note: Mapped[str] = mapped_column(Text, nullable=False)
-    reporter_contact: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[enums.DataIssueStatus] = mapped_column(
-        _pg_enum(enums.DataIssueStatus, enums.DATA_ISSUE_STATUS),
-        nullable=False,
-        server_default=text("'new'"),
-    )

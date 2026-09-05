@@ -52,11 +52,13 @@ section, matching `hocphi-info-fe`'s learning-log style — see `docs/plans/`.
 
 ## Conventions
 
-- **No admin CRUD, no auth.** Data entry is manual: edit `seeds/*.sql`, run
-  `uv run python -m scripts.seed` (idempotent). The only public write path is F17
-  (report-bad-data) — validated by Pydantic, processed via `BackgroundTasks`, never blocking
-  the response. Don't add an admin API or auth middleware without the owner asking first —
-  it's a deliberate MVP scope cut, not an oversight.
+- **No admin CRUD, no auth — the API is read-only.** There is no public write path at
+  all. Data enters through `seeds/*.jsonl|sql` + `uv run python -m scripts.seed`
+  (idempotent); those seeds are produced by the separate **AI-crawler** repo and reviewed
+  by a human before landing here. Data-error feedback from end users goes to email /
+  GitHub issues / Facebook, not to an endpoint (F17 was dropped 2026-09-04). Don't add an
+  admin API, an auth middleware, or a write endpoint without the owner asking first — it's
+  a deliberate MVP scope cut, not an oversight.
 - **Primary keys are ULIDs (`text`, `gen_ulid()` default in Postgres)**, except the small
   static lookup tables (`cities`, `major_groups`, `app_settings`), which are keyed by a plain
   `code`/`key` string — no ULID, no soft-delete on those.

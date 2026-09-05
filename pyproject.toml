@@ -29,7 +29,7 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 88
-src = ["app", "tests", "scripts"]
+src = ["app", "tests", "scripts", "crawler"]
 
 [tool.ruff.lint]
 # E/F pyflakes+pycodestyle, I isort, UP pyupgrade, B bugbear,
