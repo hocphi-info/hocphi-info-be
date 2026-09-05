@@ -31,13 +31,14 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
 
     assert resp.status_code == 200
     rows = resp.json()
-    assert len(rows) == 25
+    assert len(rows) == 100
 
     row = next(
         r
         for r in rows
         if r["program"]["majorSlug"] == "cong-nghe-thong-tin"
         and r["program"]["track"] == "dai_tra"
+        and r["program"]["schoolSlug"] == "uit"
     )
     assert row["program"]["schoolSlug"] == "uit"
     assert row["school"]["shortName"] == "UIT"

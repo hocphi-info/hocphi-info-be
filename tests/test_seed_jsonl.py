@@ -1,7 +1,9 @@
-"""`scripts.seed` nap seeds/*.jsonl theo `scripts.seed_majors_mapping` — chi 25/43
-dong duoc duyet moi vao DB; con lai bi bo qua. Chay lai script khong nhan doi
-(idempotent) du programs/tuition_records dung "get or create" thay vi
-`ON CONFLICT` nhu 2 file *.sql.
+"""`scripts.seed` nap seeds/*.jsonl theo `scripts.seed_majors_mapping` — chi
+dong co trong dict cua file do moi vao DB; con lai bi bo qua (vd uet.jsonl/
+ueb.jsonl khong co trong dict nao nen bi bo qua toan bo — major_name_raw cua
+2 file do la ten nhom/he chung, khong phai ten nganh cu the). Chay lai script
+khong nhan doi (idempotent) du programs/tuition_records dung "get or create"
+thay vi `ON CONFLICT` nhu 2 file *.sql.
 """
 
 from app.models import Major, Program, TuitionRecord
@@ -10,7 +12,7 @@ from scripts.seed_majors_mapping import ROW_TO_MAJOR_SLUG
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-EXPECTED_LOADED_ROWS = 25
+EXPECTED_LOADED_ROWS = 100
 
 
 async def test_seed_loads_only_approved_rows(db: AsyncSession) -> None:
