@@ -4,7 +4,7 @@ Depends(get_session) + 1 (bo) query + tra Pydantic response model — chi khac
 o day query join 4 bang thay vi SELECT 1.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -20,12 +20,24 @@ from app.schemas.common import (
     SchoolOut,
     TuitionRecordOut,
 )
+from app.text import MIN_QUERY_LEN, normalize
 
 router = APIRouter(tags=["majors"])
 
 
 @router.get("/api/majors", response_model=list[MajorRowOut])
 async def list_majors(
+    search: str | None = Query(
+        None,
+        description=(
+            "Loc theo TEN NGANH, bo dau, khong phan biet hoa/thuong. "
+            f"Toi thieu {MIN_QUERY_LEN} ky tu sau khi chuan hoa; ngan hon -> tra []."
+        ),
+    ),
+    # --- Phan trang / sap xep: CHUA implement (noi khi FE co UI "Xem them") ---
+    # page: int = Query(1, ge=1, description="Trang, 1-based"),
+    # per_page: int = Query(50, ge=1, le=200, alias="perPage"),
+    # sort: str | None = Query(None, description="vd 'year1' | '-year1' | 'name'"),
     session: AsyncSession = Depends(get_session),
 ) -> list[MajorRowOut]:
     latest_tr = latest_published_tuition_subquery()
@@ -48,7 +60,7 @@ async def list_majors(
     )
     rows = (await session.execute(stmt)).all()
 
-    return [
+    result = [
         MajorRowOut(
             program=ProgramOut(
                 id=program.id,
@@ -93,3 +105,15 @@ async def list_majors(
         )
         for program, school, major, year1, increase in rows
     ]
+
+    # `search`: loc theo ten nganh (chi thuc the chinh cua endpoint nay —
+    # QuickSearch goi rieng /api/schools?search= cho goi y truong). Loc trong
+    # Python bang normalize() y het /api/search cu — Postgres bo dau can
+    # extension `unaccent`, chua muon them ha tang o MVP.
+    if search is not None:
+        q = normalize(search)
+        if len(q) < MIN_QUERY_LEN:
+            return []
+        result = [r for r in result if q in normalize(r.major.name)]
+
+    return result

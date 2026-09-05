@@ -47,3 +47,36 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     assert row["year1"]["amountPerYear"] == 37_000_000
     assert row["year1"]["isProjected"] is False
     assert row["increase"] is None  # chua seed program_increase o Tuan 2
+
+
+async def test_list_majors_search_filters_by_major_name_without_diacritics(
+    db: AsyncSession,
+) -> None:
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/majors", params={"search": "ke toan"})
+
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert rows, "phai co it nhat 1 dong khop 'ke toan'"
+    # Moi dong tra ve deu la nganh Ke toan (loc theo ten nganh, khong dau).
+    assert {r["major"]["slug"] for r in rows} == {"ke-toan"}
+    # /api/majors tra 1 dong / program -> nhieu truong day Ke toan -> nhieu dong.
+    assert len(rows) >= 1
+
+
+async def test_list_majors_search_below_min_length_returns_empty(
+    db: AsyncSession,
+) -> None:
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/majors", params={"search": "a"})
+
+    assert resp.status_code == 200
+    assert resp.json() == []

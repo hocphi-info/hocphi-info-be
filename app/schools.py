@@ -7,7 +7,7 @@ o API" (owner chot khi lap plan, xem docs/plans/2026-09-05-001-...-plan.md).
 
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +15,7 @@ from app import enums
 from app.db import get_session
 from app.models import Major, Program, ProgramIncrease, School
 from app.schemas.common import SchoolOut, SchoolRowOut, SchoolStatsOut
+from app.text import MIN_QUERY_LEN, normalize
 
 router = APIRouter(tags=["schools"])
 
@@ -41,6 +42,18 @@ def _format_increase_summary(pairs: list[tuple[float, str]]) -> str:
 
 @router.get("/api/schools", response_model=list[SchoolRowOut])
 async def list_schools(
+    search: str | None = Query(
+        None,
+        description=(
+            "Loc theo TEN TRUONG + ten viet tat, bo dau, khong phan biet "
+            f"hoa/thuong. Toi thieu {MIN_QUERY_LEN} ky tu sau khi chuan hoa; "
+            "ngan hon -> tra []."
+        ),
+    ),
+    # --- Phan trang / sap xep: CHUA implement (noi khi FE co UI "Xem them") ---
+    # page: int = Query(1, ge=1, description="Trang, 1-based"),
+    # per_page: int = Query(50, ge=1, le=200, alias="perPage"),
+    # sort: str | None = Query(None, description="vd 'min' | '-min' | 'name'"),
     session: AsyncSession = Depends(get_session),
 ) -> list[SchoolRowOut]:
     # VIEW da tinh san Min-Max/trung vi/so nganh — doc qua SQL Core (chi doc,
@@ -121,5 +134,19 @@ async def list_schools(
                 ),
             )
         )
+    # `search`: loc theo ten truong + ten viet tat (chi thuc the chinh cua
+    # endpoint nay). Loc trong Python bang normalize() y het /api/search cu.
+    # Luu y: danh sach nay von chi gom truong co he DAI TRA da co hoc phi
+    # (VIEW school_track_stats) — search khong "moi" pham vi do.
+    if search is not None:
+        q = normalize(search)
+        if len(q) < MIN_QUERY_LEN:
+            return []
+        result = [
+            r
+            for r in result
+            if q in normalize(f"{r.school.name} {r.school.short_name or ''}")
+        ]
+
     result.sort(key=lambda r: r.school.name)
     return result

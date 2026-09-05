@@ -78,3 +78,46 @@ async def test_list_schools_exposes_logo_url_after_import(
     rows = resp.json()
     uit_row = next(r for r in rows if r["school"]["slug"] == "uit")
     assert uit_row["school"]["logoUrl"] == "https://example.org/uit.png"
+
+
+async def test_list_schools_search_matches_by_short_name_without_diacritics(
+    db: AsyncSession,
+) -> None:
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/schools", params={"search": "uit"})
+
+    assert resp.status_code == 200
+    rows = resp.json()
+    slugs = {r["school"]["slug"] for r in rows}
+    # Khop qua ten viet tat "UIT" (bo dau, substring). Khong khop het danh sach
+    # 9 truong -> search co loc that.
+    assert "uit" in slugs
+    assert slugs != {
+        "tdtu",
+        "dh-van-lang",
+        "uit",
+        "ussh-tphcm",
+        "hutech",
+        "ulis",
+        "dh-hoa-sen",
+        "dh-quoc-te-tphcm",
+        "dh-khoa-hoc-tu-nhien-tphcm",
+    }
+
+
+async def test_list_schools_search_no_match_returns_empty(
+    db: AsyncSession,
+) -> None:
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/schools", params={"search": "zzzzzz"})
+
+    assert resp.status_code == 200
+    assert resp.json() == []
