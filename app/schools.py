@@ -50,9 +50,14 @@ async def list_schools(
             "ngan hon -> tra []."
         ),
     ),
-    # --- Phan trang / sap xep: CHUA implement (noi khi FE co UI "Xem them") ---
+    # --- Phan trang / sap xep phia server: KHONG lam o MVP ---
+    # FE phan trang CLIENT-SIDE (nut "Xem them", 20 dong/lan, state cuc bo):
+    # client giu full list de loc / gom (deriveSchoolRows) / tinh phan bo, nen
+    # server chi tra 20 dong se lam vo het cac phep do. Server-side pagination
+    # chi lam khi mot tap DA LOC thuong xuyen vuot ~vai tram dong — luc do phai
+    # day filter + derive xuong BE truoc. Khung tham so de lam moc:
     # page: int = Query(1, ge=1, description="Trang, 1-based"),
-    # per_page: int = Query(50, ge=1, le=200, alias="perPage"),
+    # per_page: int = Query(20, ge=1, le=200, alias="perPage"),
     # sort: str | None = Query(None, description="vd 'min' | '-min' | 'name'"),
     session: AsyncSession = Depends(get_session),
 ) -> list[SchoolRowOut]:
