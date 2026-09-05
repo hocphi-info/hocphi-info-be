@@ -9,6 +9,8 @@ la "hop dong" — moi field o day PHAI khop ten + kieu ben do.
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
@@ -50,6 +52,15 @@ class ProgramOut(CamelModel):
     language: str
 
 
+class SourceOut(CamelModel):
+    """Khop `Source` domain.ts (F12) — chi gan duoc voi ban ghi CONG BO that
+    (Nam 1); cac nam du phong la so tinh, khong co source_id that."""
+
+    url: str
+    doc_type: str
+    published_date: date | None
+
+
 class TuitionRecordOut(CamelModel):
     """Khop `TuitionRecord` domain.ts. KHONG lo needs_review/review_reason —
     chua co UI hien thi (xem migration 0002 + plan Tuan 2)."""
@@ -59,6 +70,7 @@ class TuitionRecordOut(CamelModel):
     amount_per_year: int
     is_projected: bool
     confidence: str
+    source: SourceOut | None = None
 
 
 class ProgramIncreaseOut(CamelModel):
@@ -96,6 +108,39 @@ class SchoolRowOut(CamelModel):
 
     school: SchoolOut
     stats: SchoolStatsOut
+
+
+class SchoolTrackStatOut(CamelModel):
+    """Khop `SchoolTrackStat` domain.ts — 1 hang / he dao tao trong 1 truong
+    (F7 chart Min-Max noi bo truong). Cung VIEW `school_track_stats` voi
+    SchoolStatsOut nhung loc theo school_id thay vi track — moi truong co toi
+    da 1 dong / he da co chuong trinh."""
+
+    track: str
+    n_programs: int
+    min_amount: int
+    min_major_name: str
+    median_amount: float
+    max_amount: int
+    max_major_name: str
+
+
+class SchoolProgramRowOut(CamelModel):
+    """Khop `SchoolProgramRow` domain.ts — 1 dong trong bang danh sach nganh
+    cua 1 truong (F7). `year1.source` luon None o day — F12 (nguon) chi hien
+    o trang F6, khong lap lai o F7 (xem plan Tuan 4)."""
+
+    program: ProgramOut
+    major: MajorOut
+    year1: TuitionRecordOut
+
+
+class SchoolDetailResponseOut(CamelModel):
+    """Khop response cua `GET /api/schools/{school_slug}` (F7)."""
+
+    school: SchoolOut
+    track_stats: list[SchoolTrackStatOut]
+    programs: list[SchoolProgramRowOut]
 
 
 class YearlyAmountOut(CamelModel):

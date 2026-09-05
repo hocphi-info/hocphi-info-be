@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import health, majors, program_detail, schools, search
+from app import health, majors, program_detail, school_detail, schools, search
 from app.config import settings
 
 logger = logging.getLogger("hocphi")
@@ -21,7 +21,8 @@ app = FastAPI(
     description=(
         "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
         "GET /api/majors, /api/schools, /api/search, "
-        "/api/schools/{school_slug}/majors/{major_slug}."
+        "/api/schools/{school_slug}/majors/{major_slug}, "
+        "/api/schools/{school_slug}."
     ),
 )
 
@@ -50,3 +51,4 @@ app.include_router(majors.router)
 app.include_router(schools.router)
 app.include_router(search.router)
 app.include_router(program_detail.router)
+app.include_router(school_detail.router)

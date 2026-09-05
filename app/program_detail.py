@@ -19,6 +19,7 @@ from app.models import (
     Program,
     ProgramIncrease,
     School,
+    Source,
     TuitionRecord,
 )
 from app.queries import latest_published_tuition_subquery
@@ -29,6 +30,7 @@ from app.schemas.common import (
     ProgramIncreaseOut,
     ProgramOut,
     SchoolOut,
+    SourceOut,
     TuitionRecordOut,
     YearlyAmountOut,
 )
@@ -70,11 +72,14 @@ async def get_program_detail(
     LatestTuition = aliased(TuitionRecord, latest_tr)
 
     stmt = (
-        select(Program, School, Major, LatestTuition, ProgramIncrease)
+        select(Program, School, Major, LatestTuition, ProgramIncrease, Source)
         .join(School, Program.school_id == School.id)
         .join(Major, Program.major_id == Major.id)
         .join(latest_tr, latest_tr.c.program_id == Program.id)
         .outerjoin(ProgramIncrease, ProgramIncrease.program_id == Program.id)
+        # outerjoin: source_id nullable tren tuition_records (F12) — chi Nam 1
+        # (ban ghi that) co the co nguon, cac nam du phong la so tinh.
+        .outerjoin(Source, Source.id == latest_tr.c.source_id)
         .where(
             School.slug == school_slug,
             Major.slug == major_slug,
@@ -88,7 +93,7 @@ async def get_program_detail(
     if not rows:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    _, school, major, _, _ = rows[0]
+    _, school, major, _, _, _ = rows[0]
 
     default_increase_pct = float(
         await session.scalar(
@@ -106,7 +111,7 @@ async def get_program_detail(
     assert post_grad_total is not None  # COALESCE(..., 0) luon ra 1 gia tri
 
     programs: list[ProgramDetailOut] = []
-    for program, _school, _major, year1, increase in rows:
+    for program, _school, _major, year1, increase, source in rows:
         increase_pct = (
             float(increase.annual_increase_pct)
             if increase is not None
@@ -134,6 +139,15 @@ async def get_program_detail(
                     amount_per_year=year1.amount_per_year,
                     is_projected=year1.is_projected,
                     confidence=year1.confidence.value,
+                    source=(
+                        SourceOut(
+                            url=source.url,
+                            doc_type=source.doc_type.value,
+                            published_date=source.published_date,
+                        )
+                        if source is not None
+                        else None
+                    ),
                 ),
                 increase=(
                     ProgramIncreaseOut(

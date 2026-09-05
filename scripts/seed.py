@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 from app.db import SessionLocal, engine
-from app.models import Major, Program, School, TuitionRecord
+from app.models import Major, Program, School, Source, TuitionRecord
 from crawler.schema import TuitionRow
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -92,6 +92,27 @@ async def _get_or_create_program(
     return program.id
 
 
+async def _get_or_create_source(session: AsyncSession, row: TuitionRow) -> str:
+    """SELECT truoc theo `url` (khong co UNIQUE constraint tren cot nay, nhung
+    cung 1 URL = cung 1 tai lieu goc trong thuc te — nhieu dong TuitionRow co
+    the tro chung 1 nguon). INSERT neu chua co. Tra ve `sources.id` (F12)."""
+    existing = await session.scalar(
+        select(Source.id).where(Source.url == row.source_url)
+    )
+    if existing is not None:
+        return existing
+
+    source = Source(
+        url=row.source_url,
+        doc_type=row.source_doc_type,
+        published_date=row.source_published_date,
+        fetched_at=row.fetched_at,
+    )
+    session.add(source)
+    await session.flush()
+    return source.id
+
+
 async def _load_jsonl_file(filename: str) -> tuple[int, int]:
     """Tra ve (so_dong_da_nap, so_dong_bo_qua)."""
     mapping = ROW_TO_MAJOR_SLUG.get(filename, {})
@@ -141,13 +162,20 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
                 session, school_id=school_id, major_id=major_id, row=row
             )
 
+            source_id = await _get_or_create_source(session, row)
+
             existing_tr = await session.scalar(
-                select(TuitionRecord.id).where(
+                select(TuitionRecord).where(
                     TuitionRecord.program_id == program_id,
                     TuitionRecord.academic_year == row.academic_year,
                 )
             )
-            if existing_tr is None:
+            if existing_tr is not None:
+                # Backfill (F12): ban ghi nap tu truoc khi seed.py biet gan
+                # nguon van con source_id NULL — gan lai, khong tao dong moi.
+                if existing_tr.source_id is None:
+                    existing_tr.source_id = source_id
+            else:
                 session.add(
                     TuitionRecord(
                         program_id=program_id,
@@ -161,6 +189,7 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
                         confidence=row.confidence,
                         needs_review=row.needs_review,
                         review_reason=row.review_reason,
+                        source_id=source_id,
                     )
                 )
             loaded += 1

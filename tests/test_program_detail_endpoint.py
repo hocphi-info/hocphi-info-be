@@ -85,6 +85,26 @@ async def test_get_program_detail_standard_years_6_duoc_hoc(db: AsyncSession) ->
     assert program["totalWithLicense"] == program["totalCourse"]
 
 
+async def test_get_program_detail_year1_has_source(db: AsyncSession) -> None:
+    """F12 — seed.py gan source_id tu source_url trong jsonl (Tuan 4)."""
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/schools/tdtu/majors/ke-toan")
+
+    assert resp.status_code == 200
+    program = resp.json()["programs"][0]
+    source = program["year1"]["source"]
+    assert source is not None
+    assert source["url"].startswith("http")
+    assert source["docType"]
+    # Nam du phong (Nam 2..N) la so tinh, khong co source rieng — chi Nam 1
+    # (TuitionRecordOut) moi co field nay; yearlyAmounts khong co "source".
+    assert "source" not in program["yearlyAmounts"][1]
+
+
 async def test_get_program_detail_orders_multiple_tracks(db: AsyncSession) -> None:
     await run_seed()
 
