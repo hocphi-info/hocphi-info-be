@@ -4,16 +4,23 @@ Khong nghiep vu o day. /docs (Swagger) + /openapi.json bat mac dinh — la "hop 
 API cho FE (origin R9).
 """
 
-import logging
-
+import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import coverage, health, majors, program_detail, school_detail, schools
 from app.config import settings
+from app.observability import (
+    RequestContextMiddleware,
+    configure_logging,
+    get_request_id,
+)
 
-logger = logging.getLogger("hocphi")
+# Dung structlog TRUOC khi tao app / bat ky log nao — mot lan / process.
+configure_logging()
+
+logger = structlog.get_logger("hocphi")
 
 app = FastAPI(
     title="hocphi.info API",
@@ -26,7 +33,9 @@ app = FastAPI(
     ),
 )
 
-# CORS — cho phep origin FE goi cheo (origin R10). Danh sach qua bien moi truong.
+# Thu tu: CORS o NGOAI (moi response, ke ca loi, phai co header CORS de browser
+# doc duoc), RequestContext o TRONG. `add_middleware` boc tu ngoai vao nen add
+# CORS truoc, RequestContext sau.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -34,16 +43,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestContextMiddleware)
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Moi loi chua bat -> JSON co cau truc, khong lo stack (origin R11).
 
-    Structured logging day du la Tuan 5 — Tuan 1 chi logger.exception.
+    Kem `requestId` (tu contextvar cua RequestContextMiddleware) o body VA header
+    de mot bao loi tu nguoi dung tra nguoc duoc ve dong log tuong ung.
     """
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    request_id = get_request_id()
+    logger.exception("unhandled_error", method=request.method, path=request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "requestId": request_id},
+        headers={"X-Request-ID": request_id} if request_id else None,
+    )
 
 
 app.include_router(health.router)
