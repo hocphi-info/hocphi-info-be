@@ -94,6 +94,7 @@ async def get_school_detail(
             short_name=school.short_name,
             city_code=school.city_code,
             category=school.category.value,
+            logo_url=school.logo_url,
         ),
         track_stats=track_stats,
         programs=[

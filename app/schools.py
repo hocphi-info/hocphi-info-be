@@ -106,6 +106,7 @@ async def list_schools(
                     short_name=school.short_name,
                     city_code=school.city_code,
                     category=school.category.value,
+                    logo_url=school.logo_url,
                 ),
                 stats=SchoolStatsOut(
                     n_programs=view_row.n_programs,

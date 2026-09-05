@@ -27,6 +27,8 @@ class SchoolOut(CamelModel):
     short_name: str | None
     city_code: str
     category: str
+    # URL logo truong (schools.logo_url) — NULL = chua co; FE hien chu viet tat.
+    logo_url: str | None = None
 
 
 class MajorOut(CamelModel):

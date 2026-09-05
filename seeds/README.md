@@ -4,6 +4,22 @@
 
 50 trường pilot, nhập tay (xem header trong file). `category`/`short_name` là phỏng đoán.
 
+## `003_school_logos.csv` — logo trường (nhập tay)
+
+4 cột `slug,name,short_name,logo_url` (đúng thứ tự cột như bảng `schools`). Khoá
+join là **`slug`**; `name`/`short_name` chỉ để người điền nhìn biết dòng nào,
+script không đọc. `logo_url` để trống = bỏ qua dòng đó. Hợp lệ khi bắt đầu bằng
+`http://`, `https://`, hoặc `/` (đường dẫn trong `hocphi-info-fe/public/`).
+
+```
+uv run python -m scripts.import_school_logos --dry-run   # xem tóm tắt
+uv run python -m scripts.import_school_logos             # UPDATE schools.logo_url
+```
+
+Idempotent (UPDATE theo slug, chạy lại cho cùng kết quả). Slug lạ chỉ cảnh báo,
+không làm script dừng. Cột `schools.logo_url` đã có sẵn từ migration `0001` —
+**không** cần migration mới.
+
 ## `*.jsonl` — output AI-crawler, batch **2026-09**
 
 Học phí thu thập bằng skill `.claude/skills/crawl-truong/` (Claude Code tự

@@ -42,6 +42,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     )
     assert row["program"]["schoolSlug"] == "uit"
     assert row["school"]["shortName"] == "UIT"
+    assert row["school"]["logoUrl"] is None  # chua chay import_school_logos
     assert row["major"]["standardYears"] == 4
     assert row["year1"]["amountPerYear"] == 37_000_000
     assert row["year1"]["isProjected"] is False
