@@ -103,7 +103,11 @@ số lượng bản ghi như serial, không cần round-trip lấy id trước k
 ## III. Công nghệ
 
 FastAPI · PostgreSQL 16 · SQLAlchemy 2.x (async, asyncpg) · Alembic · Pydantic v2 ·
-Redis (cache — từ Tuần 5) · pytest · GitHub Actions CI · `uv` · Docker Compose
+structlog (structured logging — Tuần 5) · pytest · GitHub Actions CI · `uv` · Docker Compose
+
+> **Caching:** roadmap gốc có Redis từ Tuần 5. Hoãn tới khi đo được một hot path thật
+> sự cần — thêm một service + biến môi trường + dependency cho một API read-only chưa có
+> traffic là chi phí không đổi lại gì. Xem `docs/brainstorms/2026-09-06-week5-observability-drop-redis-requirements.md`.
 
 > **Lịch sử:** roadmap gốc (B4) định viết backend bằng **Go**. Đổi sang **Python/FastAPI**
 > (2026-09-04) — đây là dự án học FastAPI, giống `hocphi-info-fe` là dự án học React.
@@ -118,7 +122,8 @@ hiển thị, không phải business logic phức tạp; query nằm thẳng tro
 ```
 app/
   main.py            # FastAPI(), CORS, exception handler, include routers
-  config.py          # pydantic-settings BaseSettings (DATABASE_URL, REDIS_URL, CORS_ORIGINS)
+  config.py          # pydantic-settings BaseSettings (DATABASE_URL, CORS_ORIGINS, LOG_FORMAT)
+  observability.py   # contextvar request_id + configure_logging() + RequestContextMiddleware
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum ↔ ENUM Postgres (school_category, program_track, …)
   models.py          # TẤT CẢ model SQLAlchemy trong 1 file (MVP 11 bảng)
@@ -148,7 +153,7 @@ docs/
   schema.md          # thuyết minh thiết kế + ERD (v0.2) — nguồn cho app/models.py
   brainstorms/       # (git-ignore) requirements docs
   plans/             # (git-ignore) plan từng "tuần"
-compose.yaml         # postgres + redis + migrate (one-shot) + api
+compose.yaml         # postgres + migrate (one-shot) + api
 Dockerfile           # multi-stage uv, non-root
 .github/workflows/ci.yml
 ```
@@ -235,7 +240,7 @@ tra cứu tĩnh khoá bằng `code` / `key` — không ULID, không soft-delete.
 ## VI. Chạy thử
 
 ```bash
-cp .env.example .env               # điền DATABASE_URL, REDIS_URL nếu khác mặc định
+cp .env.example .env               # điền DATABASE_URL nếu khác mặc định
 uv sync                            # cài deps (uv tự tải Python 3.12)
 
 docker compose up -d postgres      # Postgres 16 qua Docker (:5432)
@@ -247,7 +252,7 @@ curl localhost:8000/health
 # Swagger UI: http://localhost:8000/docs
 ```
 
-Hoặc chạy tất cả qua Docker Compose (Postgres + Redis + migrate + API):
+Hoặc chạy tất cả qua Docker Compose (Postgres + migrate + API):
 
 ```bash
 docker compose up        # migrate chạy xong mới tới api; API tại :8000
@@ -291,7 +296,12 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
   - [ ] **Tuần 4** — mở rộng hợp đồng dữ liệu AI-crawler cho các trường/dòng còn lại
         (17 dòng bẩn đã bỏ qua ở Tuần 2 — bundle nhiều ngành, chương trình liên kết
         quốc tế, tên hệ đào tạo giả làm ngành)
-  - [ ] **Tuần 5** — caching (Redis) + rate-limit + middleware request-id + structured logging
+  - [x] **Tuần 5** — middleware request-id (`X-Request-ID` nhận lại / tự sinh, echo header,
+        vào body lỗi 500) + structured logging (structlog, JSON ra stdout, mỗi request một
+        `request_id`). Caching (Redis) và rate-limit **hoãn tới khi cần** — chưa có traffic;
+        1 instance thì rate-limit in-process là đủ khi làm. Xem
+        `docs/plans/2026-09-06-002-feat-week5-observability-drop-redis-plan.md` (kèm phần
+        "Tuần 5 học được gì": ASGI middleware, `contextvars`, structlog).
 - [ ] **B4b** **AI-crawler** — chạy bằng chính Claude Code (ngân sách API = 0), song song
       với B4. Skill `/crawl-truong` → `seeds/*.jsonl` cho 50 trường pilot;
       xem [`docs/ai-crawler.md`](docs/ai-crawler.md)

@@ -106,7 +106,12 @@ remains the public/URL key for `schools` and `majors`.
 ## III. Tech stack
 
 FastAPI · PostgreSQL 16 · SQLAlchemy 2.x (async, asyncpg) · Alembic · Pydantic v2 ·
-Redis (cache — from Week 5) · pytest · GitHub Actions CI · `uv` · Docker Compose
+structlog (structured logging — Week 5) · pytest · GitHub Actions CI · `uv` · Docker Compose
+
+> **Caching:** the original roadmap had Redis from Week 5. Deferred until a measured hot
+> path actually needs it — a service + env var + dependency for a read-only API with no
+> traffic is a fixed cost with no return. See
+> `docs/brainstorms/2026-09-06-week5-observability-drop-redis-requirements.md`.
 
 > **History:** the original roadmap (step B4) planned the backend in **Go**. It switched to
 > **Python/FastAPI** (2026-09-04) — this is a FastAPI learning project, just as
@@ -122,7 +127,8 @@ read / filter / display, not complex business logic; queries sit directly in the
 ```
 app/
   main.py            # FastAPI(), CORS, exception handler, include routers
-  config.py          # pydantic-settings BaseSettings (DATABASE_URL, REDIS_URL, CORS_ORIGINS)
+  config.py          # pydantic-settings BaseSettings (DATABASE_URL, CORS_ORIGINS, LOG_FORMAT)
+  observability.py   # request_id contextvar + configure_logging() + RequestContextMiddleware
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum ↔ Postgres ENUM (school_category, program_track, …)
   models.py          # ALL SQLAlchemy models in one file (MVP: 11 tables)
@@ -146,7 +152,7 @@ docs/
   schema.md          # design rationale + ERD (v0.2) — the source for app/models.py
   brainstorms/       # (git-ignored) requirements docs
   plans/             # (git-ignored) per-"week" plans
-compose.yaml         # postgres + redis + migrate (one-shot) + api
+compose.yaml         # postgres + migrate (one-shot) + api
 Dockerfile           # multi-stage uv, non-root
 .github/workflows/ci.yml
 ```
@@ -234,7 +240,7 @@ lookup tables keyed by `code` / `key` — no ULID, no soft delete. Business tabl
 ## VI. Getting started
 
 ```bash
-cp .env.example .env               # fill in DATABASE_URL, REDIS_URL if not the defaults
+cp .env.example .env               # fill in DATABASE_URL if not the default
 uv sync                            # install deps (uv fetches Python 3.12 itself)
 
 docker compose up -d postgres      # Postgres 16 via Docker (:5432)
@@ -246,7 +252,7 @@ curl localhost:8000/health
 # Swagger UI: http://localhost:8000/docs
 ```
 
-Or run everything via Docker Compose (Postgres + Redis + migrate + API):
+Or run everything via Docker Compose (Postgres + migrate + API):
 
 ```bash
 docker compose up        # migrate finishes before api starts; API on :8000
@@ -276,7 +282,12 @@ columns). `pgcrypto` ships with the `postgres:16-alpine` image.
   - [ ] **Week 4** — data contract with the AI-crawler: `seeds/*.jsonl` format,
         `scripts/seed.py` loads JSONL + Pydantic validation + idempotent upsert on
         `(program, academic_year)`
-  - [ ] **Week 5** — caching (Redis) + rate limiting + request-id middleware + structured logging
+  - [x] **Week 5** — request-id middleware (`X-Request-ID` reused / generated, echoed as a
+        response header, included in the 500 error body) + structured logging (structlog,
+        JSON to stdout, one `request_id` per request). Caching (Redis) and rate limiting are
+        **deferred until needed** — no traffic yet; on a single instance an in-process
+        rate limiter is enough when the time comes. See
+        `docs/plans/2026-09-06-002-feat-week5-observability-drop-redis-plan.md`.
 - [ ] **B4b** **AI-crawler** — driven by Claude Code itself (zero API budget), in parallel
       with B4. A `/crawl-truong` skill produces `seeds/*.jsonl` for the 50 pilot schools;
       see [`docs/ai-crawler.md`](docs/ai-crawler.md)
