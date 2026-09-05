@@ -83,7 +83,12 @@ async def get_school_detail(
                 Program.deleted_at.is_(None),
                 Major.deleted_at.is_(None),
             )
-            .order_by(Major.name, Program.track, Program.language)
+            .order_by(
+                Major.name,
+                Program.campus.nulls_first(),  # co so chinh truoc phan hieu
+                Program.track,
+                Program.language,
+            )
         )
     ).all()
 
@@ -105,6 +110,8 @@ async def get_school_detail(
                     major_slug=major.slug,
                     track=program.track.value,
                     language=program.language,
+                    campus=program.campus,
+                    display_name=program.display_name,
                 ),
                 major=MajorOut(
                     slug=major.slug,

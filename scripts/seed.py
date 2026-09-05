@@ -32,7 +32,7 @@ from crawler.schema import TuitionRow
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scripts.seed_majors_mapping import ROW_TO_MAJOR_SLUG
+from scripts.seed_majors_mapping import ROW_TO_DISPLAY_NAME, ROW_TO_MAJOR_SLUG
 
 SEEDS_DIR = Path(__file__).resolve().parent.parent / "seeds"
 
@@ -62,14 +62,19 @@ async def _get_or_create_program(
     school_id: str,
     major_id: str,
     row: TuitionRow,
+    display_name: str | None = None,
 ) -> str:
     """SELECT truoc theo dung UNIQUE (school,major,track,language,campus) cua
-    `programs` (schema.md §3); INSERT neu chua co. Tra ve `programs.id`."""
+    `programs` (schema.md §3); INSERT neu chua co. Tra ve `programs.id`.
+
+    `display_name` (tuy chon, tu `ROW_TO_DISPLAY_NAME`): set khi tao program moi;
+    khi program da ton tai nhung `display_name` con NULL thi backfill — cung mau
+    voi backfill `source_id` tren `tuition_records` o `_load_jsonl_file`."""
     campus_filter = (
         Program.campus.is_(None) if row.campus is None else Program.campus == row.campus
     )
     existing = await session.scalar(
-        select(Program.id).where(
+        select(Program).where(
             Program.school_id == school_id,
             Program.major_id == major_id,
             Program.track == row.track,
@@ -78,7 +83,9 @@ async def _get_or_create_program(
         )
     )
     if existing is not None:
-        return existing
+        if display_name is not None and existing.display_name is None:
+            existing.display_name = display_name
+        return existing.id
 
     program = Program(
         school_id=school_id,
@@ -86,6 +93,7 @@ async def _get_or_create_program(
         track=row.track,
         language=row.language,
         campus=row.campus,
+        display_name=display_name,
     )
     session.add(program)
     await session.flush()  # gen_ulid() chay o DB — flush de doc lai program.id
@@ -116,6 +124,7 @@ async def _get_or_create_source(session: AsyncSession, row: TuitionRow) -> str:
 async def _load_jsonl_file(filename: str) -> tuple[int, int]:
     """Tra ve (so_dong_da_nap, so_dong_bo_qua)."""
     mapping = ROW_TO_MAJOR_SLUG.get(filename, {})
+    display_mapping = ROW_TO_DISPLAY_NAME.get(filename, {})
     path = SEEDS_DIR / filename
     if not path.exists():
         print(f"  [bo qua] khong thay {path}")
@@ -159,7 +168,11 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
                 continue
 
             program_id = await _get_or_create_program(
-                session, school_id=school_id, major_id=major_id, row=row
+                session,
+                school_id=school_id,
+                major_id=major_id,
+                row=row,
+                display_name=display_mapping.get(line_no),
             )
 
             source_id = await _get_or_create_source(session, row)

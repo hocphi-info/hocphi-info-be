@@ -31,7 +31,8 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
 
     assert resp.status_code == 200
     rows = resp.json()
-    assert len(rows) == 150
+    # 150 + 1: TDTU Du lich co so chinh (them cung dot voi cot campus).
+    assert len(rows) == 151
 
     row = next(
         r
@@ -47,6 +48,27 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     assert row["year1"]["amountPerYear"] == 37_000_000
     assert row["year1"]["isProjected"] is False
     assert row["increase"] is None  # chua seed program_increase o Tuan 2
+    # `campus`/`displayName` co mat trong hop dong ProgramOut (NULL voi da so).
+    assert "campus" in row["program"]
+    assert "displayName" in row["program"]
+    assert row["program"]["campus"] is None
+
+    # TDTU Du lich xuat hien 2 dong: co so chinh (campus=None, 31,26tr) va
+    # Phan hieu Khanh Hoa (campus="Khánh Hòa", 20,5tr) — dung cot campus phan biet.
+    du_lich = [
+        r
+        for r in rows
+        if r["program"]["schoolSlug"] == "tdtu"
+        and r["program"]["majorSlug"] == "du-lich"
+    ]
+    assert {r["program"]["campus"] for r in du_lich} == {None, "Khánh Hòa"}
+    by_campus = {r["program"]["campus"]: r for r in du_lich}
+    assert by_campus[None]["year1"]["amountPerYear"] == 31_260_000
+    assert by_campus["Khánh Hòa"]["year1"]["amountPerYear"] == 20_500_000
+    assert (
+        by_campus["Khánh Hòa"]["program"]["displayName"]
+        == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"
+    )
 
 
 async def test_list_majors_search_filters_by_major_name_without_diacritics(

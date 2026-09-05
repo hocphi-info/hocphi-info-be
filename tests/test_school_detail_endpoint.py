@@ -25,21 +25,35 @@ async def test_get_school_detail_multi_track(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        # tdtu: 5 dai_tra + 4 chat_luong_cao + 6 tien_tien = 15 chuong trinh.
+        # tdtu: 6 dai_tra (gom Du lich o Phan hieu Khanh Hoa) + 4 chat_luong_cao
+        # + 6 tien_tien = 16 chuong trinh trong danh sach programs[].
         resp = await client.get("/api/schools/tdtu")
 
     assert resp.status_code == 200
     body = resp.json()
     assert body["school"]["slug"] == "tdtu"
     assert "logoUrl" in body["school"]  # co mat trong hop dong (NULL truoc import)
-    assert len(body["programs"]) == 15
+    assert len(body["programs"]) == 16
 
+    # trackStats doc VIEW school_track_stats — migration 0004 loai chuong trinh
+    # phan hieu (campus IS NOT NULL): dai_tra = 4 (Ke toan, Thiet ke do hoa,
+    # Duoc hoc, Du lich co so chinh), KHONG tinh Du lich + Bao ho lao dong o
+    # Khanh Hoa du 2 dong do van nam trong programs[].
     n_programs_by_track = {t["track"]: t["nPrograms"] for t in body["trackStats"]}
     assert n_programs_by_track == {
-        "dai_tra": 5,
+        "dai_tra": 4,
         "chat_luong_cao": 4,
         "tien_tien": 6,
     }
+    dai_tra_stat = next(t for t in body["trackStats"] if t["track"] == "dai_tra")
+    assert dai_tra_stat["minAmount"] == 31_260_000  # khong con bi keo xuong 20,5tr
+
+    # Chuong trinh phan hieu van xuat hien trong programs[], co `campus` set.
+    du_lich_rows = [
+        p for p in body["programs"] if p["program"]["majorSlug"] == "du-lich"
+    ]
+    assert {p["program"]["campus"] for p in du_lich_rows} == {None, "Khánh Hòa"}
+
     # F12 khong lap lai o F7 — source luon None tren tung dong chuong trinh.
     assert all(p["year1"]["source"] is None for p in body["programs"])
 

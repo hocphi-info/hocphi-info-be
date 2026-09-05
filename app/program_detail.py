@@ -87,7 +87,9 @@ async def get_program_detail(
             School.deleted_at.is_(None),
             Major.deleted_at.is_(None),
         )
-        .order_by(Program.track, Program.language)
+        # campus NULLS FIRST: co so chinh luon dung truoc phan hieu trong danh
+        # sach cac he dao tao cua cap (school, major).
+        .order_by(Program.track, Program.campus.nulls_first(), Program.language)
     )
     rows = (await session.execute(stmt)).all()
     if not rows:
@@ -132,6 +134,8 @@ async def get_program_detail(
                     major_slug=major.slug,
                     track=program.track.value,
                     language=program.language,
+                    campus=program.campus,
+                    display_name=program.display_name,
                 ),
                 year1=TuitionRecordOut(
                     program_id=year1.program_id,

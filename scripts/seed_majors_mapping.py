@@ -13,6 +13,11 @@ dong voi docs/plans/2026-09-05-001-...-plan.md § Phu luc.
 - UIT (2/4): chi nap dong khong dung UNIQUE constraint cua `programs` (owner
   chot khong mo schema them cot phan biet loai hinh tuyen sinh).
 
+TDTU dong 28 (them 2026-09-06): Du lich (Chuyen nganh Huong dan du lich) o CO SO
+CHINH TP.HCM, Nhom 1 = 31,26 tr/nam — bu vao cho dong 4 (cung nganh nhung o Phan
+hieu Khanh Hoa, 20,5 tr). 2 dong = 2 `programs` khac campus. Ca 2 gan
+`display_name` qua ROW_TO_DISPLAY_NAME ben duoi.
+
 Bo qua (khong co trong dict nao):
 - TDTU dong 16-27 (12 dong): chuong trinh lien ket quoc te/song bang — gia chi
   la giai doan 1, chua gom giai doan hoc o nuoc ngoai.
@@ -44,6 +49,7 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str]] = {
         14: "kinh-doanh-quoc-te",  # nhom C — bo qua Marketing, QTKD (NH-KS)
         15: "ky-thuat-dieu-khien-tu-dong-hoa",  # nhom C — bo qua 4 nganh con lai
         # 16-27: chuong trinh lien ket quoc te/song bang — bo qua (xem docstring).
+        28: "du-lich",  # co so chinh TP.HCM, Nhom 1 — doi voi dong 4 (Khanh Hoa)
     },
     "neu.jsonl": {
         # 1,2,3: ten he dao tao (CLC/POHE/Tien tien), khong phai nganh that — bo qua.
@@ -208,5 +214,17 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str]] = {
         25: "cong-nghe-ban-dan",
         26: "thiet-ke-vi-mach",
         27: "cong-nghe-giao-duc",
+    },
+}
+
+# {ten_file_jsonl: {so_dong: display_name}} — ghi de `programs.display_name` khi
+# ten trong tai lieu goc chi tiet hon ten `majors` dung chung (name drift, xem
+# docs/schema.md §"majors dung chung"). Chi dat khi that su can — mac dinh
+# `display_name` = NULL va UI hien `majors.name`. `scripts/seed.py` set khi tao
+# program moi, va backfill khi program da ton tai nhung `display_name` con NULL.
+ROW_TO_DISPLAY_NAME: dict[str, dict[int, str]] = {
+    "tdtu.jsonl": {
+        4: "Du lịch (Chuyên ngành Hướng dẫn du lịch)",  # Phan hieu Khanh Hoa
+        28: "Du lịch (Chuyên ngành Hướng dẫn du lịch)",  # co so chinh TP.HCM
     },
 }

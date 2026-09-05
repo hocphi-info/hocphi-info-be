@@ -61,8 +61,10 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     assert body["totals"] == {
         "schoolsTotal": 50,
         "schoolsWithData": 10,
-        "programsWithTuition": 150,
-        "tuitionRecords": 150,
+        # 150 + 1: TDTU Du lich co so chinh (dong 28 tdtu.jsonl). Nguon tai
+        # dung URL TDTU da co -> sourcesCited khong doi.
+        "programsWithTuition": 151,
+        "tuitionRecords": 151,
         "sourcesCited": 11,
     }
     # snapshotDate = max(tuition_records.updated_at)::date -> chuoi "YYYY-MM-DD".
@@ -81,9 +83,10 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
 
     by_group = {r["groupCode"]: r["programsWithTuition"] for r in body["byMajorGroup"]}
     assert by_group.keys() == MAJOR_GROUP_CODES
-    assert by_group["KINH_TE"] == 52
+    # +1 KINH_TE: TDTU Du lich co so chinh (major `du-lich` group_code=KINH_TE).
+    assert by_group["KINH_TE"] == 53
     assert by_group["KY_THUAT"] == 52
-    assert sum(by_group.values()) == 150
+    assert sum(by_group.values()) == 151
 
 
 async def test_coverage_seeded_schools_rows_shape(db: AsyncSession) -> None:
