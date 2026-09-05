@@ -278,8 +278,12 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
         `docs/plans/2026-09-05-001-...-plan.md`. Path endpoint **tiếng Anh** (đã chốt,
         khác draft để ngỏ ban đầu); `tuition_records` +`needs_review`/`review_reason`
         (migration `0002`).
-  - [ ] **Tuần 3** — endpoint chi tiết ngành–trường (S3) + giá trị dẫn xuất (`schema.md` §5:
-        `total_course`, `total_with_license`)
+  - [x] **Tuần 3** — endpoint chi tiết ngành–trường `GET /api/schools/{school}/majors/{major}`
+        (S3, gom mọi hệ đào tạo) + giá trị dẫn xuất `schema.md` §5: `total_course`,
+        `total_with_license` (tính lũy tiến theo `app_settings.default_increase_pct`,
+        chưa có `program_increase` thật). Không cần migration mới. Bỏ `total_course_range`
+        khỏi tuần này (chưa có dữ liệu lộ trình tăng thật để khoảng có ý nghĩa) — xem
+        `docs/brainstorms/2026-09-05-week3-program-detail-endpoint-requirements.md`.
   - [ ] **Tuần 4** — mở rộng hợp đồng dữ liệu AI-crawler cho các trường/dòng còn lại
         (17 dòng bẩn đã bỏ qua ở Tuần 2 — bundle nhiều ngành, chương trình liên kết
         quốc tế, tên hệ đào tạo giả làm ngành)
