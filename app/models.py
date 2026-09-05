@@ -306,6 +306,12 @@ class TuitionRecord(Base, TimestampSoftDelete):
     verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Trang thai duyet cua AI-crawler (migration 0002) — giu nguyen tu
+    # seeds/*.jsonl, KHONG lo ra response API o Tuan 2 (chi tra soat truc tiep DB).
+    needs_review: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    review_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     program: Mapped[Program] = relationship(back_populates="tuition_records")
 
