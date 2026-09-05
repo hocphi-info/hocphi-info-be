@@ -123,15 +123,21 @@ app/
   enums.py           # Python StrEnum ↔ ENUM Postgres (school_category, program_track, …)
   models.py          # TẤT CẢ model SQLAlchemy trong 1 file (MVP 11 bảng)
   health.py          # GET /health (+ /docs Swagger tự sinh)
-  (Tuần 2+) schools.py, majors.py, search.py, …  # mỗi file = router + Pydantic models
+  majors.py          # GET /api/majors (S1) — join programs+schools+majors+tuition+increase
+  schools.py         # GET /api/schools (S2) — đọc VIEW school_track_stats + increaseSummary
+  search.py          # GET /api/search (F13) — không dấu, min 2 ký tự, max 8 kết quả
+  schemas/common.py  # Pydantic response model dùng chung (CamelModel, khớp FE domain.ts)
 alembic/
   env.py             # template async — trỏ app.db:Base.metadata
   versions/
     0001_initial_schema.py   # viết tay: gen_ulid(), ENUM, bảng, VIEW, seed bảng tra cứu
+    0002_tuition_review_columns.py  # tuition_records +needs_review/+review_reason
 scripts/
-  seed.py            # nạp seeds/*.sql|jsonl qua AsyncSession (idempotent)
+  seed.py                   # nạp seeds/*.sql + *.jsonl (đã duyệt) qua AsyncSession (idempotent)
+  seed_majors_mapping.py    # quyết định tay: dòng nào trong *.jsonl được nạp, vào ngành nào
 seeds/
   001_schools.sql    # 50 trường pilot (category/short_name còn phỏng đoán)
+  002_majors.sql     # 16 ngành tối thiểu cho 25 dòng học phí thật đã duyệt (Tuần 2)
   # (Tuần 4+) *.jsonl — output đã duyệt của repo AI-crawler
 tests/
   conftest.py        # fixture _schema (alembic upgrade), engine, db (SAVEPOINT rollback)
@@ -263,14 +269,20 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
 
 - [x] **B1** Chốt phạm vi MVP
 - [x] **B2** Mockup UI (`*.dc.html`)
-- [x] **B3** Thiết kế schema dữ liệu — [`docs/schema.md`](docs/schema.md) v0.2
+- [x] **B3** Thiết kế schema dữ liệu — [`docs/schema.md`](docs/schema.md) v0.3
 - [ ] **B4** API backend (**FastAPI** — đang làm)
-  - [ ] **Tuần 1** — nền tảng: schema + Alembic + seed + Docker Compose + `GET /health` + `/docs`
-  - [ ] **Tuần 2** — endpoint đọc S1 (theo ngành) / S2 (theo trường) / F13 (tìm nhanh) + Pydantic response models
-  - [ ] **Tuần 3** — endpoint chi tiết ngành–trường (S3) + giá trị dẫn xuất (`schema.md` §5)
-  - [ ] **Tuần 4** — hợp đồng dữ liệu với AI-crawler: định dạng `seeds/*.jsonl`,
-        `scripts/seed.py` nạp JSONL + validate bằng Pydantic + upsert idempotent theo
-        `(program, academic_year)`
+  - [x] **Tuần 1** — nền tảng: schema + Alembic + seed + Docker Compose + `GET /health` + `/docs`
+  - [x] **Tuần 2** — nạp học phí thật (JSONL, 25/43 dòng đã duyệt) + endpoint đọc
+        `GET /api/majors` (S1) / `GET /api/schools` (S2) / `GET /api/search` (F13) +
+        Pydantic response models. Đảo thứ tự với Tuần 4 gốc — xem
+        `docs/plans/2026-09-05-001-...-plan.md`. Path endpoint **tiếng Anh** (đã chốt,
+        khác draft để ngỏ ban đầu); `tuition_records` +`needs_review`/`review_reason`
+        (migration `0002`).
+  - [ ] **Tuần 3** — endpoint chi tiết ngành–trường (S3) + giá trị dẫn xuất (`schema.md` §5:
+        `total_course`, `total_with_license`)
+  - [ ] **Tuần 4** — mở rộng hợp đồng dữ liệu AI-crawler cho các trường/dòng còn lại
+        (17 dòng bẩn đã bỏ qua ở Tuần 2 — bundle nhiều ngành, chương trình liên kết
+        quốc tế, tên hệ đào tạo giả làm ngành)
   - [ ] **Tuần 5** — caching (Redis) + rate-limit + middleware request-id + structured logging
 - [ ] **B4b** **AI-crawler** — chạy bằng chính Claude Code (ngân sách API = 0), song song
       với B4. Skill `/crawl-truong` → `seeds/*.jsonl` cho 50 trường pilot;
