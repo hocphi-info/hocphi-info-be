@@ -1,4 +1,4 @@
-"""Pydantic response model dung chung o nhieu router (majors/schools/search).
+"""Pydantic response model dung chung o nhieu router (majors/schools/detail).
 
 Tach khoi `app/models.py` (ORM) — day la lop DTO rieng, "lap" tay tu ket qua
 query (join nhieu bang) chu khong tra thang ORM object. `CamelModel` tu sinh
@@ -172,12 +172,3 @@ class ProgramDetailResponseOut(CamelModel):
     school: SchoolOut
     major: MajorOut
     programs: list[ProgramDetailOut]
-
-
-class SearchHitOut(CamelModel):
-    """Khop `SearchHit` domain.ts — 1 goi y cua F13 (`GET /api/search?q=`)."""
-
-    kind: str
-    slug: str
-    name: str
-    short_name: str | None = None

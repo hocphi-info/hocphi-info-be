@@ -10,17 +10,17 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import health, majors, program_detail, school_detail, schools, search
+from app import health, majors, program_detail, school_detail, schools
 from app.config import settings
 
 logger = logging.getLogger("hocphi")
 
 app = FastAPI(
     title="hocphi.info API",
-    version="0.3.0",
+    version="0.4.0",
     description=(
         "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
-        "GET /api/majors, /api/schools, /api/search, "
+        "GET /api/majors (?search=), /api/schools (?search=), "
         "/api/schools/{school_slug}/majors/{major_slug}, "
         "/api/schools/{school_slug}."
     ),
@@ -49,6 +49,5 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 app.include_router(health.router)
 app.include_router(majors.router)
 app.include_router(schools.router)
-app.include_router(search.router)
 app.include_router(program_detail.router)
 app.include_router(school_detail.router)
