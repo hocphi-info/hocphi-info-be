@@ -171,6 +171,7 @@ async def get_program_detail(
             short_name=school.short_name,
             city_code=school.city_code,
             category=school.category.value,
+            logo_url=school.logo_url,
         ),
         major=MajorOut(
             slug=major.slug,

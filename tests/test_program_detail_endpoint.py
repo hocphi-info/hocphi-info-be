@@ -42,6 +42,7 @@ async def test_get_program_detail_standard_years_4(db: AsyncSession) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["school"]["slug"] == "tdtu"
+    assert "logoUrl" in body["school"]  # co mat trong hop dong (NULL truoc import)
     assert body["major"]["slug"] == "ke-toan"
     assert body["major"]["standardYears"] == 4
 

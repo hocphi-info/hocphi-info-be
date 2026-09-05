@@ -31,6 +31,7 @@ async def test_get_school_detail_multi_track(db: AsyncSession) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["school"]["slug"] == "tdtu"
+    assert "logoUrl" in body["school"]  # co mat trong hop dong (NULL truoc import)
     assert len(body["programs"]) == 15
 
     n_programs_by_track = {t["track"]: t["nPrograms"] for t in body["trackStats"]}
