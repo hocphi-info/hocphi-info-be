@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.selectable import Subquery
 
 from app.db import get_session
 from app.models import Major, Program, ProgramIncrease, School, TuitionRecord
+from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
     MajorOut,
     MajorRowOut,
@@ -24,29 +24,11 @@ from app.schemas.common import (
 router = APIRouter(tags=["majors"])
 
 
-def _latest_published_tuition_subquery() -> Subquery:
-    """1 dong / program: ban ghi CONG BO (is_projected=false) moi nhat theo
-    nam hoc — cung logic voi CTE `latest` trong VIEW school_track_stats
-    (alembic/versions/0001, schema.md §4), viet lai bang ORM de join truc tiep
-    voi Program/School/Major thay vi doc qua VIEW (VIEW gom theo truong, khong
-    giu tung program rieng le nhu S1 can)."""
-    return (
-        select(TuitionRecord)
-        .where(
-            TuitionRecord.deleted_at.is_(None),
-            TuitionRecord.is_projected.is_(False),
-        )
-        .distinct(TuitionRecord.program_id)
-        .order_by(TuitionRecord.program_id, TuitionRecord.academic_year_start.desc())
-        .subquery()
-    )
-
-
 @router.get("/api/majors", response_model=list[MajorRowOut])
 async def list_majors(
     session: AsyncSession = Depends(get_session),
 ) -> list[MajorRowOut]:
-    latest_tr = _latest_published_tuition_subquery()
+    latest_tr = latest_published_tuition_subquery()
     LatestTuition = aliased(TuitionRecord, latest_tr)
 
     stmt = (
