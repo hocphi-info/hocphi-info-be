@@ -119,3 +119,46 @@ async def test_get_program_detail_orders_multiple_tracks(db: AsyncSession) -> No
     tracks = [p["program"]["track"] for p in resp.json()["programs"]]
     assert len(tracks) == 2
     assert set(tracks) == {"tien_tien", "chat_luong_cao"}
+
+
+async def test_get_program_detail_campus_split(db: AsyncSession) -> None:
+    """TDTU Du lich: 2 program cung (school, major, track, language) khac `campus`
+    — co so chinh (campus=None, 31,26tr) va Phan hieu Khanh Hoa ("Khánh Hòa",
+    20,5tr). Ca 2 xuat hien rieng trong `programs`, co so chinh dung TRUOC
+    (campus NULLS FIRST), moi program tu tinh yearlyAmounts doc lap."""
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/api/schools/tdtu/majors/du-lich")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["major"]["slug"] == "du-lich"
+
+    programs = body["programs"]
+    assert len(programs) == 2
+    # campus NULLS FIRST — co so chinh truoc.
+    assert programs[0]["program"]["campus"] is None
+    assert programs[1]["program"]["campus"] == "Khánh Hòa"
+
+    main, khanh_hoa = programs
+    assert main["year1"]["amountPerYear"] == 31_260_000
+    assert khanh_hoa["year1"]["amountPerYear"] == 20_500_000
+
+    # displayName giu chuyen nganh day du cho ca 2 (dong 4 duoc backfill).
+    assert (
+        main["program"]["displayName"]
+        == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"
+    )
+    assert (
+        khanh_hoa["program"]["displayName"]
+        == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"
+    )
+
+    # yearlyAmounts tinh doc lap tu year1 cua tung program (standard_years=4).
+    assert main["yearlyAmounts"][0]["amountPerYear"] == 31_260_000
+    assert len(main["yearlyAmounts"]) == 4
+    assert len(khanh_hoa["yearlyAmounts"]) == 4
+    assert main["totalCourse"] != khanh_hoa["totalCourse"]

@@ -74,6 +74,8 @@ async def list_majors(
                 major_slug=major.slug,
                 track=program.track.value,
                 language=program.language,
+                campus=program.campus,
+                display_name=program.display_name,
             ),
             school=SchoolOut(
                 slug=school.slug,

@@ -262,6 +262,14 @@ học phí **công bố mới nhất** (`is_projected = false`, năm học lớn
 chương trình. Không trộn hệ. Min/Max kèm `min_major_id` / `max_major_id` để UI
 hiển thị tên ngành tương ứng (yêu cầu S2).
 
+Từ migration `0004`: VIEW **chỉ tính chương trình cơ sở chính** (`programs.campus
+IS NULL`). Học phí phân hiệu vùng thấp hơn hẳn (vd TDTU Phân hiệu Khánh Hòa: Du
+lịch 20,5 tr vs 31,26 tr ở cơ sở chính) sẽ kéo lệch con số headline — mở rộng tự
+nhiên của "không trộn hệ" sang "không trộn cơ sở". Chương trình phân hiệu vẫn xuất
+hiện đầy đủ trong danh sách `programs[]` của F7 (query riêng, kèm nhãn cơ sở ở UI).
+Hạn chế: trường **chỉ** có chương trình một hệ ở phân hiệu sẽ không xuất hiện ở S2
+/ `trackStats` của hệ đó (hiện chưa có case).
+
 MVP để **VIEW thường** (luôn tươi, không cần vận hành). Khi dữ liệu lớn → chuyển
 `MATERIALIZED VIEW` + `REFRESH` sau mỗi đợt nhập liệu.
 
@@ -297,8 +305,11 @@ chưa công bố thì lấy năm gần nhất rồi dự phóng tới `current_i
   ở v2.
 - **`majors` dùng chung vs tên ngành lệch giữa các trường**: giải quyết tạm bằng
   `programs.display_name`. Nếu lệch nhiều → cân nhắc `school_major_aliases`.
-- **Nhiều cơ sở, học phí khác nhau**: đã hỗ trợ qua `programs.campus`; UI S4 gom
-  theo tab cơ sở.
+- **Nhiều cơ sở, học phí khác nhau**: đã hỗ trợ qua `programs.campus`. `ProgramOut`
+  expose `campus` + `displayName`; S3 sắp `campus` NULLS FIRST (cơ sở chính trước);
+  F7 hiện cột "Cơ sở" khi có ≥1 chương trình phân hiệu; VIEW `school_track_stats`
+  loại phân hiệu khỏi khoảng headline (migration `0004`, xem §4). UI S4 (so sánh)
+  gom theo tab cơ sở — v2.
 - **`category` của 50 trường trong seed là phỏng đoán** — chốt lại ở bước 3.
 - **`majors.standard_years` chưa có seed** — migration bước 4 tạo cột (NOT NULL
   DEFAULT 4). Khi viết seed `majors`: nhóm `Y_DUOC` = 6 (Y khoa, Răng–Hàm–Mặt,

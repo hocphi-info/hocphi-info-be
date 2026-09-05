@@ -12,7 +12,9 @@ from scripts.seed_majors_mapping import ROW_TO_MAJOR_SLUG
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-EXPECTED_LOADED_ROWS = 150
+# 150 + 1: TDTU Du lich co so chinh (dong 28 tdtu.jsonl, campus=NULL) — doi
+# voi dong 4 (Phan hieu Khanh Hoa). Xem scripts/seed_majors_mapping.py.
+EXPECTED_LOADED_ROWS = 151
 
 
 async def test_seed_loads_only_approved_rows(db: AsyncSession) -> None:

@@ -52,6 +52,11 @@ class ProgramOut(CamelModel):
     major_slug: str
     track: str
     language: str
+    # NULL = co so chinh. Chuoi tu do (vd "Khánh Hòa") khi la phan hieu/co so khac.
+    campus: str | None = None
+    # Ten hien thi rieng cua chuong trinh khi lech ten `majors` dung chung
+    # (vd chuyen nganh) — NULL thi UI dung `majors.name`. Xem docs/schema.md.
+    display_name: str | None = None
 
 
 class SourceOut(CamelModel):
