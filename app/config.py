@@ -24,8 +24,6 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+asyncpg://hocphi:hocphi@localhost:5432/hocphi",
     )
-    # Redis — chua dung toi Tuan 5, chi giu bien de compose day du.
-    redis_url: str = Field(default="redis://localhost:6379/0")
     # Danh sach origin FE duoc phep goi cheo, dang CSV tho ("http://a,http://b").
     # Giu la `str` (khong phai list[str]): pydantic-settings tu thu json.loads()
     # gia tri env cho field kieu list/complex TRUOC ca validator -> vo hieu voi
@@ -36,6 +34,12 @@ class Settings(BaseSettings):
     )
     # In moi cau SQL ra stdout — bat khi debug, tat o CI/prod.
     sql_echo: bool = Field(default=False)
+
+    # Structured logging (Tuan 5). `json` = 1 dong JSON / ban ghi (prod, platform
+    # gom stdout); `console` = mau + can le, de doc khi dev.
+    log_format: str = Field(default="json", alias="LOG_FORMAT")
+    # Nguong log toi thieu — ten level cua stdlib logging (debug/info/warning/...).
+    log_level: str = Field(default="info", alias="LOG_LEVEL")
 
     @computed_field  # type: ignore[prop-decorator]
     @property

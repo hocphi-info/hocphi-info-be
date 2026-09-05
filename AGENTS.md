@@ -31,7 +31,7 @@ module. Two design decisions that shape everything else:
 ```
 app/
   main.py            # FastAPI(), CORS, exception handlers, include routers
-  config.py          # pydantic-settings BaseSettings (DATABASE_URL, REDIS_URL, CORS_ORIGINS)
+  config.py          # pydantic-settings BaseSettings (DATABASE_URL, CORS_ORIGINS, LOG_FORMAT)
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum <-> Postgres ENUM (school_category, program_track, …)
   models.py          # every SQLAlchemy model, one file (11 tables at MVP size)
@@ -44,7 +44,7 @@ seeds/                 # hand-curated *.sql (no admin API — see below)
 tests/                 # conftest.py: alembic upgrade against an isolated test DB,
                         # SAVEPOINT-wrapped session per test (rolls back, never touches dev data)
 docs/schema.md          # schema rationale + ERD — the source of truth `app/models.py` follows
-compose.yaml            # postgres + redis + migrate (one-shot) + api
+compose.yaml            # postgres + migrate (one-shot) + api
 ```
 
 Work is split into **"tuần" (week) plans** with a "Tuần N học được gì" (what I learned)
