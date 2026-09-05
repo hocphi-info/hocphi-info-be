@@ -30,8 +30,9 @@ async def list_majors(
     search: str | None = Query(
         None,
         description=(
-            "Loc theo TEN NGANH, bo dau, khong phan biet hoa/thuong. "
-            f"Toi thieu {MIN_QUERY_LEN} ky tu sau khi chuan hoa; ngan hon -> tra []."
+            "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), "
+            "bo dau, khong phan biet hoa/thuong. Toi thieu "
+            f"{MIN_QUERY_LEN} ky tu sau khi chuan hoa; ngan hon -> tra []."
         ),
     ),
     # --- Phan trang / sap xep: CHUA implement (noi khi FE co UI "Xem them") ---
@@ -106,14 +107,21 @@ async def list_majors(
         for program, school, major, year1, increase in rows
     ]
 
-    # `search`: loc theo ten nganh (chi thuc the chinh cua endpoint nay —
-    # QuickSearch goi rieng /api/schools?search= cho goi y truong). Loc trong
-    # Python bang normalize() y het /api/search cu — Postgres bo dau can
+    # `search`: khop ten truong / ten viet tat / ten nganh (bat ky). Query da
+    # join San School + Major nen chi can gop 3 truong lai roi so khop. Loc
+    # trong Python bang normalize() y het /api/search cu — Postgres bo dau can
     # extension `unaccent`, chua muon them ha tang o MVP.
     if search is not None:
         q = normalize(search)
         if len(q) < MIN_QUERY_LEN:
             return []
-        result = [r for r in result if q in normalize(r.major.name)]
+        result = [
+            r
+            for r in result
+            if q
+            in normalize(
+                f"{r.school.name} {r.school.short_name or ''} {r.major.name}"
+            )
+        ]
 
     return result

@@ -62,10 +62,30 @@ async def test_list_majors_search_filters_by_major_name_without_diacritics(
     assert resp.status_code == 200
     rows = resp.json()
     assert rows, "phai co it nhat 1 dong khop 'ke toan'"
-    # Moi dong tra ve deu la nganh Ke toan (loc theo ten nganh, khong dau).
+    # Moi dong tra ve deu la nganh Ke toan (khop qua ten nganh, khong dau).
     assert {r["major"]["slug"] for r in rows} == {"ke-toan"}
     # /api/majors tra 1 dong / program -> nhieu truong day Ke toan -> nhieu dong.
     assert len(rows) >= 1
+
+
+async def test_list_majors_search_also_matches_school_name(
+    db: AsyncSession,
+) -> None:
+    await run_seed()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get(
+            "/api/majors", params={"search": "ton duc thang"}
+        )
+
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert rows, "search theo ten truong phai ra cac chuong trinh cua truong do"
+    # Khop qua ten truong -> moi dong deu la cua Ton Duc Thang, nhieu nganh.
+    assert {r["school"]["slug"] for r in rows} == {"tdtu"}
+    assert len({r["major"]["slug"] for r in rows}) > 1
 
 
 async def test_list_majors_search_below_min_length_returns_empty(
