@@ -10,15 +10,18 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import health
+from app import health, majors, schools, search
 from app.config import settings
 
 logger = logging.getLogger("hocphi")
 
 app = FastAPI(
     title="hocphi.info API",
-    version="0.1.0",
-    description="Tra cuu & so sanh hoc phi dai hoc Viet Nam. Tuan 1: chi co /health.",
+    version="0.2.0",
+    description=(
+        "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
+        "Tuan 2: GET /api/majors, /api/schools, /api/search."
+    ),
 )
 
 # CORS — cho phep origin FE goi cheo (origin R10). Danh sach qua bien moi truong.
@@ -42,3 +45,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 app.include_router(health.router)
+app.include_router(majors.router)
+app.include_router(schools.router)
+app.include_router(search.router)
