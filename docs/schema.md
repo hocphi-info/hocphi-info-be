@@ -1,9 +1,15 @@
 # Thiết kế schema dữ liệu — hocphi.info (Bước 3)
 
-> Phiên bản 0.2 — MVP pilot 50 trường TP.HCM & Hà Nội.
+> Phiên bản 0.3 — MVP pilot 50 trường TP.HCM & Hà Nội.
 > Nguồn yêu cầu: [`yeu-cau-san-pham.md`](../../hocphi-info/yeu-cau-san-pham.md) §2, §8, §9 và
 > [`y-tuong-hoc-phi-dai-hoc.md`](../../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §6.
-> DDL: chưa có — migration sẽ viết lại sau khi chốt thiết kế này (xem README).
+> DDL: `alembic/versions/0001_initial_schema.py` (khởi tạo) +
+> `0002_tuition_review_columns.py` (`tuition_records` +`needs_review`/`review_reason`).
+>
+> **0.3 (2026-09-05):** thêm `needs_review boolean` + `review_reason text` vào
+> `tuition_records` — giữ trạng thái duyệt của AI-crawler qua tầng DB thay vì
+> chỉ nằm trong `seeds/*.jsonl` (xem `docs/plans/2026-09-05-001-...-plan.md`).
+> Chưa lộ ra API (chưa có UI hiển thị "dòng chưa chắc").
 
 ## 1. Nguyên tắc thiết kế
 
@@ -95,6 +101,8 @@ erDiagram
     text     source_id FK
     text     verified_by
     timestamptz verified_at
+    boolean  needs_review "0.3 — mặc định false, true nếu AI-crawler đánh dấu chưa chắc"
+    text     review_reason "0.3 — nullable, câu giải thích của crawler"
     timestamptz created_at
     timestamptz updated_at
     timestamptz deleted_at
@@ -209,6 +217,10 @@ năm liên tiếp; `academic_year_start` là cột **generated** để lọc / s
   hiển thị dòng "Giả định {x} tín chỉ/năm".
 - `confidence = 'verified'` **bắt buộc** `source_id` + `verified_at` (CHECK).
 - `source_id` nullable + `ON DELETE SET NULL` → trạng thái "chưa có nguồn" (§9).
+- `needs_review`/`review_reason` (0.3, migration `0002`) — trạng thái duyệt của
+  AI-crawler (vd "đây là MAX của khoảng, chỉ áp dụng đúng ngành X trong nhóm
+  Y"), giữ nguyên qua tầng DB thay vì chỉ nằm trong `seeds/*.jsonl` gốc. Chưa
+  lộ ra API — chưa có UI hiển thị "dòng chưa chắc", chỉ tra soát trực tiếp DB.
 
 ### `program_increase` — % tăng học phí/năm (1–1 với `programs`)
 `increase_source = 'published_roadmap'` bắt buộc `source_id` (CHECK);
