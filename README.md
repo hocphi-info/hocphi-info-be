@@ -284,6 +284,10 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
         chưa có `program_increase` thật). Không cần migration mới. Bỏ `total_course_range`
         khỏi tuần này (chưa có dữ liệu lộ trình tăng thật để khoảng có ý nghĩa) — xem
         `docs/brainstorms/2026-09-05-week3-program-detail-endpoint-requirements.md`.
+  - [x] **Phụ** — `GET /api/coverage` (độ phủ dữ liệu cho trang `/du-lieu` của FE):
+        tổng hợp + theo thành phố / loại trường / nhóm ngành + bảng từng trường, một
+        CTE `pub` cho mọi phép đếm (các số cộng khớp nhau). Không cần migration mới —
+        xem `../hocphi-info/docs/plans/2026-09-06-001-feat-coverage-endpoint-du-lieu-page-plan.md`.
   - [ ] **Tuần 4** — mở rộng hợp đồng dữ liệu AI-crawler cho các trường/dòng còn lại
         (17 dòng bẩn đã bỏ qua ở Tuần 2 — bundle nhiều ngành, chương trình liên kết
         quốc tế, tên hệ đào tạo giả làm ngành)
