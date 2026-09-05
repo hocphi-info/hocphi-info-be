@@ -98,6 +98,35 @@ class SchoolRowOut(CamelModel):
     stats: SchoolStatsOut
 
 
+class YearlyAmountOut(CamelModel):
+    """1 nam trong bang hoc phi tinh luy tien cua 1 program (S3) — so **tinh**,
+    khong phai ban ghi DB (khac TuitionRecordOut: khong co program_id/confidence)."""
+
+    academic_year: str
+    amount_per_year: int
+    is_projected: bool
+
+
+class ProgramDetailOut(CamelModel):
+    """1 he dao tao (track/language/campus) trong trang chi tiet nganh-truong (S3)."""
+
+    program: ProgramOut
+    year1: TuitionRecordOut
+    increase: ProgramIncreaseOut | None
+    yearly_amounts: list[YearlyAmountOut]
+    total_course: int
+    total_with_license: int
+
+
+class ProgramDetailResponseOut(CamelModel):
+    """Khop response cua `GET /api/schools/{school_slug}/majors/{major_slug}` (S3) —
+    gom TAT CA programs cung (school, major), dung schema.md §3."""
+
+    school: SchoolOut
+    major: MajorOut
+    programs: list[ProgramDetailOut]
+
+
 class SearchHitOut(CamelModel):
     """Khop `SearchHit` domain.ts — 1 goi y cua F13 (`GET /api/search?q=`)."""
 

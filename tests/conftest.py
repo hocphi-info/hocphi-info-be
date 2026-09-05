@@ -37,10 +37,26 @@ import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import (  # noqa: E402
     AsyncEngine,
     AsyncSession,
     create_async_engine,
+)
+
+# Bang do `scripts/seed.py` nap (khac cities/major_groups/app_settings — nap san
+# trong migration 0001, khong can don). `scripts.seed.main()`/HTTP request qua
+# `app/db.py:get_session()` deu commit that vao DB, KHONG di qua SAVEPOINT cua
+# fixture `db` ben duoi — neu khong don truoc moi test, du lieu 1 test seed se
+# ro ri sang test sau (chi "may man" khong lo neu thu tu file tinh co dat sau
+# tests/test_migrations.py, vi test do lam lai toan bo schema).
+_SEEDED_TABLES = (
+    "tuition_records",
+    "program_increase",
+    "post_grad_requirements",
+    "programs",
+    "majors",
+    "schools",
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -69,6 +85,14 @@ async def engine(_schema: None) -> AsyncGenerator[AsyncEngine, None]:
 
 @pytest_asyncio.fixture
 async def db(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    # Don rieng, commit that TRUOC KHI mo transaction cua test — phai xong va
+    # commit hoan toan o day, khac voi ghi trong than test (se bi rollback o
+    # cuoi ham nay, khong lien quan gi toi buoc don nay).
+    async with engine.begin() as clean_conn:
+        await clean_conn.execute(
+            text(f"TRUNCATE {', '.join(_SEEDED_TABLES)} RESTART IDENTITY CASCADE")
+        )
+
     async with engine.connect() as conn:
         trans = await conn.begin()
         session = AsyncSession(
