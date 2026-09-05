@@ -4,12 +4,15 @@
 > Nguồn yêu cầu: [`yeu-cau-san-pham.md`](../../hocphi-info/yeu-cau-san-pham.md) §2, §8, §9 và
 > [`y-tuong-hoc-phi-dai-hoc.md`](../../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §6.
 > DDL: `alembic/versions/0001_initial_schema.py` (khởi tạo) +
-> `0002_tuition_review_columns.py` (`tuition_records` +`needs_review`/`review_reason`).
+> `0002_tuition_review_columns.py` (`tuition_records` +`needs_review`/`review_reason`) +
+> `0003_dong_toan_khoa_unit.py` (`TuitionUnit.DONG_TOAN_KHOA` + `duration_years_assumed`).
 >
 > **0.3 (2026-09-05):** thêm `needs_review boolean` + `review_reason text` vào
 > `tuition_records` — giữ trạng thái duyệt của AI-crawler qua tầng DB thay vì
 > chỉ nằm trong `seeds/*.jsonl` (xem `docs/plans/2026-09-05-001-...-plan.md`).
-> Chưa lộ ra API (chưa có UI hiển thị "dòng chưa chắc").
+> Chưa lộ ra API (chưa có UI hiển thị "dòng chưa chắc"). Cùng đợt: thêm đơn vị
+> `dong_toan_khoa` + cột `duration_years_assumed` cho trường công bố học phí
+> trọn gói cả khoá (vd HUTECH khoá 2026) — xem §4 `tuition_records`.
 
 ## 1. Nguyên tắc thiết kế
 
@@ -93,9 +96,10 @@ erDiagram
     text     academic_year "YYYY-YYYY"
     smallint academic_year_start "generated"
     bigint   amount_per_year "đồng/năm, chuẩn hoá"
-    enum     unit_original "dong_nam | dong_thang | dong_tin_chi"
+    enum     unit_original "dong_nam | dong_thang | dong_tin_chi | dong_toan_khoa"
     bigint   amount_original
     smallint credits_per_year_assumed
+    numeric  duration_years_assumed "0.3 (migration 0003), numeric(3,1) — ho tro 3.5/4.5 nam; bat buoc khi dong_toan_khoa"
     boolean  is_projected
     enum     confidence "verified | published_unverified | estimated"
     text     source_id FK
@@ -215,6 +219,13 @@ năm liên tiếp; `academic_year_start` là cột **generated** để lọc / s
   UI luôn gắn nhãn "dự phóng".
 - `unit_original = 'dong_tin_chi'` **bắt buộc** `credits_per_year_assumed` (CHECK) —
   hiển thị dòng "Giả định {x} tín chỉ/năm".
+- `unit_original = 'dong_toan_khoa'` (0.3, migration `0003`) **bắt buộc**
+  `duration_years_assumed` (CHECK) — trường công bố học phí **trọn gói cả
+  khoá** (vd HUTECH khoá 2026: "X triệu đồng / N năm, ổn định"), không có mức
+  từng năm riêng. `amount_per_year = amount_original / duration_years_assumed`
+  (chia đều) — luôn `needs_review = true` vì đây là số suy ra, không phải mức
+  trường công bố cho từng năm. UI hiển thị dòng "Giả định chia đều học phí cả
+  khoá cho {n} năm".
 - `confidence = 'verified'` **bắt buộc** `source_id` + `verified_at` (CHECK).
 - `source_id` nullable + `ON DELETE SET NULL` → trạng thái "chưa có nguồn" (§9).
 - `needs_review`/`review_reason` (0.3, migration `0002`) — trạng thái duyệt của

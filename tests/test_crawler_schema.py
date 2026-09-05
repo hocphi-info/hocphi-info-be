@@ -7,6 +7,7 @@ Xem `.claude/skills/crawl-truong/SKILL.md` muc "Bay da gap that".
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -70,6 +71,26 @@ def test_quy_doi(
     assert quy_doi_ve_dong_nam(amount, unit, credits) == mong_doi
 
 
+def test_quy_doi_toan_khoa() -> None:
+    # HUTECH khoa 2026, CNTT: 247.500.000 dong / 4 nam = 61.875.000 dong/nam.
+    assert (
+        quy_doi_ve_dong_nam(
+            247_500_000, enums.TuitionUnit.DONG_TOAN_KHOA, None, Decimal("4")
+        )
+        == 61_875_000
+    )
+
+
+def test_quy_doi_toan_khoa_nam_le() -> None:
+    # HUTECH Dieu duong: 238.000.000 dong / 3.5 nam = 68.000.000 dong/nam.
+    assert (
+        quy_doi_ve_dong_nam(
+            238_000_000, enums.TuitionUnit.DONG_TOAN_KHOA, None, Decimal("3.5")
+        )
+        == 68_000_000
+    )
+
+
 def test_model_tu_tinh_sai_thi_bi_chan() -> None:
     """Rang buoc quan trong nhat: amount_per_year phai = ket qua quy doi."""
     with pytest.raises(ValidationError, match="khong khop quy doi"):
@@ -112,6 +133,37 @@ def test_so_tin_chi_mac_dinh_bi_danh_dau_can_review() -> None:
     assert r.needs_review is True
     assert r.review_reason is not None
     assert "mac dinh" in r.review_reason
+
+
+def test_toan_khoa_thieu_so_nam_thi_bi_chan() -> None:
+    with pytest.raises(ValidationError, match="bat buoc co duration_years_assumed"):
+        TuitionRow.model_validate(
+            _row(
+                amount_original=247_500_000,
+                unit_original="dong_toan_khoa",
+                duration_years_assumed=None,
+                amount_per_year=61_875_000,
+            )
+        )
+
+
+def test_toan_khoa_luon_bi_danh_dau_can_review() -> None:
+    """HUTECH khoa 2026: hoc phi tron goi ca khoa, khong co muc tung nam rieng —
+    chia deu la suy ra, luon can nguoi duyet (khac voi vi du hop le o dau file,
+    o day danh dau vi don vi toan_khoa, khong phai vi thieu major_slug)."""
+    r = TuitionRow.model_validate(
+        _row(
+            major_slug="cong-nghe-thong-tin",
+            amount_original=247_500_000,
+            unit_original="dong_toan_khoa",
+            duration_years_assumed=4,
+            amount_per_year=61_875_000,
+            confidence="published_unverified",
+        )
+    )
+    assert r.needs_review is True
+    assert r.review_reason is not None
+    assert "toan khoa" in r.review_reason
 
 
 @pytest.mark.parametrize("nam", ["2025", "2025-2027", "25-26", "2026-2025"])

@@ -268,6 +268,11 @@ class TuitionRecord(Base, TimestampSoftDelete):
             "unit_original <> 'dong_tin_chi' OR credits_per_year_assumed IS NOT NULL",
             name="ck_tuition_credits_when_per_credit",
         ),
+        # unit_original = 'dong_toan_khoa' => phai co duration_years_assumed.
+        CheckConstraint(
+            "unit_original <> 'dong_toan_khoa' OR duration_years_assumed IS NOT NULL",
+            name="ck_tuition_duration_when_toan_khoa",
+        ),
         # confidence = 'verified' => phai co source_id + verified_at.
         CheckConstraint(
             "confidence <> 'verified' "
@@ -292,6 +297,11 @@ class TuitionRecord(Base, TimestampSoftDelete):
     amount_original: Mapped[int] = mapped_column(BigInteger, nullable=False)
     credits_per_year_assumed: Mapped[int | None] = mapped_column(
         SmallInteger, nullable=True
+    )
+    # Numeric (khong phai smallint) — mot so truong dung khoa 3,5/4,5 nam
+    # (7/9 hoc ky) thay vi so nam tron (vd HUTECH: Dieu duong 3,5 nam).
+    duration_years_assumed: Mapped[Decimal | None] = mapped_column(
+        Numeric(3, 1), nullable=True
     )
     is_projected: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")

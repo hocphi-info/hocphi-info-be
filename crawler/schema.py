@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Literal
 
 from app import enums
@@ -39,6 +40,7 @@ def quy_doi_ve_dong_nam(
     amount_original: int,
     unit_original: enums.TuitionUnit,
     credits_per_year: int | None,
+    duration_years: Decimal | None = None,
 ) -> int:
     """Quy doi so goc ve dong/nam. Day la NGUON SU THAT cho amount_per_year.
 
@@ -57,6 +59,16 @@ def quy_doi_ve_dong_nam(
                     "unit_original='dong_tin_chi' bat buoc co credits_per_year_assumed"
                 )
             return amount_original * credits_per_year
+        case enums.TuitionUnit.DONG_TOAN_KHOA:
+            # amount_original = hoc phi CA KHOA (truong cong bo tron goi, on
+            # dinh toan khoa). Chia deu cho so nam dao tao — xap xi, khong
+            # phai muc tung nam truong cong bo rieng => luon needs_review
+            # (xem TuitionRow._danh_dau_can_review).
+            if duration_years is None:
+                raise ValueError(
+                    "unit_original='dong_toan_khoa' bat buoc co duration_years_assumed"
+                )
+            return round(Decimal(amount_original) / duration_years)
 
 
 class Evidence(BaseModel):
@@ -100,6 +112,8 @@ class TuitionRow(BaseModel):
 
     unit_original: enums.TuitionUnit
     credits_per_year_assumed: int | None = Field(default=None, gt=0, le=100)
+    duration_years_assumed: Decimal | None = Field(default=None, gt=0, le=10)
+    """Ho tro .5 nam (7/9 hoc ky) — vd 3.5, 4.5. Xem Numeric(3,1) o app/models.py."""
 
     amount_per_year: int = Field(gt=0)
     """Dong/nam sau quy doi. Validator ep = quy_doi_ve_dong_nam(...)."""
@@ -141,7 +155,10 @@ class TuitionRow(BaseModel):
     def _kiem_quy_doi(self) -> None:
         """Ep amount_per_year = ket qua quy doi. Lech => model tu tinh => loi."""
         mong_doi = quy_doi_ve_dong_nam(
-            self.amount_original, self.unit_original, self.credits_per_year_assumed
+            self.amount_original,
+            self.unit_original,
+            self.credits_per_year_assumed,
+            self.duration_years_assumed,
         )
         if self.amount_per_year != mong_doi:
             raise ValueError(
@@ -165,6 +182,11 @@ class TuitionRow(BaseModel):
             and self.credits_per_year_assumed == DEFAULT_CREDITS_PER_YEAR
         ):
             ly_do.append("so tin chi/nam la gia dinh mac dinh, khong phai so cong bo")
+        if self.unit_original is enums.TuitionUnit.DONG_TOAN_KHOA:
+            ly_do.append(
+                "amount_per_year suy ra tu hoc phi toan khoa / so nam dao tao (gia "
+                "dinh chia deu theo nam) — khong phai muc tung nam truong cong bo rieng"
+            )
         if self.confidence is enums.ConfidenceLevel.ESTIMATED:
             ly_do.append("confidence=estimated")
 
