@@ -31,7 +31,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
 
     assert resp.status_code == 200
     rows = resp.json()
-    assert len(rows) == 100
+    assert len(rows) == 150
 
     row = next(
         r

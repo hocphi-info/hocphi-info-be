@@ -12,7 +12,7 @@ from scripts.seed_majors_mapping import ROW_TO_MAJOR_SLUG
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-EXPECTED_LOADED_ROWS = 100
+EXPECTED_LOADED_ROWS = 150
 
 
 async def test_seed_loads_only_approved_rows(db: AsyncSession) -> None:

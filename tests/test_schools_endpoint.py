@@ -31,8 +31,8 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
     assert resp.status_code == 200
     rows = resp.json()
     slugs = {r["school"]["slug"] for r in rows}
-    # tdtu, dh-van-lang, uit, ussh-tphcm, hutech, ulis, dh-hoa-sen co dong
-    # dai_tra da nap; neu chi co chat_luong_cao (rows 4,5,7) nen KHONG xuat hien.
+    # cac truong co dong dai_tra da nap; neu chi co chat_luong_cao (rows
+    # 4,5,7) nen KHONG xuat hien.
     assert slugs == {
         "tdtu",
         "dh-van-lang",
@@ -41,6 +41,8 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
         "hutech",
         "ulis",
         "dh-hoa-sen",
+        "dh-quoc-te-tphcm",
+        "dh-khoa-hoc-tu-nhien-tphcm",
     }
 
     uit_row = next(r for r in rows if r["school"]["slug"] == "uit")
