@@ -6,6 +6,11 @@
 app = 'hocphi-info-api'
 primary_region = 'sin'
 
+# Dockerfile co 2 stage (build + runtime). Pin target de Docker khong lay nham
+# stage cuoi neu file thay doi — runtime = non-root, chay uvicorn tu .venv.
+[build]
+  target = 'runtime'
+
 [env]
 PORT = '8000'
 ALLOW_ORIGINS = 'https://hocphi.info,https://www.hocphi.info'
