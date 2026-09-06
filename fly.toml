@@ -18,7 +18,12 @@ ALLOW_ORIGINS = 'https://hocphi.info,https://www.hocphi.info'
 [http_service]
 internal_port = 8000
 force_https = true
-auto_stop_machines = 'stop'
+# 'suspend' thay vi 'stop': may ngu (snapshot RAM ra dia) thay vi tat han +
+# reboot. Fly proxy resume no trong ~1s VA GIU request trong luc resume — het
+# canh proxy tra 403 vi "0 may dang chay" khi co request toi luc scale-to-zero
+# (nguyen nhan 403 chap chon o /nganh, /truong). Chi phi ~= 'stop' (chi ton
+# rootfs storage), khong phai may chay 24/7 nhu min_machines_running=1.
+auto_stop_machines = 'suspend'
 auto_start_machines = true
 min_machines_running = 0
 processes = ['app']
