@@ -215,6 +215,64 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str]] = {
         26: "thiet-ke-vi-mach",
         27: "cong-nghe-giao-duc",
     },
+    # 2026-09-06 — ftu.jsonl / hcmute.jsonl crawl o muc HE / KHOI NGANH, phan
+    # lon dong la ten he ("Chuong trinh Tieu chuan/Tich hop/CLC/Tien tien") hoac
+    # "Khoi nganh X" gop nhieu nganh -> KHONG map, bo qua. Chi map dong nao neu
+    # dich danh 1 nganh; nhom nhieu nganh 1 gia thi chi lay nganh NEU TEN dau,
+    # khong rai gia (cung quy tac nhom C: TDTU/USSH). 3/7 dong ftu + 1/11 dong
+    # hcmute duoc nap.
+    "ftu.jsonl": {
+        # 1-3: ten he (Tieu chuan/Tich hop/CLC) — bo qua.
+        4: "quan-tri-khach-san",  # nhom "Dinh huong NN quoc te" — nganh neu ten dau
+        # 5: "cac nganh con lai" — bo qua.
+        6: "kinh-te-doi-ngoai",  # nhom CT tien tien — bo qua QTKD, TC-NH
+        7: "kinh-doanh-quoc-te",  # i-Hons Queensland — bo qua Phan tich du lieu KD
+    },
+    "hcmute.jsonl": {
+        # 1,3-11: "Khoi nganh X" / chuong trinh lien ket — gop nhieu nganh, bo qua.
+        2: "cong-nghe-truyen-thong",  # dong duy nhat dich danh 1 nganh
+    },
+    # 2026-09-06 (dot 2) — crawl 5 truong, uu tien nguon *.edu.vn chinh thuc.
+    # - ump.jsonl: bang "Hoc phi du kien" trong de an tuyen sinh 1608/TTTS-DHYD
+    #   (Hieu truong ky), moi dong 1 nganh Y-Duoc cu the, don vi dong/nam -> map
+    #   het, TRU dong 7 ("Dieu duong chuyen nganh Gay me hoi suc") vi trung
+    #   (school,major=dieu-duong,track,language,campus) voi dong 6 -> dung UNIQUE
+    #   constraint cua `programs` (cung 48tr, khong mat thong tin).
+    # - ou-tphcm.jsonl: cot "MUC HOC PHI BINH QUAN" cho CA NHOM nganh -> ap dung
+    #   quy tac nhom C (TDTU/USSH): chi nap cho nganh NEU TEN DAU moi dong, khong
+    #   rai gia cho cac nganh con lai. review_reason da ghi ro day la binh quan.
+    # - tmu.jsonl: KHONG map dong nao — ca 4 dong deu la ten HE dao tao
+    #   ("Cac chuong trinh dao tao chuan/IPOP/song bang quoc te/tien tien"),
+    #   khong phai ten nganh (giong uet.jsonl / ueb.jsonl).
+    "ump.jsonl": {
+        1: "y-khoa",
+        2: "y-hoc-du-phong",
+        3: "y-hoc-co-truyen",
+        4: "duoc-hoc",
+        5: "hoa-duoc",
+        6: "dieu-duong",
+        # 7: "Dieu duong chuyen nganh Gay me hoi suc" — trung UNIQUE voi dong 6, bo qua.
+        8: "ho-sinh",
+        9: "dinh-duong",
+        10: "rang-ham-mat",
+        11: "ky-thuat-phuc-hinh-rang",
+        12: "ky-thuat-xet-nghiem-y-hoc",
+        13: "ky-thuat-hinh-anh-y-hoc",
+        14: "ky-thuat-phuc-hoi-chuc-nang",
+        15: "y-te-cong-cong",
+        16: "cong-tac-xa-hoi",
+        17: "cong-nghe-duoc-pham",
+        18: "tam-ly-hoc",
+    },
+    "ou-tphcm.jsonl": {
+        1: "cong-nghe-sinh-hoc",  # nhom: CNSH, CN thuc pham, Sinh hoc ung dung
+        2: "cong-nghe-ky-thuat-cong-trinh-xay-dung",  # nhom: + QL xay dung, Kien truc, KT xay dung
+        3: "cong-nghe-thong-tin",  # nhom: CNTT, KHMT, KHDL, HTTTQL, TTNT, KTPM, ATTT, Toan UD
+        4: "ke-toan",  # nhom: Ke toan, Kiem toan, TC-NH, QTKD, Marketing, KDQT, ...
+        5: "kinh-te",  # nhom: Kinh te, QL cong, XHH, CTXH, Dong Nam A hoc, Tam ly hoc
+        6: "ngon-ngu-nhat",  # nhom: NN Nhat, NN Trung, NN Anh, NN Han
+        7: "tai-chinh-ngan-hang",  # he TIEN TIEN, nhom nganh dau tien neu ten
+    },
 }
 
 # {ten_file_jsonl: {so_dong: display_name}} — ghi de `programs.display_name` khi

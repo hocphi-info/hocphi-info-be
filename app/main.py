@@ -11,14 +11,18 @@ from fastapi.responses import JSONResponse
 
 from app import coverage, health, majors, program_detail, school_detail, schools
 from app.config import settings
+from app.db import engine
 from app.observability import (
     RequestContextMiddleware,
     configure_logging,
+    configure_sql_logging,
     get_request_id,
 )
 
 # Dung structlog TRUOC khi tao app / bat ky log nao — mot lan / process.
 configure_logging()
+# Gan event dem/log SQL vao engine dong bo ben duoi AsyncEngine (mot lan / process).
+configure_sql_logging(engine.sync_engine)
 
 logger = structlog.get_logger("hocphi")
 

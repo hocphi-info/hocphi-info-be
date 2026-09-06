@@ -33,6 +33,20 @@ WebSearch/curl/đọc PDF, không gọi LLM API trả tiền — xem `docs/ai-cr
 | `neu.jsonl` | ĐH Kinh tế Quốc dân | 7 |
 | `ussh-tphcm.jsonl` | ĐH KHXH&NV TP.HCM (ĐHQG-HCM) | 4 |
 
+Đợt 2 (2026-09-06) — ưu tiên nguồn `*.edu.vn` chính thức:
+
+| File | Trường | Số dòng |
+|---|---|---|
+| `ump.jsonl` | ĐH Y Dược TP.HCM | 18 |
+| `tmu.jsonl` | ĐH Thương mại | 4 |
+| `ou-tphcm.jsonl` | ĐH Mở TP.HCM | 7 |
+
+**Đã crawl nhưng 0 dòng** (chỉ còn `crawler/work/<slug>/`, không có seed): `dh-luat-tphcm`,
+`ptit` — quyết định học phí chính thức của cả hai trường chỉ công bố **đồng/tín chỉ**,
+không kèm tổng số tín chỉ/năm; không có bảng đồng/năm chính thức nào ⇒ không quy đổi
+được mà không bịa số (xem SKILL.md mục 2 & 7). Đơn giá tín chỉ gốc đã ghi trong
+`review_reason`/báo cáo phiên để người duyệt hoàn tất nếu lấy được số tín chỉ/năm.
+
 **Mọi dòng đều `needs_review: true`** — `major_slug` chưa map vào danh mục
 `majors`, và nhiều dòng có `review_reason` nêu bất định cần người xác nhận trước
 khi đưa vào `scripts/seed.py` (xem `.claude/skills/crawl-truong/SKILL.md` mục

@@ -1,6 +1,6 @@
 """Request-id + structured logging (Tuần 5).
 
-Ba mảnh, cố ý gom một file vì chúng dùng chung nhau:
+Bốn mảnh, cố ý gom một file vì chúng dùng chung nhau:
 
 - `request_id_ctx` — `ContextVar` giữ id của request đang chạy. `ContextVar` là
   biến "theo ngữ cảnh chạy": mỗi request chạy trong một `asyncio.Task` riêng với
@@ -13,7 +13,11 @@ Ba mảnh, cố ý gom một file vì chúng dùng chung nhau:
   cái đó chạy endpoint trong task con nên `ContextVar` set trong nó không
   propagate xuống endpoint). Mỗi request: lấy/validate `X-Request-ID` gửi vào
   hoặc sinh mới, bind vào context, chèn lại vào response header, và ghi đúng
-  MỘT dòng access log lúc xong.
+  MỘT dòng access log lúc xong (kèm `query_count`/`query_ms` gom từ mảnh dưới).
+- `configure_sql_logging(engine)` — gắn event `before/after_cursor_execute` của
+  SQLAlchemy để (a) đếm số query + thời gian SQL mỗi request vào `sql_stats_ctx`
+  (luôn bật), (b) khi `SQL_LOG=true` thì ghi thêm một dòng `event="sql"` / câu
+  lệnh. Gọi **một lần** lúc khởi động, sau khi tạo engine.
 
 Rate-limit: xem TODO ở `RequestContextMiddleware` — hoãn tới khi có traffic.
 """
@@ -23,9 +27,12 @@ import re
 import sys
 from contextvars import ContextVar
 from time import perf_counter
+from typing import Any
 from uuid import uuid4
 
 import structlog
+from sqlalchemy import event
+from sqlalchemy.engine import Connection, Engine
 from starlette.datastructures import Headers
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -33,6 +40,14 @@ from app.config import settings
 
 # ── request-id context ───────────────────────────────────────────────────────
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
+
+# Bộ đếm SQL theo request. `RequestContextMiddleware` set một dict mới ở đầu mỗi
+# request, các event listener của SQLAlchemy (xem `configure_sql_logging`) cộng
+# dồn vào đó, dòng access log đọc lại lúc kết thúc. `None` = đang chạy ngoài một
+# request (script seed, health check trong task nền…) → listener bỏ qua, không đếm.
+sql_stats_ctx: ContextVar[dict[str, float] | None] = ContextVar(
+    "sql_stats", default=None
+)
 
 # `X-Request-ID` từ ngoài có thể do CDN/proxy đặt — nhận lại để nối được trace,
 # nhưng chỉ khi "lành": chữ-số-gạch, tối đa 128 ký tự. Không hợp lệ → sinh mới.
@@ -143,6 +158,8 @@ class RequestContextMiddleware:
         structlog.contextvars.bind_contextvars(request_id=rid)
         started = perf_counter()
         seen_status = 500
+        sql_stats: dict[str, float] = {"count": 0, "time_ms": 0.0}
+        sql_token = sql_stats_ctx.set(sql_stats)
 
         async def send_wrapper(message: Message) -> None:
             nonlocal seen_status
@@ -176,6 +193,8 @@ class RequestContextMiddleware:
                     status_code=500 if raised else seen_status,
                     duration_ms=round((perf_counter() - started) * 1000, 1),
                     client_ip=client[0] if client else None,
+                    query_count=int(sql_stats["count"]),
+                    query_ms=round(sql_stats["time_ms"], 1),
                 )
             # Đường bình thường: dọn ngay. Đường lỗi: KHÔNG dọn — exception
             # handler (chạy sau, ngoài middleware này) còn cần đọc request_id để
@@ -184,3 +203,69 @@ class RequestContextMiddleware:
             if not raised:
                 structlog.contextvars.clear_contextvars()
                 request_id_ctx.reset(token)
+                sql_stats_ctx.reset(sql_token)
+
+
+# ── SQL logging ──────────────────────────────────────────────────────────────
+_sql_log = structlog.get_logger("hocphi.sql")
+
+
+def configure_sql_logging(sync_engine: Engine) -> None:
+    """Gắn hai event vào `Engine` đồng bộ nằm dưới `AsyncEngine`.
+
+    SQLAlchemy phát `before/after_cursor_execute` quanh MỖI câu lệnh gửi xuống
+    driver. Ta dùng chúng cho hai việc:
+
+    - **Luôn bật, gần như free:** cộng số query + tổng thời gian vào
+      `sql_stats_ctx` của request đang chạy → `RequestContextMiddleware` in ra
+      `query_count` / `query_ms` trong dòng access log.
+    - **Chỉ khi `settings.sql_log`:** ghi thêm một dòng log `event="sql"` cho
+      từng câu — statement (gộp về một dòng), tham số (cắt 500 ký tự), thời gian,
+      số dòng. `merge_contextvars` tự đính `request_id` nên lọc theo id là ra
+      đủ SQL của một request.
+
+    Thời gian đo bằng một stack (`list`) trên `conn.info`: cùng một connection có
+    thể chạy lồng nhau (câu này gọi ra câu khác) nên push lúc `before`, pop lúc
+    `after` mới ghép đúng cặp. Gọi hàm này một lần lúc khởi động.
+    """
+
+    @event.listens_for(sync_engine, "before_cursor_execute")
+    def _before(
+        conn: Connection,
+        cursor: Any,
+        statement: str,
+        parameters: Any,
+        context: Any,
+        executemany: bool,
+    ) -> None:
+        start_stack: list[float] = conn.info.setdefault("_q_start", [])
+        start_stack.append(perf_counter())
+
+    @event.listens_for(sync_engine, "after_cursor_execute")
+    def _after(
+        conn: Connection,
+        cursor: Any,
+        statement: str,
+        parameters: Any,
+        context: Any,
+        executemany: bool,
+    ) -> None:
+        start_stack: list[float] = conn.info["_q_start"]
+        elapsed_ms = (perf_counter() - start_stack.pop()) * 1000
+
+        stats = sql_stats_ctx.get()
+        if stats is not None:
+            stats["count"] += 1
+            stats["time_ms"] += elapsed_ms
+
+        if settings.sql_log:
+            _sql_log.info(
+                "sql",
+                # `merge_contextvars` cũng đính request_id, nhưng ghi thẳng như
+                # dòng access log cho chắc (test / xử lý ngoài pipeline vẫn thấy).
+                request_id=request_id_ctx.get(),
+                statement=" ".join(statement.split()),  # gộp SQL nhiều dòng về 1
+                params=repr(parameters)[:500],
+                duration_ms=round(elapsed_ms, 2),
+                rows=cursor.rowcount if cursor.rowcount != -1 else None,
+            )

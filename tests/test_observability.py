@@ -7,14 +7,18 @@ riêng cuối cùng chạm `app` thật để chắc middleware đã được g�
 """
 
 import re
+from collections.abc import AsyncGenerator
 
+import pytest
+import pytest_asyncio
 import structlog
 from app.main import app, unhandled_exception_handler
 from app.observability import RequestContextMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 _HEX32 = re.compile(r"\A[0-9a-f]{32}\Z")
 
@@ -109,3 +113,78 @@ async def test_middleware_is_wired_into_the_real_app(db: AsyncSession) -> None:
         resp = await client.get("/health")
     assert resp.status_code == 200
     assert _HEX32.match(resp.headers["x-request-id"])
+
+
+# ── SQL logging (configure_sql_logging) ──────────────────────────────────────
+# Không đi qua `app.db.engine` (pool tạo lúc import, dễ dính prepared-statement
+# cũ sau khi test_migrations roundtrip schema). Mỗi test tự dựng 1 engine "một
+# lần rồi bỏ" trỏ vào DB test, gắn listener, rồi cho mini-app chạy 1 câu SQL.
+
+
+@pytest_asyncio.fixture
+async def sql_engine() -> AsyncGenerator[AsyncEngine, None]:
+    from app.config import settings
+    from app.observability import configure_sql_logging
+
+    eng = create_async_engine(settings.database_url)
+    configure_sql_logging(eng.sync_engine)
+    yield eng
+    await eng.dispose()
+
+
+def _mini_app_touching_db(eng: AsyncEngine) -> FastAPI:
+    mini = _mini_app()
+
+    @mini.get("/query")
+    async def _query() -> dict[str, bool]:
+        async with eng.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"ok": True}
+
+    return mini
+
+
+async def test_access_log_carries_sql_counters(sql_engine: AsyncEngine) -> None:
+    """Dòng access log kèm `query_count` + `query_ms` cho mỗi request chạm DB."""
+    with structlog.testing.capture_logs() as logs:
+        async with _client(_mini_app_touching_db(sql_engine)) as client:
+            resp = await client.get("/query")
+    assert resp.status_code == 200
+
+    line = next(e for e in logs if e["event"] == "request")
+    assert line["query_count"] >= 1
+    assert isinstance(line["query_ms"], float)
+    assert line["query_ms"] >= 0
+
+
+async def test_no_sql_counters_leak_outside_a_request(sql_engine: AsyncEngine) -> None:
+    """`sql_stats_ctx` mặc định None → listener chạy ngoài request không nổ."""
+    from app.observability import sql_stats_ctx
+
+    assert sql_stats_ctx.get() is None
+    async with sql_engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))  # không được raise
+
+
+async def test_sql_log_lines_only_when_enabled(
+    sql_engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`SQL_LOG` tắt → không dòng `event="sql"`; bật → có, kèm đúng request_id."""
+    from app import observability
+
+    mini = _mini_app_touching_db(sql_engine)
+
+    async with _client(mini) as client:
+        with structlog.testing.capture_logs() as off_logs:
+            await client.get("/query")
+        assert [e for e in off_logs if e.get("event") == "sql"] == []
+
+        monkeypatch.setattr(observability.settings, "sql_log", True)
+        with structlog.testing.capture_logs() as on_logs:
+            await client.get("/query", headers={"X-Request-ID": "trace-sql-1"})
+
+    sql_lines = [e for e in on_logs if e.get("event") == "sql"]
+    assert sql_lines
+    assert all(e["request_id"] == "trace-sql-1" for e in sql_lines)
+    assert any("SELECT" in e["statement"].upper() for e in sql_lines)
+    assert all(isinstance(e["duration_ms"], float) for e in sql_lines)

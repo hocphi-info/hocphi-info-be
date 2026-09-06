@@ -32,8 +32,16 @@ class Settings(BaseSettings):
         default="http://localhost:3000,http://127.0.0.1:3000",
         alias="CORS_ORIGINS",
     )
-    # In moi cau SQL ra stdout — bat khi debug, tat o CI/prod.
+    # Echo tho cua SQLAlchemy (logger `sqlalchemy.engine`, 2 dong / cau, khong
+    # timing). De debug nhanh mot lan; thuong tat — dung `sql_log` ben duoi.
     sql_echo: bool = Field(default=False)
+
+    # Ghi 1 dong log `event="sql"` co cau truc / cau lenh (statement + params +
+    # duration + so dong), tu dinh `request_id`. Bat qua env `SQL_LOG=true` khi
+    # can soi query cua tung request; tat o CI/prod cho do nhieu. Doc lai moi lan
+    # event chay nen doi env + restart la du, khong phu thuoc `sql_echo`.
+    # (Bo dem `query_count`/`query_ms` trong access log thi LUON bat, khong can co.)
+    sql_log: bool = Field(default=False, alias="SQL_LOG")
 
     # Structured logging (Tuan 5). `json` = 1 dong JSON / ban ghi (prod, platform
     # gom stdout); `console` = mau + can le, de doc khi dev.

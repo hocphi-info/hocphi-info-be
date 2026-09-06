@@ -126,5 +126,28 @@ INSERT INTO majors (slug, name, code, group_code, standard_years) VALUES
   ('quan-ly-tai-nguyen-va-moi-truong', 'Quản lý tài nguyên và Môi trường', NULL, 'KY_THUAT', 4),
   ('cong-nghe-ban-dan', 'Công nghệ bán dẫn', NULL, 'CNTT', 4),
   ('thiet-ke-vi-mach', 'Thiết kế vi mạch', NULL, 'CNTT', 4),
-  ('cong-nghe-giao-duc', 'Công nghệ giáo dục', NULL, 'LUAT', 4)
+  ('cong-nghe-giao-duc', 'Công nghệ giáo dục', NULL, 'LUAT', 4),
+  -- +2 ngành (2026-09-06) — để nạp ftu.jsonl / hcmute.jsonl (Tuần 4 batch bổ
+  -- sung). Chỉ 4 dòng trong 2 file đó map được vào 1 ngành cụ thể (phần lớn là
+  -- tên hệ / khối ngành → major_slug = null). Xem scripts/seed_majors_mapping.py.
+  ('kinh-te-doi-ngoai', 'Kinh tế đối ngoại', NULL, 'KINH_TE', 4),
+  ('cong-nghe-truyen-thong', 'Công nghệ truyền thông', NULL, 'KY_THUAT', 4),
+  -- +13 ngành (2026-09-06, đợt 2) — để nạp ump.jsonl (12 ngành Y-Dược cụ thể,
+  -- bảng học phí dự kiến trong đề án tuyển sinh 1608/TTTS-ĐHYD) + ou-tphcm.jsonl
+  -- (1 ngành: cong-nghe-ky-thuat-cong-trinh-xay-dung, ngành nêu tên đầu của một
+  -- nhóm). tmu.jsonl KHÔNG có ngành nào — 4 dòng đều là tên hệ đào tạo.
+  -- Xem scripts/seed_majors_mapping.py.
+  ('y-hoc-du-phong',                'Y học dự phòng',                       NULL, 'Y_DUOC',   6),
+  ('y-hoc-co-truyen',              'Y học cổ truyền',                      NULL, 'Y_DUOC',   6),
+  ('hoa-duoc',                      'Hóa dược',                             NULL, 'Y_DUOC',   5),
+  ('ho-sinh',                       'Hộ sinh',                              NULL, 'Y_DUOC',   4),
+  ('dinh-duong',                    'Dinh dưỡng',                           NULL, 'Y_DUOC',   4),
+  ('rang-ham-mat',                  'Răng - Hàm - Mặt',                     NULL, 'Y_DUOC',   6),
+  ('ky-thuat-phuc-hinh-rang',       'Kỹ thuật phục hình răng',              NULL, 'Y_DUOC',   4),
+  ('ky-thuat-hinh-anh-y-hoc',       'Kỹ thuật hình ảnh y học',              NULL, 'Y_DUOC',   4),
+  ('ky-thuat-phuc-hoi-chuc-nang',   'Kỹ thuật phục hồi chức năng',          NULL, 'Y_DUOC',   4),
+  ('y-te-cong-cong',                'Y tế công cộng',                       NULL, 'Y_DUOC',   4),
+  ('cong-tac-xa-hoi',               'Công tác xã hội',                      NULL, 'LUAT',     4),
+  ('cong-nghe-duoc-pham',           'Công nghệ dược phẩm',                  NULL, 'Y_DUOC',   4),
+  ('cong-nghe-ky-thuat-cong-trinh-xay-dung', 'Công nghệ kỹ thuật công trình xây dựng', NULL, 'KY_THUAT', 4)
 ON CONFLICT (slug) WHERE deleted_at IS NULL DO NOTHING;
