@@ -270,27 +270,42 @@ generated columns). `pgcrypto` có sẵn trong image `postgres:16-alpine`.
 
 ### Seed dữ liệu lên production
 
-Production = Fly.io app `hocphi-info-api` (region `sin`). Push lên `main` tự deploy
-qua GitHub Actions (`.github/workflows/fly-deploy.yml` → `flyctl deploy`). Image chỉ
-chạy `uvicorn` — migrate/seed **không** tự chạy; nhưng `alembic`, `scripts/seed.py`,
-`seeds/`, `crawler/` đều nằm trong image (`.dockerignore` chỉ bỏ `.venv`,
-`__pycache__`, `.git`, `*.md`, `docs/`).
+Production = Fly.io app `hocphi-info-api` (region `sin`). Deploy chỉ chạy khi **push
+tag `v*`** (`.github/workflows/fly-deploy.yml` → `flyctl deploy`) — push `main`
+KHÔNG deploy. Image chỉ chạy `uvicorn` — migrate/seed **không** tự chạy; nhưng
+`alembic`, `scripts/seed.py`, `seeds/`, `crawler/` đều nằm trong image
+(`.dockerignore` chỉ bỏ `.venv`, `__pycache__`, `.git`, `*.md`, `docs/`).
 
-Sau mỗi lần cập nhật `seeds/*` hoặc `scripts/seed_majors_mapping.py`:
+**Chỉ sửa `seeds/*` / `scripts/seed_majors_mapping.py`** (không đổi code app) → KHÔNG
+cần deploy, code seed đã có sẵn trong image đang chạy. Chỉ cần từ bước 2:
 
 ```bash
-git push origin main                                             # 1. deploy code mới
-fly ssh console -a hocphi-info-api -C "python -m scripts.seed"    # 2. nạp seed vào DB prod
-curl -s https://api.hocphi.info/api/coverage                     # 3. đối chiếu số liệu
+git push origin main                                          # 1. đẩy code (main KHÔNG tự deploy)
+fly status -a hocphi-info-api                                 # 2. lấy id 1 máy (cột ID)
+fly machine start <machine-id> -a hocphi-info-api             # 3. bật máy đó (đang stopped)
+fly ssh console -a hocphi-info-api -C "python -m scripts.seed" # 4. nạp seed vào DB prod
+curl -s https://api.hocphi.info/api/coverage                  # 5. đối chiếu số liệu
 ```
+
+**Có đổi code app** (router, model, migration…) → cần deploy image mới trước:
+
+```bash
+git push origin main
+TAG=v$(date +%Y.%m.%d); git tag "$TAG" && git push origin "$TAG"   # -> GitHub Actions deploy lên Fly
+```
+
+(Trùng ngày thì thêm hậu tố: `v2026.09.10-2`. Hoặc bấm "Run workflow" ở tab Actions.)
 
 - `scripts.seed` **idempotent** (`ON CONFLICT DO NOTHING` cho `*.sql`; get-or-create
   cho `*.jsonl`) — chạy lại bao nhiêu lần cũng không nhân đôi, không đụng dòng cũ.
 - `DATABASE_URL` là Fly secret sẵn trong máy; `SEEDS_DIR` resolve theo `__file__` nên
-  không phụ thuộc thư mục hiện tại (`-C` không cần `cd`).
-- Máy hay ở trạng thái `suspend` (`min_machines_running = 0`) — `fly ssh console` tự
-  đánh thức.
-- **Có migration mới** thì chạy trước seed:
+  không phụ thuộc thư mục hiện tại (`-C` không cần `cd`). `python` không thấy thì dùng
+  `/app/.venv/bin/python -m scripts.seed`.
+- **Bước bật máy bắt buộc:** `min_machines_running = 0` + `auto_stop_machines =
+  'suspend'` → máy ở trạng thái `stopped` khi rảnh, và `fly ssh console` **không** tự
+  bật máy (báo `app ... has no started VMs`). Bật 1 máy bất kỳ bằng `fly machine
+  start` (`fly status` để xem id), seed xong máy tự `suspend` lại — không cần stop tay.
+- **Có migration mới** thì deploy (tag) trước, rồi chạy trước seed:
   `fly ssh console -a hocphi-info-api -C "sh -lc 'alembic upgrade head && python -m scripts.seed'"`
 - Muốn migrate tự động mỗi lần deploy: thêm
   `[deploy] release_command = "alembic upgrade head"` vào `fly.toml`. Seed nên vẫn để

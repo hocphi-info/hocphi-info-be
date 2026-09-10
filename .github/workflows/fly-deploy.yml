@@ -1,16 +1,21 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+#
+# Deploy CHỈ khi push tag `v*` (vd `git tag v2026.09.10 && git push origin v2026.09.10`)
+# hoặc bấm "Run workflow" trong tab Actions. Push `main` KHÔNG deploy — tránh deploy
+# thừa cho commit docs / cập nhật seed (chỉ cần chạy lại `scripts.seed`, xem README §VI).
 
 name: Fly Deploy
 on:
   push:
-    branches:
-      - main
-      - master
+    tags:
+      - "v*"
+  workflow_dispatch:
+
 jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    concurrency: deploy-group    # optional: ensure only one action runs at a time
+    concurrency: deploy-group # optional: ensure only one action runs at a time
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
