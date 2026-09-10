@@ -104,6 +104,14 @@ Ghi chu ve cac truong hay sai:
 | `major_slug` | `null` neu chua chac — dung bia slug. |
 | `evidence.page` | So trang PDF. `null` cho nguon HTML. |
 
+**Fan-out (1 dong -> nhieu nganh):** neu truong cong bo 1 muc cho CA HE (hang chuc
+nganh), van ghi 1 dong JSONL `major_slug=null`, `major_name_raw` ghi ro "ap dung
+chung ~N nganh". Viec rai ra tung nganh lam o `scripts/seed_majors_mapping.py`:
+gia tri mapping la `list[str]` slug (nguoi duyet viet tay, lay tu trang mo ta
+nganh cua truong) -> `scripts/seed.py` lap tao N `programs` + N `tuition_records`
+cung gia. Xem `docs/ai-crawler.md` §4 "Fan-out". KHONG fan-out khi tai lieu chi
+cho don gia tin chi chua co tong TC/nam, hoac la khoang gia nhom nganh.
+
 ### 6 · Kiem tra
 
 ```bash

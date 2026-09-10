@@ -209,6 +209,10 @@ Tổ hợp `school × major × track × language × campus`. UNIQUE trên
 `(school_id, major_id, track, language, COALESCE(campus,''))`.
 `display_name` = tên trường tự gọi (khi khác `majors.name`). `is_active` để ẩn
 ngành ngừng tuyển mà vẫn giữ lịch sử học phí.
+Trường công bố học phí **theo hệ** (1 mức cho hàng chục ngành) được "nở" thành
+N `programs` ở tầng seed: `scripts/seed_majors_mapping.py` cho phép 1 dòng JSONL
+map tới `list[str]` slug ngành, `scripts/seed.py` lặp tạo N bộ (cùng
+`amount_per_year` + `source`). Xem `docs/ai-crawler.md` §4 "Fan-out".
 Trang chi tiết S3 (`/truong/{school}/{major}`) gom **tất cả** `programs` cùng
 `(school, major)` để dựng bảng "học phí theo năm & hệ".
 

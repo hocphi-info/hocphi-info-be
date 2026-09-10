@@ -14,7 +14,9 @@ deu idempotent):
      `crawler.schema.TuitionRow`. KHONG nap het moi dong: chi dong co trong
      `scripts.seed_majors_mapping.ROW_TO_MAJOR_SLUG` (da duyet tay, xem file do
      va docs/plans/2026-09-05-001-...-plan.md § Phu luc) moi duoc nap; dong
-     con lai bi bo qua (in ra so luong khi chay xong).
+     con lai bi bo qua (in ra so luong khi chay xong). Gia tri mapping la LIST
+     => fan-out: 1 dong JSONL (1 muc cong bo o muc HE) sinh N `programs` +
+     N `tuition_records`, moi nganh 1 bo (cung amount, cung source).
 
 Idempotent: `programs` dung "get or create" (SELECT truoc, INSERT neu thieu,
 dua vao UNIQUE (school,major,track,language,campus)); `tuition_records` SELECT
@@ -122,7 +124,8 @@ async def _get_or_create_source(session: AsyncSession, row: TuitionRow) -> str:
 
 
 async def _load_jsonl_file(filename: str) -> tuple[int, int]:
-    """Tra ve (so_dong_da_nap, so_dong_bo_qua)."""
+    """Tra ve (so_muc_da_nap, so_muc_bo_qua) — dem theo (program, tuition_record),
+    khong theo dong JSONL: 1 dong fan-out ra N nganh dem thanh N muc."""
     mapping = ROW_TO_MAJOR_SLUG.get(filename, {})
     display_mapping = ROW_TO_DISPLAY_NAME.get(filename, {})
     path = SEEDS_DIR / filename
@@ -138,10 +141,17 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
         ):
             if not raw_line.strip():
                 continue
-            major_slug = mapping.get(line_no)
-            if major_slug is None:
+            mapped = mapping.get(line_no)
+            if mapped is None:
                 skipped += 1
                 continue
+            # str -> 1 nganh; list -> fan-out: 1 dong ap cho nhieu nganh cung
+            # gia (xem scripts/seed_majors_mapping.py). `display_name` chi ap
+            # cho dong 1-1 (moi nganh fan-out giu ten `majors.name` cua no).
+            major_slugs = [mapped] if isinstance(mapped, str) else mapped
+            display_name = (
+                display_mapping.get(line_no) if isinstance(mapped, str) else None
+            )
 
             row = TuitionRow.model_validate_json(raw_line)
 
@@ -156,56 +166,58 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
                 skipped += 1
                 continue
 
-            major_id = await session.scalar(
-                select(Major.id).where(Major.slug == major_slug)
-            )
-            if major_id is None:
-                print(
-                    f"  [loi] {filename}:{line_no} khong thay "
-                    f"major_slug={major_slug!r} (chay 002_majors.sql chua?)"
-                )
-                skipped += 1
-                continue
-
-            program_id = await _get_or_create_program(
-                session,
-                school_id=school_id,
-                major_id=major_id,
-                row=row,
-                display_name=display_mapping.get(line_no),
-            )
-
+            # `source` gan theo dong (khong theo nganh) — tao 1 lan cho ca fan-out.
             source_id = await _get_or_create_source(session, row)
 
-            existing_tr = await session.scalar(
-                select(TuitionRecord).where(
-                    TuitionRecord.program_id == program_id,
-                    TuitionRecord.academic_year == row.academic_year,
+            for major_slug in major_slugs:
+                major_id = await session.scalar(
+                    select(Major.id).where(Major.slug == major_slug)
                 )
-            )
-            if existing_tr is not None:
-                # Backfill (F12): ban ghi nap tu truoc khi seed.py biet gan
-                # nguon van con source_id NULL — gan lai, khong tao dong moi.
-                if existing_tr.source_id is None:
-                    existing_tr.source_id = source_id
-            else:
-                session.add(
-                    TuitionRecord(
-                        program_id=program_id,
-                        academic_year=row.academic_year,
-                        amount_per_year=row.amount_per_year,
-                        unit_original=row.unit_original,
-                        amount_original=row.amount_original,
-                        credits_per_year_assumed=row.credits_per_year_assumed,
-                        duration_years_assumed=row.duration_years_assumed,
-                        is_projected=row.is_projected,
-                        confidence=row.confidence,
-                        needs_review=row.needs_review,
-                        review_reason=row.review_reason,
-                        source_id=source_id,
+                if major_id is None:
+                    print(
+                        f"  [loi] {filename}:{line_no} khong thay "
+                        f"major_slug={major_slug!r} (chay 002_majors.sql chua?)"
+                    )
+                    skipped += 1
+                    continue
+
+                program_id = await _get_or_create_program(
+                    session,
+                    school_id=school_id,
+                    major_id=major_id,
+                    row=row,
+                    display_name=display_name,
+                )
+
+                existing_tr = await session.scalar(
+                    select(TuitionRecord).where(
+                        TuitionRecord.program_id == program_id,
+                        TuitionRecord.academic_year == row.academic_year,
                     )
                 )
-            loaded += 1
+                if existing_tr is not None:
+                    # Backfill (F12): ban ghi nap tu truoc khi seed.py biet gan
+                    # nguon van con source_id NULL — gan lai, khong tao dong moi.
+                    if existing_tr.source_id is None:
+                        existing_tr.source_id = source_id
+                else:
+                    session.add(
+                        TuitionRecord(
+                            program_id=program_id,
+                            academic_year=row.academic_year,
+                            amount_per_year=row.amount_per_year,
+                            unit_original=row.unit_original,
+                            amount_original=row.amount_original,
+                            credits_per_year_assumed=row.credits_per_year_assumed,
+                            duration_years_assumed=row.duration_years_assumed,
+                            is_projected=row.is_projected,
+                            confidence=row.confidence,
+                            needs_review=row.needs_review,
+                            review_reason=row.review_reason,
+                            source_id=source_id,
+                        )
+                    )
+                loaded += 1
         await session.commit()
     return loaded, skipped
 
@@ -219,11 +231,11 @@ async def main() -> None:
     total_skipped = 0
     for filename in ROW_TO_MAJOR_SLUG:
         loaded, skipped = await _load_jsonl_file(filename)
-        print(f"  [xong] {filename} -> nap {loaded} dong, bo qua {skipped} dong")
+        print(f"  [xong] {filename} -> nap {loaded} muc, bo qua {skipped} muc")
         total_loaded += loaded
         total_skipped += skipped
 
-    print(f"Tong: nap {total_loaded} dong, bo qua {total_skipped} dong.")
+    print(f"Tong: nap {total_loaded} muc, bo qua {total_skipped} muc.")
     await engine.dispose()
     print("Hoan tat.")
 

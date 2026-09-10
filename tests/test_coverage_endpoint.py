@@ -58,14 +58,15 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     assert resp.status_code == 200
     body = resp.json()
 
+    # 179 (baseline moi tren main, sau khi them cac file mapping ftu/hcmute/
+    # ump/ou-tphcm + dot 2) + 51 HCMUT (dong 1 fan-out 41 nganh he tieu chuan,
+    # dong 2-8 them 10 nganh). HCMUT them 5 school co du lieu va 6 source moi.
     assert body["totals"] == {
         "schoolsTotal": 50,
-        "schoolsWithData": 10,
-        # 150 + 1: TDTU Du lich co so chinh (dong 28 tdtu.jsonl). Nguon tai
-        # dung URL TDTU da co -> sourcesCited khong doi.
-        "programsWithTuition": 151,
-        "tuitionRecords": 151,
-        "sourcesCited": 11,
+        "schoolsWithData": 15,
+        "programsWithTuition": 230,
+        "tuitionRecords": 230,
+        "sourcesCited": 17,
     }
     # snapshotDate = max(tuition_records.updated_at)::date -> chuoi "YYYY-MM-DD".
     assert isinstance(body["snapshotDate"], str)
@@ -76,17 +77,18 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
         "cityCode": "HCM",
         "cityName": "TP. Ho Chi Minh",
         "schoolsTotal": 25,
-        "schoolsWithData": 8,
+        "schoolsWithData": 12,  # +dh-bach-khoa-tphcm (con lai co tu cac dot truoc)
     }
     assert by_city["HN"]["schoolsTotal"] == 25
-    assert by_city["HN"]["schoolsWithData"] == 2
+    assert by_city["HN"]["schoolsWithData"] == 3
 
     by_group = {r["groupCode"]: r["programsWithTuition"] for r in body["byMajorGroup"]}
     assert by_group.keys() == MAJOR_GROUP_CODES
-    # +1 KINH_TE: TDTU Du lich co so chinh (major `du-lich` group_code=KINH_TE).
-    assert by_group["KINH_TE"] == 53
-    assert by_group["KY_THUAT"] == 52
-    assert sum(by_group.values()) == 151
+    # HCMUT he tieu chuan fan-out: phan lon 41 nganh vao KY_THUAT, vai nganh
+    # KINH_TE (kinh-te-xay-dung, quan-ly-cong-nghiep, kinh-te-tai-nguyen...).
+    assert by_group["KINH_TE"] == 64
+    assert by_group["KY_THUAT"] == 90
+    assert sum(by_group.values()) == 230
 
 
 async def test_coverage_seeded_schools_rows_shape(db: AsyncSession) -> None:

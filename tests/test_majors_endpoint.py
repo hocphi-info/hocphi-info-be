@@ -31,8 +31,9 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
 
     assert resp.status_code == 200
     rows = resp.json()
-    # 150 + 1: TDTU Du lich co so chinh (them cung dot voi cot campus).
-    assert len(rows) == 151
+    # 1 row / program-co-tuition. 179 baseline + 51 HCMUT (fan-out he tieu chuan
+    # 41 nganh + 10 nganh cac he khac). Xem tests/test_seed_jsonl.py.
+    assert len(rows) == 230
 
     row = next(
         r

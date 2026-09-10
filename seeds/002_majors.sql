@@ -149,5 +149,31 @@ INSERT INTO majors (slug, name, code, group_code, standard_years) VALUES
   ('y-te-cong-cong',                'Y tế công cộng',                       NULL, 'Y_DUOC',   4),
   ('cong-tac-xa-hoi',               'Công tác xã hội',                      NULL, 'LUAT',     4),
   ('cong-nghe-duoc-pham',           'Công nghệ dược phẩm',                  NULL, 'Y_DUOC',   4),
-  ('cong-nghe-ky-thuat-cong-trinh-xay-dung', 'Công nghệ kỹ thuật công trình xây dựng', NULL, 'KY_THUAT', 4)
+  ('cong-nghe-ky-thuat-cong-trinh-xay-dung', 'Công nghệ kỹ thuật công trình xây dựng', NULL, 'KY_THUAT', 4),
+  -- +21 ngành (2026-09-10) — hệ Chương trình tiêu chuẩn của HCMUT. Thông báo
+  -- học phí HCMUT ra 1 mức/hệ cho ~41 ngành; nạp qua cơ chế fan-out mới trong
+  -- scripts/seed.py (1 dòng seeds/dh-bach-khoa-tphcm.jsonl → nhiều major).
+  -- 20 ngành còn lại của hệ đã có sẵn slug ở trên. Nhóm gán KY_THUAT trừ 3
+  -- ngành kinh tế/quản lý. Xem scripts/seed_majors_mapping.py.
+  ('kinh-te-xay-dung',                        'Kinh tế xây dựng',                        NULL, 'KINH_TE',  4),
+  ('ky-thuat-xay-dung-cong-trinh-giao-thong', 'Kỹ thuật xây dựng công trình giao thông', NULL, 'KY_THUAT', 4),
+  ('ky-thuat-trac-dia-ban-do',                'Kỹ thuật trắc địa - bản đồ',              NULL, 'KY_THUAT', 4),
+  ('ky-thuat-xay-dung-cong-trinh-thuy',       'Kỹ thuật xây dựng công trình thủy',       NULL, 'KY_THUAT', 4),
+  ('ky-thuat-xay-dung-cong-trinh-bien',       'Kỹ thuật xây dựng công trình biển',       NULL, 'KY_THUAT', 4),
+  ('ky-thuat-co-so-ha-tang',                  'Kỹ thuật cơ sở hạ tầng',                  NULL, 'KY_THUAT', 4),
+  ('cong-nghe-ky-thuat-vat-lieu-xay-dung',    'Công nghệ kỹ thuật vật liệu xây dựng',    NULL, 'KY_THUAT', 4),
+  ('ky-thuat-nhiet',                          'Kỹ thuật nhiệt',                          NULL, 'KY_THUAT', 4),
+  ('ky-thuat-det',                            'Kỹ thuật dệt',                            NULL, 'KY_THUAT', 4),
+  ('cong-nghe-det-may',                       'Công nghệ dệt may',                       NULL, 'KY_THUAT', 4),
+  ('bao-duong-cong-nghiep',                   'Bảo dưỡng công nghiệp',                   NULL, 'KY_THUAT', 4),
+  ('ky-thuat-vat-lieu',                       'Kỹ thuật vật liệu',                       NULL, 'KY_THUAT', 4),
+  ('vat-ly-ky-thuat',                         'Vật lý kỹ thuật',                         NULL, 'KY_THUAT', 4),
+  ('co-ky-thuat',                             'Cơ kỹ thuật',                             NULL, 'KY_THUAT', 4),
+  ('ky-thuat-tau-thuy',                       'Kỹ thuật tàu thủy',                       NULL, 'KY_THUAT', 4),
+  ('ky-thuat-hang-khong',                     'Kỹ thuật hàng không',                     NULL, 'KY_THUAT', 4),
+  ('quan-ly-cong-nghiep',                     'Quản lý công nghiệp',                     NULL, 'KINH_TE',  4),
+  ('dia-ky-thuat-xay-dung',                   'Địa kỹ thuật xây dựng',                   NULL, 'KY_THUAT', 4),
+  ('ky-thuat-dau-khi',                        'Kỹ thuật dầu khí',                        NULL, 'KY_THUAT', 4),
+  ('kinh-te-tai-nguyen-thien-nhien',          'Kinh tế tài nguyên thiên nhiên',          NULL, 'KINH_TE',  4),
+  ('ky-thuat-moi-truong',                     'Kỹ thuật môi trường',                     NULL, 'KY_THUAT', 4)
 ON CONFLICT (slug) WHERE deleted_at IS NULL DO NOTHING;

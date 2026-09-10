@@ -5,13 +5,13 @@ sai lech vi ky tu Unicode (gach ngang dai/ngan, dau cau) trong ten nganh goc.
 Khoa tra cuu la SO DONG (1-indexed, dung thu tu file) — da doi chieu tay tung
 dong voi docs/plans/2026-09-05-001-...-plan.md § Phu luc.
 
-25/43 dong duoc nap (18 dong con lai KHONG co trong dict nao ben duoi -> bo qua):
-- Nhom A (10): 1 nganh ro rang.
-- Nhom C (10: TDTU 6 + USSH 4): 1 gia dung chung ca nhom nhieu nganh, chi nap
-  cho nganh duoc NEU TEN, khong suy ra gia cho cac nganh con lai trong nhom.
-- NEU rieng (3): ten co hau to chuong trinh (vd "- EPMP") nhung la 1 nganh that.
-- UIT (2/4): chi nap dong khong dung UNIQUE constraint cua `programs` (owner
-  chot khong mo schema them cot phan biet loai hinh tuyen sinh).
+Gia tri trong dict con:
+- str: 1 dong -> 1 nganh (nhom A: nganh ro rang; nhom C: 1 gia dung chung ca
+  nhom nhieu nganh, chi nap cho nganh duoc NEU TEN).
+- list[str]: 1 dong -> NHIEU nganh cung gia (fan-out). `scripts/seed.py` lap qua
+  list tao N `programs` + N `tuition_records`. Dung khi truong ra 1 muc/HE cho
+  hang chuc nganh (HCMUT he Chuong trinh tieu chuan: 1 dong -> 41 nganh).
+- khong co trong dict: bo qua khi nap (vd uet.jsonl/ueb.jsonl toan ten he).
 
 TDTU dong 28 (them 2026-09-06): Du lich (Chuyen nganh Huong dan du lich) o CO SO
 CHINH TP.HCM, Nhom 1 = 31,26 tr/nam — bu vao cho dong 4 (cung nganh nhung o Phan
@@ -29,9 +29,16 @@ Bo qua (khong co trong dict nao):
 
 from __future__ import annotations
 
-# {ten_file_jsonl: {so_dong (1-indexed): major_slug}} — dong khong co trong
-# dict con cua file do se bi bo qua khi nap.
-ROW_TO_MAJOR_SLUG: dict[str, dict[int, str]] = {
+# {ten_file_jsonl: {so_dong (1-indexed): major_slug | [major_slug, ...]}} — dong
+# khong co trong dict con cua file do se bi bo qua khi nap.
+#
+# Gia tri la LIST = fan-out: 1 dong JSONL (1 muc hoc phi cong bo o MUC HE) ap
+# cho NHIEU nganh cung mot gia. `scripts/seed.py` lap qua list, tao 1 `programs`
+# + 1 `tuition_records` cho moi nganh (cung amount, cung source, khac major_id).
+# Dung khi truong ra 1 muc/he cho hang chuc nganh (vd HCMUT he Chuong trinh tieu
+# chuan). `ROW_TO_DISPLAY_NAME` BO QUA dong dang list (moi nganh giu ten
+# `majors.name` cua no).
+ROW_TO_MAJOR_SLUG: dict[str, dict[int, str | list[str]]] = {
     "tdtu.jsonl": {
         1: "ke-toan",
         2: "thiet-ke-do-hoa",
@@ -266,12 +273,74 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str]] = {
     },
     "ou-tphcm.jsonl": {
         1: "cong-nghe-sinh-hoc",  # nhom: CNSH, CN thuc pham, Sinh hoc ung dung
-        2: "cong-nghe-ky-thuat-cong-trinh-xay-dung",  # nhom: + QL xay dung, Kien truc, KT xay dung
-        3: "cong-nghe-thong-tin",  # nhom: CNTT, KHMT, KHDL, HTTTQL, TTNT, KTPM, ATTT, Toan UD
-        4: "ke-toan",  # nhom: Ke toan, Kiem toan, TC-NH, QTKD, Marketing, KDQT, ...
+        2: "cong-nghe-ky-thuat-cong-trinh-xay-dung",  # nhom: + QL xd, Kien truc
+        3: "cong-nghe-thong-tin",  # nhom: CNTT, KHMT, KHDL, HTTTQL, TTNT, KTPM...
+        4: "ke-toan",  # nhom: Ke toan, Kiem toan, TC-NH, QTKD, Marketing, KDQT...
         5: "kinh-te",  # nhom: Kinh te, QL cong, XHH, CTXH, Dong Nam A hoc, Tam ly hoc
         6: "ngon-ngu-nhat",  # nhom: NN Nhat, NN Trung, NN Anh, NN Han
         7: "tai-chinh-ngan-hang",  # he TIEN TIEN, nhom nganh dau tien neu ten
+    },
+    # 2026-09-10 — HCMUT. Nguon: thong bao muc thu hoc phi nam hoc 2026-2027 tren
+    # hcmut.edu.vn (noi dung lay qua API /api/home/content/item, trang render JS).
+    # Truong ra 1 muc/HE, khong theo nganh. Owner chot "phuong an C" (2026-09-10):
+    #   - Dong 1 (he Chuong trinh tieu chuan): FAN-OUT ra ca 41 nganh dai hoc
+    #     chinh quy (danh sach nganh lay tu hcmut.edu.vn/tuyen-sinh/mo-ta-nganh-
+    #     dao-tao, BO khoi PFIEV vi khoa <=2018 khong con tuyen). 20 nganh da co
+    #     slug tu truoc, 21 nganh them moi o seeds/002_majors.sql (2026-09-10).
+    #   - Dong 2-8 (cac he tieng Anh / tien tien / Nhat / lien ket): chua co danh
+    #     sach nganh tung he -> tam map 1-2 nganh NEU TEN (kieu nhom A/C). Bo sung
+    #     sau khi crawl trang OISP.
+    "dh-bach-khoa-tphcm.jsonl": {
+        1: [
+            "thiet-ke-vi-mach",
+            "ky-thuat-dien-tu-vien-thong",
+            "ky-thuat-dieu-khien-tu-dong-hoa",
+            "ky-thuat-dien",
+            "kinh-te-xay-dung",
+            "ky-thuat-xay-dung-cong-trinh-giao-thong",
+            "ky-thuat-trac-dia-ban-do",
+            "ky-thuat-xay-dung",
+            "ky-thuat-xay-dung-cong-trinh-thuy",
+            "ky-thuat-xay-dung-cong-trinh-bien",
+            "ky-thuat-co-so-ha-tang",
+            "kien-truc",
+            "cong-nghe-ky-thuat-vat-lieu-xay-dung",
+            "ky-thuat-co-dien-tu",
+            "ky-thuat-nhiet",
+            "ky-thuat-det",
+            "ky-thuat-co-khi",
+            "cong-nghe-det-may",
+            "bao-duong-cong-nghiep",
+            "ky-thuat-hoa-hoc",
+            "cong-nghe-thuc-pham",
+            "cong-nghe-sinh-hoc",
+            "ky-thuat-may-tinh",
+            "khoa-hoc-may-tinh",
+            "ky-thuat-vat-lieu",
+            "khoa-hoc-du-lieu",
+            "vat-ly-ky-thuat",
+            "co-ky-thuat",
+            "ky-thuat-tau-thuy",
+            "cong-nghe-ky-thuat-o-to",
+            "ky-thuat-hang-khong",
+            "quan-tri-kinh-doanh",
+            "logistics-va-quan-ly-chuoi-cung-ung",
+            "ky-thuat-he-thong-cong-nghiep",
+            "quan-ly-cong-nghiep",
+            "dia-ky-thuat-xay-dung",
+            "ky-thuat-dau-khi",
+            "ky-thuat-dia-chat",
+            "kinh-te-tai-nguyen-thien-nhien",
+            "quan-ly-tai-nguyen-va-moi-truong",
+            "ky-thuat-moi-truong",
+        ],
+        2: "khoa-hoc-may-tinh",  # CTTA tieng Anh — nganh dai dien (chua co ds)
+        3: "khoa-hoc-may-tinh",  # CTTT tien tien — track khac dong 2 -> program rieng
+        4: "khoa-hoc-may-tinh",  # CTQT chuyen tiep quoc te — track khac -> rieng
+        5: ["khoa-hoc-du-lieu", "ky-thuat-hat-nhan"],  # CTTA nhom uu dai — neu ten
+        6: "ky-thuat-dien-tu-vien-thong",  # CTNB chuyen tiep Nhat — nganh neu ten
+        7: ["khoa-hoc-may-tinh", "co-ky-thuat"],  # CTHNB dinh huong Nhat — neu ten
+        8: ["tri-tue-nhan-tao", "cong-nghe-thong-tin"],  # lien ket UTS — neu ten
     },
 }
 
