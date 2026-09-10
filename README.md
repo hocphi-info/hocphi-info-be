@@ -268,6 +268,34 @@ uv run pytest -q
 Yêu cầu: PostgreSQL ≥ 14 (dùng `gen_random_bytes` của `pgcrypto` cho `gen_ulid()` +
 generated columns). `pgcrypto` có sẵn trong image `postgres:16-alpine`.
 
+### Seed dữ liệu lên production
+
+Production = Fly.io app `hocphi-info-api` (region `sin`). Push lên `main` tự deploy
+qua GitHub Actions (`.github/workflows/fly-deploy.yml` → `flyctl deploy`). Image chỉ
+chạy `uvicorn` — migrate/seed **không** tự chạy; nhưng `alembic`, `scripts/seed.py`,
+`seeds/`, `crawler/` đều nằm trong image (`.dockerignore` chỉ bỏ `.venv`,
+`__pycache__`, `.git`, `*.md`, `docs/`).
+
+Sau mỗi lần cập nhật `seeds/*` hoặc `scripts/seed_majors_mapping.py`:
+
+```bash
+git push origin main                                             # 1. deploy code mới
+fly ssh console -a hocphi-info-api -C "python -m scripts.seed"    # 2. nạp seed vào DB prod
+curl -s https://api.hocphi.info/api/coverage                     # 3. đối chiếu số liệu
+```
+
+- `scripts.seed` **idempotent** (`ON CONFLICT DO NOTHING` cho `*.sql`; get-or-create
+  cho `*.jsonl`) — chạy lại bao nhiêu lần cũng không nhân đôi, không đụng dòng cũ.
+- `DATABASE_URL` là Fly secret sẵn trong máy; `SEEDS_DIR` resolve theo `__file__` nên
+  không phụ thuộc thư mục hiện tại (`-C` không cần `cd`).
+- Máy hay ở trạng thái `suspend` (`min_machines_running = 0`) — `fly ssh console` tự
+  đánh thức.
+- **Có migration mới** thì chạy trước seed:
+  `fly ssh console -a hocphi-info-api -C "sh -lc 'alembic upgrade head && python -m scripts.seed'"`
+- Muốn migrate tự động mỗi lần deploy: thêm
+  `[deploy] release_command = "alembic upgrade head"` vào `fly.toml`. Seed nên vẫn để
+  tay — nó là thao tác dữ liệu, không phải schema.
+
 ## VII. Lộ trình
 
 Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`](../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §8):
