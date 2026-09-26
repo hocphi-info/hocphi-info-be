@@ -26,6 +26,10 @@ docs/
 # Crawler — snapshot tài liệu tải về, không commit (chỉ commit seeds/*.jsonl đã duyệt)
 crawler/work/
 
+seeds/*.jsonl
+!seeds/dh-bach-khoa-tphcm.jsonl
+!seeds/dh-khoa-hoc-tu-nhien-tphcm.jsonl
+
 # Claude Code — skill co commit, settings ca nhan thi khong
 .claude/settings.local.json
 
