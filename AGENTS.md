@@ -35,9 +35,11 @@ app/
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum <-> Postgres ENUM (school_category, program_track, …)
   models.py          # every SQLAlchemy model, one file (11 tables at MVP size)
-  health.py          # GET /health (+ /docs Swagger, auto-generated)
-  # feature routers land here as they're built: schools.py, majors.py, search.py, …
-  # each file = router + its Pydantic request/response models, colocated
+  health.py          # GET /health (+ /docs Swagger, auto-generated) — unversioned, infra check
+  v1/                # versioned business endpoints, GET /api/v1/...
+    __init__.py      # plain package marker, not a router aggregator
+    # feature routers land here as they're built: schools.py, majors.py, coverage.py, …
+    # each file = router + its Pydantic request/response models, colocated
 alembic/versions/     # 0001_initial_schema.py written by hand (gen_ulid(), ENUMs, VIEW, seed)
 scripts/seed.py        # manual data load — reads seeds/*.sql via AsyncSession
 seeds/                 # hand-curated *.sql (no admin API — see below)
