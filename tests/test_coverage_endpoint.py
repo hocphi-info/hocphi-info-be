@@ -1,4 +1,4 @@
-"""GET /api/coverage — httpx.AsyncClient goi thang app qua ASGITransport, dung
+"""GET /api/v1/coverage — httpx.AsyncClient goi thang app qua ASGITransport, dung
 chung DB test voi fixture `db` (xem tests/conftest.py). Response phai dung
 camelCase, khop hop dong trong docs/plans/2026-09-06-001-...-plan.md va nhom
 `Coverage*` cua hocphi-info-fe/src/types/domain.ts.
@@ -21,7 +21,7 @@ async def test_coverage_empty_db_returns_zero_shape(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/coverage")
+        resp = await client.get("/api/v1/coverage")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -53,7 +53,7 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/coverage")
+        resp = await client.get("/api/v1/coverage")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -97,7 +97,7 @@ async def test_coverage_seeded_schools_rows_shape(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/coverage")
+        resp = await client.get("/api/v1/coverage")
 
     body = resp.json()
     schools = body["schools"]
@@ -134,7 +134,7 @@ async def test_coverage_seeded_numbers_reconcile(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/coverage")
+        resp = await client.get("/api/v1/coverage")
 
     body = resp.json()
     totals = body["totals"]

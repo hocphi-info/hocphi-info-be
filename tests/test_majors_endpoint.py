@@ -1,4 +1,4 @@
-"""GET /api/majors (S1) — httpx.AsyncClient goi thang app qua ASGITransport
+"""GET /api/v1/majors (S1) — httpx.AsyncClient goi thang app qua ASGITransport
 (khong can server that chay), dung chung DB test voi fixture `db` (xem
 tests/conftest.py). Response phai dung camelCase, khop
 hocphi-info-fe/src/types/domain.ts:MajorRow.
@@ -14,7 +14,7 @@ async def test_list_majors_empty_when_no_data(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/majors")
+        resp = await client.get("/api/v1/majors")
     assert resp.status_code == 200
     assert resp.json() == []
 
@@ -27,7 +27,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/majors")
+        resp = await client.get("/api/v1/majors")
 
     assert resp.status_code == 200
     rows = resp.json()
@@ -80,14 +80,14 @@ async def test_list_majors_search_filters_by_major_name_without_diacritics(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/majors", params={"search": "ke toan"})
+        resp = await client.get("/api/v1/majors", params={"search": "ke toan"})
 
     assert resp.status_code == 200
     rows = resp.json()
     assert rows, "phai co it nhat 1 dong khop 'ke toan'"
     # Moi dong tra ve deu la nganh Ke toan (khop qua ten nganh, khong dau).
     assert {r["major"]["slug"] for r in rows} == {"ke-toan"}
-    # /api/majors tra 1 dong / program -> nhieu truong day Ke toan -> nhieu dong.
+    # /api/v1/majors tra 1 dong / program -> nhieu truong day Ke toan -> nhieu dong.
     assert len(rows) >= 1
 
 
@@ -100,7 +100,7 @@ async def test_list_majors_search_also_matches_school_name(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.get(
-            "/api/majors", params={"search": "ton duc thang"}
+            "/api/v1/majors", params={"search": "ton duc thang"}
         )
 
     assert resp.status_code == 200
@@ -119,7 +119,7 @@ async def test_list_majors_search_below_min_length_returns_empty(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/majors", params={"search": "a"})
+        resp = await client.get("/api/v1/majors", params={"search": "a"})
 
     assert resp.status_code == 200
     assert resp.json() == []

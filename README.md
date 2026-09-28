@@ -128,8 +128,8 @@ app/
   enums.py           # Python StrEnum ↔ ENUM Postgres (school_category, program_track, …)
   models.py          # TẤT CẢ model SQLAlchemy trong 1 file (MVP 11 bảng)
   health.py          # GET /health (+ /docs Swagger tự sinh)
-  majors.py          # GET /api/majors (S1) — join programs+schools+majors+tuition+increase
-  schools.py         # GET /api/schools (S2) — đọc VIEW school_track_stats + increaseSummary
+  majors.py          # GET /api/v1/majors (S1) — join programs+schools+majors+tuition+increase
+  schools.py         # GET /api/v1/schools (S2) — đọc VIEW school_track_stats + increaseSummary
   search.py          # GET /api/search (F13) — không dấu, min 2 ký tự, max 8 kết quả
   schemas/common.py  # Pydantic response model dùng chung (CamelModel, khớp FE domain.ts)
 alembic/
@@ -284,7 +284,7 @@ git push origin main                                          # 1. đẩy code (
 fly status -a hocphi-info-api                                 # 2. lấy id 1 máy (cột ID)
 fly machine start <machine-id> -a hocphi-info-api             # 3. bật máy đó (đang stopped)
 fly ssh console -a hocphi-info-api -C "python -m scripts.seed" # 4. nạp seed vào DB prod
-curl -s https://api.hocphi.info/api/coverage                  # 5. đối chiếu số liệu
+curl -s https://api.hocphi.info/api/v1/coverage                  # 5. đối chiếu số liệu
 ```
 
 **Có đổi code app** (router, model, migration…) → cần deploy image mới trước:
@@ -321,18 +321,18 @@ Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`
 - [ ] **B4** API backend (**FastAPI** — đang làm)
   - [x] **Tuần 1** — nền tảng: schema + Alembic + seed + Docker Compose + `GET /health` + `/docs`
   - [x] **Tuần 2** — nạp học phí thật (JSONL, 25/43 dòng đã duyệt) + endpoint đọc
-        `GET /api/majors` (S1) / `GET /api/schools` (S2) / `GET /api/search` (F13) +
+        `GET /api/v1/majors` (S1) / `GET /api/v1/schools` (S2) / `GET /api/search` (F13) +
         Pydantic response models. Đảo thứ tự với Tuần 4 gốc — xem
         `docs/plans/2026-09-05-001-...-plan.md`. Path endpoint **tiếng Anh** (đã chốt,
         khác draft để ngỏ ban đầu); `tuition_records` +`needs_review`/`review_reason`
         (migration `0002`).
-  - [x] **Tuần 3** — endpoint chi tiết ngành–trường `GET /api/schools/{school}/majors/{major}`
+  - [x] **Tuần 3** — endpoint chi tiết ngành–trường `GET /api/v1/schools/{school}/majors/{major}`
         (S3, gom mọi hệ đào tạo) + giá trị dẫn xuất `schema.md` §5: `total_course`,
         `total_with_license` (tính lũy tiến theo `app_settings.default_increase_pct`,
         chưa có `program_increase` thật). Không cần migration mới. Bỏ `total_course_range`
         khỏi tuần này (chưa có dữ liệu lộ trình tăng thật để khoảng có ý nghĩa) — xem
         `docs/brainstorms/2026-09-05-week3-program-detail-endpoint-requirements.md`.
-  - [x] **Phụ** — `GET /api/coverage` (độ phủ dữ liệu cho trang `/du-lieu` của FE):
+  - [x] **Phụ** — `GET /api/v1/coverage` (độ phủ dữ liệu cho trang `/du-lieu` của FE):
         tổng hợp + theo thành phố / loại trường / nhóm ngành + bảng từng trường, một
         CTE `pub` cho mọi phép đếm (các số cộng khớp nhau). Không cần migration mới —
         xem `../hocphi-info/docs/plans/2026-09-06-001-feat-coverage-endpoint-du-lieu-page-plan.md`.

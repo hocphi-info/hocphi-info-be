@@ -86,7 +86,7 @@ class CoverageOut(CamelModel):
 
 
 # ── Endpoint ───────────────────────────────────────────────────────────────
-@router.get("/api/coverage", response_model=CoverageOut)
+@router.get("/api/v1/coverage", response_model=CoverageOut)
 async def get_coverage(
     session: AsyncSession = Depends(get_session),
 ) -> CoverageOut:
