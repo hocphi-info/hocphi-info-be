@@ -1,4 +1,4 @@
-"""GET /api/schools (S2) — doc VIEW school_track_stats, chi tinh tren he dai
+"""GET /api/v1/schools (S2) — doc VIEW school_track_stats, chi tinh tren he dai
 tra. NEU chi co du lieu he chat_luong_cao (Tuan 2) nen KHONG xuat hien trong
 danh sach nay — dung ngu nghia "khong tron he" cua schema.md §4.
 """
@@ -19,7 +19,7 @@ async def test_list_schools_empty_when_no_data(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools")
+        resp = await client.get("/api/v1/schools")
     assert resp.status_code == 200
     assert resp.json() == []
 
@@ -32,7 +32,7 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools")
+        resp = await client.get("/api/v1/schools")
 
     assert resp.status_code == 200
     rows = resp.json()
@@ -77,7 +77,7 @@ async def test_list_schools_exposes_logo_url_after_import(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools")
+        resp = await client.get("/api/v1/schools")
 
     rows = resp.json()
     uit_row = next(r for r in rows if r["school"]["slug"] == "uit")
@@ -92,7 +92,7 @@ async def test_list_schools_search_matches_by_short_name_without_diacritics(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools", params={"search": "uit"})
+        resp = await client.get("/api/v1/schools", params={"search": "uit"})
 
     assert resp.status_code == 200
     rows = resp.json()
@@ -121,7 +121,7 @@ async def test_list_schools_search_no_match_returns_empty(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools", params={"search": "zzzzzz"})
+        resp = await client.get("/api/v1/schools", params={"search": "zzzzzz"})
 
     assert resp.status_code == 200
     assert resp.json() == []

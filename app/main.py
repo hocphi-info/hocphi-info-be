@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import coverage, health, majors, program_detail, school_detail, schools
+from app import health
 from app.config import settings
 from app.db import engine
 from app.observability import (
@@ -18,6 +18,7 @@ from app.observability import (
     configure_sql_logging,
     get_request_id,
 )
+from app.v1 import coverage, majors, program_detail, school_detail, schools
 
 # Dung structlog TRUOC khi tao app / bat ky log nao — mot lan / process.
 configure_logging()
@@ -31,9 +32,9 @@ app = FastAPI(
     version="0.4.0",
     description=(
         "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
-        "GET /api/majors (?search=), /api/schools (?search=), "
-        "/api/schools/{school_slug}/majors/{major_slug}, "
-        "/api/schools/{school_slug}, /api/coverage."
+        "GET /api/v1/majors (?search=), /api/v1/schools (?search=), "
+        "/api/v1/schools/{school_slug}/majors/{major_slug}, "
+        "/api/v1/schools/{school_slug}, /api/v1/coverage."
     ),
 )
 

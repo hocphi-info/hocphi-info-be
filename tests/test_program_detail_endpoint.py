@@ -1,4 +1,4 @@
-"""GET /api/schools/{school_slug}/majors/{major_slug} (S3) — httpx.AsyncClient goi
+"""GET /api/v1/schools/{school_slug}/majors/{major_slug} (S3) — httpx.AsyncClient goi
 thang app qua ASGITransport, dung chung DB test voi fixture `db` (xem
 tests/conftest.py). Response phai dung camelCase, khop pattern
 tests/test_majors_endpoint.py.
@@ -16,7 +16,7 @@ async def test_get_program_detail_404_when_school_not_found(db: AsyncSession) ->
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/khong-ton-tai/majors/ke-toan")
+        resp = await client.get("/api/v1/schools/khong-ton-tai/majors/ke-toan")
     assert resp.status_code == 404
 
 
@@ -27,7 +27,7 @@ async def test_get_program_detail_404_when_no_program_seeded(db: AsyncSession) -
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # uit + duoc-hoc: ca 2 ton tai rieng biet nhung khong ghep thanh 1 program.
-        resp = await client.get("/api/schools/uit/majors/duoc-hoc")
+        resp = await client.get("/api/v1/schools/uit/majors/duoc-hoc")
     assert resp.status_code == 404
 
 
@@ -37,7 +37,7 @@ async def test_get_program_detail_standard_years_4(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/tdtu/majors/ke-toan")
+        resp = await client.get("/api/v1/schools/tdtu/majors/ke-toan")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -70,7 +70,7 @@ async def test_get_program_detail_standard_years_6_duoc_hoc(db: AsyncSession) ->
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/tdtu/majors/duoc-hoc")
+        resp = await client.get("/api/v1/schools/tdtu/majors/duoc-hoc")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -93,7 +93,7 @@ async def test_get_program_detail_year1_has_source(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/tdtu/majors/ke-toan")
+        resp = await client.get("/api/v1/schools/tdtu/majors/ke-toan")
 
     assert resp.status_code == 200
     program = resp.json()["programs"][0]
@@ -113,7 +113,7 @@ async def test_get_program_detail_orders_multiple_tracks(db: AsyncSession) -> No
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # tdtu/ngon-ngu-anh co 2 program: tien_tien va chat_luong_cao.
-        resp = await client.get("/api/schools/tdtu/majors/ngon-ngu-anh")
+        resp = await client.get("/api/v1/schools/tdtu/majors/ngon-ngu-anh")
 
     assert resp.status_code == 200
     tracks = [p["program"]["track"] for p in resp.json()["programs"]]
@@ -131,7 +131,7 @@ async def test_get_program_detail_campus_split(db: AsyncSession) -> None:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/tdtu/majors/du-lich")
+        resp = await client.get("/api/v1/schools/tdtu/majors/du-lich")
 
     assert resp.status_code == 200
     body = resp.json()

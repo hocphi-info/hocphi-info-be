@@ -60,7 +60,7 @@ def _compute_yearly_amounts(
 
 
 @router.get(
-    "/api/schools/{school_slug}/majors/{major_slug}",
+    "/api/v1/schools/{school_slug}/majors/{major_slug}",
     response_model=ProgramDetailResponseOut,
 )
 async def get_program_detail(

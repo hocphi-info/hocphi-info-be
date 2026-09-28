@@ -25,7 +25,7 @@ from app.text import MIN_QUERY_LEN, normalize
 router = APIRouter(tags=["majors"])
 
 
-@router.get("/api/majors", response_model=list[MajorRowOut])
+@router.get("/api/v1/majors", response_model=list[MajorRowOut])
 async def list_majors(
     search: str | None = Query(
         None,

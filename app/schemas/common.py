@@ -89,7 +89,7 @@ class ProgramIncreaseOut(CamelModel):
 
 
 class MajorRowOut(CamelModel):
-    """Khop `MajorRow` domain.ts — 1 dong o man hinh S1 (`GET /api/majors`)."""
+    """Khop `MajorRow` domain.ts — 1 dong o man hinh S1 (`GET /api/v1/majors`)."""
 
     program: ProgramOut
     school: SchoolOut
@@ -111,7 +111,7 @@ class SchoolStatsOut(CamelModel):
 
 
 class SchoolRowOut(CamelModel):
-    """Khop `SchoolRow` domain.ts — 1 dong o man hinh S2 (`GET /api/schools`)."""
+    """Khop `SchoolRow` domain.ts — 1 dong o man hinh S2 (`GET /api/v1/schools`)."""
 
     school: SchoolOut
     stats: SchoolStatsOut
@@ -143,7 +143,7 @@ class SchoolProgramRowOut(CamelModel):
 
 
 class SchoolDetailResponseOut(CamelModel):
-    """Khop response cua `GET /api/schools/{school_slug}` (F7)."""
+    """Khop response cua `GET /api/v1/schools/{school_slug}` (F7)."""
 
     school: SchoolOut
     track_stats: list[SchoolTrackStatOut]
@@ -171,7 +171,7 @@ class ProgramDetailOut(CamelModel):
 
 
 class ProgramDetailResponseOut(CamelModel):
-    """Khop response cua `GET /api/schools/{school_slug}/majors/{major_slug}` (S3) —
+    """Khop response cua `GET /api/v1/schools/{school_slug}/majors/{major_slug}` (S3) —
     gom TAT CA programs cung (school, major), dung schema.md §3."""
 
     school: SchoolOut

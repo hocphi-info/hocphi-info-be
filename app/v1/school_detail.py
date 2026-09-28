@@ -26,7 +26,7 @@ from app.schemas.common import (
 router = APIRouter(tags=["school-detail"])
 
 
-@router.get("/api/schools/{school_slug}", response_model=SchoolDetailResponseOut)
+@router.get("/api/v1/schools/{school_slug}", response_model=SchoolDetailResponseOut)
 async def get_school_detail(
     school_slug: str,
     session: AsyncSession = Depends(get_session),

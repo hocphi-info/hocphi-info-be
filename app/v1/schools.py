@@ -40,7 +40,7 @@ def _format_increase_summary(pairs: list[tuple[float, str]]) -> str:
     return f"+{lo:g}–{hi:g}%"  # noqa: RUF001 — en dash co y, khop derive.ts
 
 
-@router.get("/api/schools", response_model=list[SchoolRowOut])
+@router.get("/api/v1/schools", response_model=list[SchoolRowOut])
 async def list_schools(
     search: str | None = Query(
         None,

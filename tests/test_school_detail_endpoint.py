@@ -1,4 +1,4 @@
-"""GET /api/schools/{school_slug} (F7) — httpx.AsyncClient goi thang app qua
+"""GET /api/v1/schools/{school_slug} (F7) — httpx.AsyncClient goi thang app qua
 ASGITransport, dung chung DB test voi fixture `db`. Response phai dung
 camelCase, khop pattern tests/test_program_detail_endpoint.py.
 """
@@ -15,7 +15,7 @@ async def test_get_school_detail_404_when_school_not_found(db: AsyncSession) -> 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/khong-ton-tai")
+        resp = await client.get("/api/v1/schools/khong-ton-tai")
     assert resp.status_code == 404
 
 
@@ -27,7 +27,7 @@ async def test_get_school_detail_multi_track(db: AsyncSession) -> None:
     ) as client:
         # tdtu: 6 dai_tra (gom Du lich o Phan hieu Khanh Hoa) + 4 chat_luong_cao
         # + 6 tien_tien = 16 chuong trinh trong danh sach programs[].
-        resp = await client.get("/api/schools/tdtu")
+        resp = await client.get("/api/v1/schools/tdtu")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -64,7 +64,7 @@ async def test_get_school_detail_single_program_school(db: AsyncSession) -> None
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/schools/dh-van-lang")
+        resp = await client.get("/api/v1/schools/dh-van-lang")
 
     assert resp.status_code == 200
     body = resp.json()
