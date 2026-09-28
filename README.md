@@ -127,10 +127,14 @@ app/
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum ↔ ENUM Postgres (school_category, program_track, …)
   models.py          # TẤT CẢ model SQLAlchemy trong 1 file (MVP 11 bảng)
-  health.py          # GET /health (+ /docs Swagger tự sinh)
-  majors.py          # GET /api/v1/majors (S1) — join programs+schools+majors+tuition+increase
-  schools.py         # GET /api/v1/schools (S2) — đọc VIEW school_track_stats + increaseSummary
-  search.py          # GET /api/search (F13) — không dấu, min 2 ký tự, max 8 kết quả
+  health.py          # GET /health (+ /docs Swagger tự sinh) — không version, health check hạ tầng
+  v1/                # endpoint nghiệp vụ có version, GET /api/v1/...
+    __init__.py      # package marker thuần, không gom router
+    majors.py         # GET /api/v1/majors (S1) — join programs+schools+majors+tuition+increase
+    schools.py        # GET /api/v1/schools (S2) — đọc VIEW school_track_stats + increaseSummary
+    program_detail.py # GET /api/v1/schools/{school}/majors/{major} (S3) — chi tiết ngành–trường
+    school_detail.py  # GET /api/v1/schools/{school} (F7) — chi tiết trường
+    coverage.py       # GET /api/v1/coverage (F14/F15) — độ phủ dữ liệu cho trang /du-lieu
   schemas/common.py  # Pydantic response model dùng chung (CamelModel, khớp FE domain.ts)
 alembic/
   env.py             # template async — trỏ app.db:Base.metadata
