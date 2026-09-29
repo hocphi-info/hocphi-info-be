@@ -11,11 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, MajorGroupCode, ProgramLanguage
+from app.enums import CityCode, ProgramLanguage
 from app.models import Major, Program, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
-    MajorOut,
     ProgramOut,
     SchoolDetailResponseOut,
     SchoolOut,
@@ -23,6 +22,7 @@ from app.schemas.common import (
     SchoolTrackStatOut,
     TuitionRecordOut,
 )
+from app.taxonomy import load_major_context, to_major_out
 
 router = APIRouter(tags=["school-detail"])
 
@@ -91,6 +91,10 @@ async def get_school_detail(
         )
     ).all()
 
+    ctx = await load_major_context(
+        session, {major for _program, major, _year1 in program_rows}
+    )
+
     return SchoolDetailResponseOut(
         school=SchoolOut(
             slug=school.slug,
@@ -112,15 +116,7 @@ async def get_school_detail(
                     campus=program.campus,
                     display_name=program.display_name,
                 ),
-                major=MajorOut(
-                    slug=major.slug,
-                    name=major.name,
-                    code=major.code,
-                    group_code=MajorGroupCode(major.group_code),
-                    standard_years=major.standard_years,
-                    requires_practice_license=major.requires_practice_license,
-                    practice_profession=major.practice_profession,
-                ),
+                major=to_major_out(major, ctx),
                 year1=TuitionRecordOut(
                     program_id=year1.program_id,
                     academic_year=year1.academic_year,

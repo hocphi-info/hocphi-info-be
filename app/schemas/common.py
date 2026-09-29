@@ -53,13 +53,34 @@ class SchoolOut(CamelModel):
     logo_url: str | None = None
 
 
+class TaxonomyNodeOut(CamelModel):
+    """1 nut cua danh muc nganh cua Bo GD&DT (ma + ten chinh thuc)."""
+
+    code: str
+    name: str
+
+
+class TaxonomyOut(CamelModel):
+    """Vi tri cua nganh trong danh muc Bo GD&DT: linh vuc (3 so) va nhom nganh
+    (5 so). Chi co khi nganh da co ma 7 so; nganh "Chua phan loai" -> `taxonomy`
+    la null o `MajorOut`."""
+
+    field: TaxonomyNodeOut
+    group: TaxonomyNodeOut
+
+
 class MajorOut(CamelModel):
     """Khop `Major` domain.ts."""
 
     slug: str
     name: str
     code: str | None
+    # 6 nhom tu dat CU — se bi go o migration 0006 khi FE da chuyen sang `taxonomy`.
     group_code: MajorGroupCode
+    # null = "Chua phan loai" (chua co ma 7 so trong danh muc Bo — seeds/005).
+    taxonomy: TaxonomyOut | None
+    # Ten goi khac de tim kiem ("cntt", "it", "computer science") — seeds/006.
+    aliases: list[str]
     standard_years: int
     requires_practice_license: bool
     practice_profession: str | None
@@ -172,6 +193,17 @@ class SchoolDetailResponseOut(CamelModel):
     programs: list[SchoolProgramRowOut]
 
 
+class RelatedMajorOut(CamelModel):
+    """Nganh CUNG NHOM NGANH (5 so) voi nganh dang xem — de so sanh. So truong va
+    khoang hoc phi Nam 1 tinh tren he DAI TRA (khong tron he)."""
+
+    slug: str
+    name: str
+    n_schools: int
+    min_year1_amount: int
+    max_year1_amount: int
+
+
 class YearlyAmountOut(CamelModel):
     """1 nam trong bang hoc phi tinh luy tien cua 1 program (S3) — so **tinh**,
     khong phai ban ghi DB (khac TuitionRecordOut: khong co program_id/confidence)."""
@@ -199,3 +231,6 @@ class ProgramDetailResponseOut(CamelModel):
     school: SchoolOut
     major: MajorOut
     programs: list[ProgramDetailOut]
+    # Nganh cung nhom nganh co du lieu (toi da 6); rong khi nganh chua phan loai
+    # hoac nhom chi co 1 nganh.
+    related_majors: list[RelatedMajorOut]

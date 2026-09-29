@@ -25,10 +25,20 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from sqlalchemy import and_, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.db import get_session
 from app.enums import CityCode, MajorGroupCode, SchoolCategory, SourceDocType
-from app.models import City, Major, MajorGroup, Program, School, Source, TuitionRecord
+from app.models import (
+    City,
+    Major,
+    MajorGroup,
+    Program,
+    School,
+    Source,
+    TaxonomyNode,
+    TuitionRecord,
+)
 from app.schemas.common import CamelModel
 
 router = APIRouter(tags=["coverage"])
@@ -62,6 +72,15 @@ class CoverageMajorGroupRowOut(CamelModel):
     programs_with_tuition: int
 
 
+class CoverageFieldRowOut(CamelModel):
+    """1 linh vuc (danh muc Bo GD&DT) co du lieu. `field_code = null` la dong
+    "Chua phan loai" (nganh chua co ma 7 so)."""
+
+    field_code: str | None
+    field_name: str
+    programs_with_tuition: int
+
+
 class CoverageSchoolRowOut(CamelModel):
     slug: str
     name: str
@@ -83,6 +102,9 @@ class CoverageOut(CamelModel):
     by_city: list[CoverageCityRowOut]
     by_category: list[CoverageCategoryRowOut]
     by_major_group: list[CoverageMajorGroupRowOut]
+    # Chi linh vuc CO du lieu (+ dong "Chua phan loai" neu > 0). Tong = tong
+    # chuong trinh, nhu byMajorGroup.
+    by_field: list[CoverageFieldRowOut]
     schools: list[CoverageSchoolRowOut]
 
 
@@ -99,6 +121,7 @@ async def get_coverage(
             TuitionRecord.updated_at.label("tr_updated_at"),
             Program.school_id.label("school_id"),
             Major.group_code.label("group_code"),
+            Major.code.label("major_code"),
         )
         .join(Program, Program.id == TuitionRecord.program_id)
         .join(Major, Major.id == Program.major_id)
@@ -186,6 +209,26 @@ async def get_coverage(
         )
     ).all()
 
+    # --- byField: linh vuc co du lieu (ngành -> nhom -> linh vuc qua parent_code),
+    # cong dong "Chua phan loai" cho nganh chua co ma. Cung CTE `pub` => tong khop. ---
+    group_node = aliased(TaxonomyNode)
+    field_node = aliased(TaxonomyNode)
+    n_programs = func.count(distinct(pub.c.program_id))
+    field_rows = (
+        await session.execute(
+            select(field_node.code, field_node.name, n_programs)
+            .select_from(pub)
+            .join(TaxonomyNode, TaxonomyNode.code == pub.c.major_code)
+            .join(group_node, group_node.code == TaxonomyNode.parent_code)
+            .join(field_node, field_node.code == group_node.parent_code)
+            .group_by(field_node.code, field_node.name)
+            .order_by(n_programs.desc(), field_node.code)
+        )
+    ).all()
+    unclassified = await session.scalar(
+        select(n_programs).select_from(pub).where(pub.c.major_code.is_(None))
+    )
+
     # --- schools[]: TAT CA truong con song + so lieu gop tu `pub` + source moi nhat ---
     per_school = (
         select(
@@ -268,6 +311,23 @@ async def get_coverage(
             )
             for code, name, n in group_rows
         ],
+        by_field=[
+            CoverageFieldRowOut(
+                field_code=code, field_name=name, programs_with_tuition=n
+            )
+            for code, name, n in field_rows
+        ]
+        + (
+            [
+                CoverageFieldRowOut(
+                    field_code=None,
+                    field_name="Chưa phân loại",
+                    programs_with_tuition=unclassified,
+                )
+            ]
+            if unclassified
+            else []
+        ),
         schools=[
             CoverageSchoolRowOut(
                 slug=slug,

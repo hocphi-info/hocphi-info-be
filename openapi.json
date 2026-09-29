@@ -49,10 +49,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra [].",
+              "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky) hoac TEN GOI KHAC cua nganh (alias: bang han / tien to >= 3 ky tu), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra [].",
               "title": "Search"
             },
-            "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra []."
+            "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky) hoac TEN GOI KHAC cua nganh (alias: bang han / tien to >= 3 ky tu), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra []."
           }
         ],
         "responses": {
@@ -322,6 +322,37 @@
         ],
         "title": "CoverageCityRowOut"
       },
+      "CoverageFieldRowOut": {
+        "properties": {
+          "fieldCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fieldcode"
+          },
+          "fieldName": {
+            "type": "string",
+            "title": "Fieldname"
+          },
+          "programsWithTuition": {
+            "type": "integer",
+            "title": "Programswithtuition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fieldCode",
+          "fieldName",
+          "programsWithTuition"
+        ],
+        "title": "CoverageFieldRowOut",
+        "description": "1 linh vuc (danh muc Bo GD&DT) co du lieu. `field_code = null` la dong\n\"Chua phan loai\" (nganh chua co ma 7 so)."
+      },
       "CoverageMajorGroupRowOut": {
         "properties": {
           "groupCode": {
@@ -382,6 +413,13 @@
             "type": "array",
             "title": "Bymajorgroup"
           },
+          "byField": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageFieldRowOut"
+            },
+            "type": "array",
+            "title": "Byfield"
+          },
           "schools": {
             "items": {
               "$ref": "#/components/schemas/CoverageSchoolRowOut"
@@ -397,6 +435,7 @@
           "byCity",
           "byCategory",
           "byMajorGroup",
+          "byField",
           "schools"
         ],
         "title": "CoverageOut"
@@ -599,6 +638,23 @@
           "groupCode": {
             "$ref": "#/components/schemas/MajorGroupCode"
           },
+          "taxonomy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
           "standardYears": {
             "type": "integer",
             "title": "Standardyears"
@@ -625,6 +681,8 @@
           "name",
           "code",
           "groupCode",
+          "taxonomy",
+          "aliases",
           "standardYears",
           "requiresPracticeLicense",
           "practiceProfession"
@@ -728,13 +786,21 @@
             },
             "type": "array",
             "title": "Programs"
+          },
+          "relatedMajors": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedMajorOut"
+            },
+            "type": "array",
+            "title": "Relatedmajors"
           }
         },
         "type": "object",
         "required": [
           "school",
           "major",
-          "programs"
+          "programs",
+          "relatedMajors"
         ],
         "title": "ProgramDetailResponseOut",
         "description": "Khop response cua `GET /api/v1/schools/{school_slug}/majors/{major_slug}` (S3) —\ngom TAT CA programs cung (school, major), dung schema.md §3."
@@ -838,6 +904,40 @@
         ],
         "title": "ProgramTrack",
         "description": "He dao tao — hoc phi chenh 3-5 lan, khong bao gio tron khi tinh trung vi."
+      },
+      "RelatedMajorOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "nSchools": {
+            "type": "integer",
+            "title": "Nschools"
+          },
+          "minYear1Amount": {
+            "type": "integer",
+            "title": "Minyear1Amount"
+          },
+          "maxYear1Amount": {
+            "type": "integer",
+            "title": "Maxyear1Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "nSchools",
+          "minYear1Amount",
+          "maxYear1Amount"
+        ],
+        "title": "RelatedMajorOut",
+        "description": "Nganh CUNG NHOM NGANH (5 so) voi nganh dang xem — de so sanh. So truong va\nkhoang hoc phi Nam 1 tinh tren he DAI TRA (khong tron he)."
       },
       "SchoolCategory": {
         "type": "string",
@@ -1095,6 +1195,42 @@
         ],
         "title": "SourceOut",
         "description": "Khop `Source` domain.ts (F12) — chi gan duoc voi ban ghi CONG BO that\n(Nam 1); cac nam du phong la so tinh, khong co source_id that."
+      },
+      "TaxonomyNodeOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "TaxonomyNodeOut",
+        "description": "1 nut cua danh muc nganh cua Bo GD&DT (ma + ten chinh thuc)."
+      },
+      "TaxonomyOut": {
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/TaxonomyNodeOut"
+          },
+          "group": {
+            "$ref": "#/components/schemas/TaxonomyNodeOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "group"
+        ],
+        "title": "TaxonomyOut",
+        "description": "Vi tri cua nganh trong danh muc Bo GD&DT: linh vuc (3 so) va nhom nganh\n(5 so). Chi co khi nganh da co ma 7 so; nganh \"Chua phan loai\" -> `taxonomy`\nla null o `MajorOut`."
       },
       "TuitionRecordOut": {
         "properties": {
