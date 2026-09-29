@@ -66,9 +66,12 @@ section, matching `hocphi-info-fe`'s learning-log style — see `docs/plans/`.
   `code`/`key` string — no ULID, no soft-delete on those.
 - **Soft delete on business tables**: `created_at` / `updated_at` / `deleted_at`, default
   queries filter `WHERE deleted_at IS NULL`.
-- **Response models are Pydantic, camelCase, enums as strings** — this has to match
-  `hocphi-info-fe/src/types/domain.ts` field-for-field; check that file before renaming or
-  reshaping a response.
+- **Response models are Pydantic, camelCase, enums as strings** — the contract with the
+  frontend is the committed `openapi.json`, and `hocphi-info-fe` *generates* its TypeScript
+  types from it (`npm run gen:api`). After changing any response model run `make openapi`
+  and commit the result; `tests/test_openapi_contract.py` and CI fail if you forget. Use the
+  `StrEnum`s in `app/enums.py` (not bare `str`) for enum-like fields so the spec carries the
+  allowed values.
 - Tooling: `uv` for deps/venv, `ruff` (lint) + `mypy` (types, `disallow_untyped_defs`) +
   `pytest` (async, `asyncio_mode = "auto"`). Run `uv run ruff check . && uv run mypy . && uv run pytest -q`
   before committing.

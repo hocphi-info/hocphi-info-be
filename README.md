@@ -45,7 +45,7 @@ flowchart TD
         DB --> VIEW[("VIEW school_track_stats<br/>Min–Max / trung vị / số ngành<br/>theo (trường, hệ)")]
         Q --> DERIVE["Giá trị dẫn xuất tính lúc query<br/>(schema.md §5): amount_year_i =<br/>year_1 × (1+r)^(i-1), total_course,<br/>median_per_year, total_with_license"]
         VIEW --> DERIVE
-        DERIVE --> RESP["Pydantic response models<br/>camelCase, enum = string —<br/>khớp hocphi-info-fe/src/types/domain.ts"]
+        DERIVE --> RESP["Pydantic response models<br/>camelCase, enum = string —<br/>xuất ra openapi.json cho FE sinh type"]
     end
 
     RESP --> FE["hocphi-info-fe<br/>S1 theo ngành · S2 theo trường ·<br/>S3 chi tiết ngành–trường · F13 tìm nhanh"]
@@ -135,7 +135,7 @@ app/
     program_detail.py # GET /api/v1/schools/{school}/majors/{major} (S3) — chi tiết ngành–trường
     school_detail.py  # GET /api/v1/schools/{school} (F7) — chi tiết trường
     coverage.py       # GET /api/v1/coverage (F14/F15) — độ phủ dữ liệu cho trang /du-lieu
-  schemas/common.py  # Pydantic response model dùng chung (CamelModel, khớp FE domain.ts)
+  schemas/common.py  # Pydantic response model dùng chung (CamelModel; nguồn của openapi.json)
 alembic/
   env.py             # template async — trỏ app.db:Base.metadata
   versions/
@@ -240,6 +240,20 @@ VIEW `school_track_stats` (Min–Max / trung vị / số ngành theo
 tra cứu tĩnh khoá bằng `code` / `key` — không ULID, không soft-delete. Các bảng nghiệp vụ
 đều có `created_at` / `updated_at` / `deleted_at` (soft delete: query mặc định lọc
 `WHERE deleted_at IS NULL`).
+
+### Hợp đồng API (openapi.json)
+
+`openapi.json` ở gốc repo là hợp đồng giữa BE và FE, xuất từ chính code:
+
+```bash
+make openapi         # ghi lại openapi.json sau khi sửa response model → commit
+make openapi-check   # báo lỗi nếu file cũ (test + CI cũng kiểm tra)
+```
+
+FE sinh type TypeScript từ file này. Quy trình đổi response: (1) BE sửa model + `make openapi`;
+(2) FE chạy `OPENAPI_SRC=../hocphi-info-be/openapi.json npm run gen:api` rồi sửa theo `tsc`;
+(3) sau khi BE merge, FE chạy lại `npm run gen:api` (đọc từ `main`), diff phải rỗng; (4) deploy BE
+(tag) rồi FE.
 
 ## VI. Chạy thử
 

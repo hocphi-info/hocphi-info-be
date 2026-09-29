@@ -3,8 +3,12 @@
 Tach khoi `app/models.py` (ORM) — day la lop DTO rieng, "lap" tay tu ket qua
 query (join nhieu bang) chu khong tra thang ORM object. `CamelModel` tu sinh
 alias camelCase tu ten field snake_case (`alias_generator=to_camel`), khong
-can viet tay `Field(alias=...)` moi field. `hocphi-info-fe/src/types/domain.ts`
-la "hop dong" — moi field o day PHAI khop ten + kieu ben do.
+can viet tay `Field(alias=...)` moi field.
+
+Hop dong voi FE = `openapi.json` (xuat tu day bang `make openapi`, commit vao
+repo). FE SINH type TypeScript tu file do (`hocphi-info-fe`: `npm run gen:api`),
+khong con viet tay `domain.ts` cho phan khop API. Sua model o day -> chay
+`make openapi`; `tests/test_openapi_contract.py` va CI do neu quen.
 """
 
 from __future__ import annotations
