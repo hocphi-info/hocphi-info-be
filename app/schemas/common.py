@@ -22,7 +22,6 @@ from app.enums import (
     CityCode,
     ConfidenceLevel,
     IncreaseSourceKind,
-    MajorGroupCode,
     ProgramLanguage,
     ProgramTrack,
     SchoolCategory,
@@ -75,8 +74,6 @@ class MajorOut(CamelModel):
     slug: str
     name: str
     code: str | None
-    # 6 nhom tu dat CU — se bi go o migration 0006 khi FE da chuyen sang `taxonomy`.
-    group_code: MajorGroupCode
     # null = "Chua phan loai" (chua co ma 7 so trong danh muc Bo — seeds/005).
     taxonomy: TaxonomyOut | None
     # Ten goi khac de tim kiem ("cntt", "it", "computer science") — seeds/006.

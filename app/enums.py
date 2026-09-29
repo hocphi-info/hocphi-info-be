@@ -94,14 +94,3 @@ class CityCode(StrEnum):
 
     HCM = "HCM"
     HN = "HN"
-
-
-class MajorGroupCode(StrEnum):
-    """Ma nhom nganh — bang tra cuu `major_groups`, khop nhu CityCode."""
-
-    CNTT = "CNTT"
-    KY_THUAT = "KY_THUAT"
-    KINH_TE = "KINH_TE"
-    Y_DUOC = "Y_DUOC"
-    LUAT = "LUAT"
-    LOGISTICS = "LOGISTICS"

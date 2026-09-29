@@ -172,7 +172,7 @@ Chi tiết + thuyết minh: [`docs/schema.md`](docs/schema.md). Sơ đồ rút g
 ```mermaid
 erDiagram
     cities ||--o{ schools : "city_code"
-    major_groups ||--o{ majors : "group_code"
+    taxonomy_nodes ||--o{ majors : "code (NULL = Chưa phân loại)"
     schools ||--o{ programs : "school_id"
     majors ||--o{ programs : "major_id"
     programs ||--o{ tuition_records : "program_id"
@@ -193,7 +193,6 @@ erDiagram
         text id PK
         text slug UK
         text code "ma nganh cap IV, khong unique"
-        text group_code FK
         smallint standard_years "3..7, mac dinh 4"
         boolean requires_practice_license
     }
@@ -236,7 +235,7 @@ erDiagram
 
 Bảng phụ: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…).
 VIEW `school_track_stats` (Min–Max / trung vị / số ngành theo
-`(trường, hệ)`) phục vụ màn hình S2. `cities` / `major_groups` / `app_settings` là bảng
+`(trường, hệ)`) phục vụ màn hình S2. `cities` / `taxonomy_nodes` / `app_settings` là bảng
 tra cứu tĩnh khoá bằng `code` / `key` — không ULID, không soft-delete. Các bảng nghiệp vụ
 đều có `created_at` / `updated_at` / `deleted_at` (soft delete: query mặc định lọc
 `WHERE deleted_at IS NULL`).

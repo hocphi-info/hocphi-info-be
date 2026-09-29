@@ -1,7 +1,7 @@
 """Tat ca model SQLAlchemy — 1 file (MVP 11 bang). Ban dich 1-1 cua `docs/schema.md`
 v0.2 §2-§3 sang Python.
 
-Doc theo thu tu: TimestampSoftDelete (quy uoc chung) -> City/MajorGroup/AppSetting
+Doc theo thu tu: TimestampSoftDelete (quy uoc chung) -> City/TaxonomyNode/AppSetting
 (bang tra cuu, khong ULID/soft-delete) -> School/Major/Program/... (bang nghiep vu).
 
 Kieu Mapped[] + mapped_column() la style native-typed cua SQLAlchemy 2.x — mypy
@@ -54,7 +54,7 @@ def _pg_enum(py_enum: type, name: str) -> PgEnum:
 class TimestampSoftDelete:
     """Mixin: id ULID sinh o DB + created_at/updated_at + deleted_at (soft delete).
 
-    `cities`, `major_groups`, `app_settings` KHONG dung mixin nay (bang tra cuu
+    `cities`, `taxonomy_nodes`, `app_settings` KHONG dung mixin nay (bang tra cuu
     tinh khoa bang code/key).
     """
 
@@ -81,15 +81,6 @@ class City(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
 
     schools: Mapped[list[School]] = relationship(back_populates="city")
-
-
-class MajorGroup(Base):
-    __tablename__ = "major_groups"
-
-    code: Mapped[str] = mapped_column(Text, primary_key=True)  # CNTT, KY_THUAT...
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-
-    majors: Mapped[list[Major]] = relationship(back_populates="group")
 
 
 class TaxonomyNode(Base):
@@ -178,9 +169,6 @@ class Major(Base, TimestampSoftDelete):
     code: Mapped[str | None] = mapped_column(
         Text, ForeignKey("taxonomy_nodes.code"), nullable=True
     )
-    group_code: Mapped[str] = mapped_column(
-        Text, ForeignKey("major_groups.code"), nullable=False
-    )
     # So nam chuan cua khoa — may tinh total_course dung lam `years` mac dinh.
     standard_years: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, server_default=text("4")
@@ -190,7 +178,6 @@ class Major(Base, TimestampSoftDelete):
     )
     practice_profession: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    group: Mapped[MajorGroup] = relationship(back_populates="majors")
     programs: Mapped[list[Program]] = relationship(back_populates="major")
     post_grad_requirements: Mapped[list[PostGradRequirement]] = relationship(
         back_populates="major"

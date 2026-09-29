@@ -11,7 +11,7 @@ mem — dung dinh nghia voi CTE `latest` trong VIEW school_track_stats, schema.m
 §4). Moi phep dem deu bat nguon tu `pub` nen cac so cong khop nhau:
 
   Σ byCity.schoolsWithData == Σ byCategory.schoolsWithData == totals.schoolsWithData
-  Σ byMajorGroup.programsWithTuition == Σ schools.nPrograms
+  Σ byField.programsWithTuition == Σ schools.nPrograms
       == totals.programsWithTuition
   Σ byCity.schoolsTotal == totals.schoolsTotal
 
@@ -28,11 +28,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, MajorGroupCode, SchoolCategory, SourceDocType
+from app.enums import CityCode, SchoolCategory, SourceDocType
 from app.models import (
     City,
     Major,
-    MajorGroup,
     Program,
     School,
     Source,
@@ -66,12 +65,6 @@ class CoverageCategoryRowOut(CamelModel):
     schools_with_data: int
 
 
-class CoverageMajorGroupRowOut(CamelModel):
-    group_code: MajorGroupCode
-    group_name: str
-    programs_with_tuition: int
-
-
 class CoverageFieldRowOut(CamelModel):
     """1 linh vuc (danh muc Bo GD&DT) co du lieu. `field_code = null` la dong
     "Chua phan loai" (nganh chua co ma 7 so)."""
@@ -101,9 +94,8 @@ class CoverageOut(CamelModel):
     totals: CoverageTotalsOut
     by_city: list[CoverageCityRowOut]
     by_category: list[CoverageCategoryRowOut]
-    by_major_group: list[CoverageMajorGroupRowOut]
     # Chi linh vuc CO du lieu (+ dong "Chua phan loai" neu > 0). Tong = tong
-    # chuong trinh, nhu byMajorGroup.
+    # chuong trinh.
     by_field: list[CoverageFieldRowOut]
     schools: list[CoverageSchoolRowOut]
 
@@ -120,7 +112,6 @@ async def get_coverage(
             TuitionRecord.source_id.label("source_id"),
             TuitionRecord.updated_at.label("tr_updated_at"),
             Program.school_id.label("school_id"),
-            Major.group_code.label("group_code"),
             Major.code.label("major_code"),
         )
         .join(Program, Program.id == TuitionRecord.program_id)
@@ -191,21 +182,6 @@ async def get_coverage(
             .where(School.deleted_at.is_(None))
             .group_by(School.category)
             .order_by(School.category)
-        )
-    ).all()
-
-    # --- byMajorGroup: ca 6 nhom, ke ca = 0 (LEFT JOIN tu major_groups) ---
-    group_rows = (
-        await session.execute(
-            select(
-                MajorGroup.code,
-                MajorGroup.name,
-                func.count(distinct(pub.c.program_id)),
-            )
-            .select_from(MajorGroup)
-            .outerjoin(pub, pub.c.group_code == MajorGroup.code)
-            .group_by(MajorGroup.code, MajorGroup.name)
-            .order_by(MajorGroup.code)
         )
     ).all()
 
@@ -302,14 +278,6 @@ async def get_coverage(
                 schools_with_data=with_data,
             )
             for category, total, with_data in category_rows
-        ],
-        by_major_group=[
-            CoverageMajorGroupRowOut(
-                group_code=MajorGroupCode(code),
-                group_name=name,
-                programs_with_tuition=n,
-            )
-            for code, name, n in group_rows
         ],
         by_field=[
             CoverageFieldRowOut(
