@@ -1,0 +1,1209 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "hocphi.info API",
+    "description": "Tra cuu & so sanh hoc phi dai hoc Viet Nam. GET /api/v1/majors (?search=), /api/v1/schools (?search=), /api/v1/schools/{school_slug}/majors/{major_slug}, /api/v1/schools/{school_slug}, /api/v1/coverage.",
+    "version": "0.4.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "description": "Kiem tra API song + ket noi DB. DB chet -> 503 (khong de 500 lo stack).",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/majors": {
+      "get": {
+        "tags": [
+          "majors"
+        ],
+        "summary": "List Majors",
+        "operationId": "list_majors_api_v1_majors_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra [].",
+              "title": "Search"
+            },
+            "description": "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra []."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MajorRowOut"
+                  },
+                  "title": "Response List Majors Api V1 Majors Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schools": {
+      "get": {
+        "tags": [
+          "schools"
+        ],
+        "summary": "List Schools",
+        "operationId": "list_schools_api_v1_schools_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Loc theo TEN TRUONG + ten viet tat, bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra [].",
+              "title": "Search"
+            },
+            "description": "Loc theo TEN TRUONG + ten viet tat, bo dau, khong phan biet hoa/thuong. Toi thieu 2 ky tu sau khi chuan hoa; ngan hon -> tra []."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolRowOut"
+                  },
+                  "title": "Response List Schools Api V1 Schools Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schools/{school_slug}/majors/{major_slug}": {
+      "get": {
+        "tags": [
+          "program-detail"
+        ],
+        "summary": "Get Program Detail",
+        "operationId": "get_program_detail_api_v1_schools__school_slug__majors__major_slug__get",
+        "parameters": [
+          {
+            "name": "school_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "School Slug"
+            }
+          },
+          {
+            "name": "major_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Major Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDetailResponseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schools/{school_slug}": {
+      "get": {
+        "tags": [
+          "school-detail"
+        ],
+        "summary": "Get School Detail",
+        "operationId": "get_school_detail_api_v1_schools__school_slug__get",
+        "parameters": [
+          {
+            "name": "school_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "School Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolDetailResponseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coverage": {
+      "get": {
+        "tags": [
+          "coverage"
+        ],
+        "summary": "Get Coverage",
+        "operationId": "get_coverage_api_v1_coverage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CityCode": {
+        "type": "string",
+        "enum": [
+          "HCM",
+          "HN"
+        ],
+        "title": "CityCode",
+        "description": "Ma thanh pho — bang tra cuu `cities`, KHONG phai ENUM Postgres. Enum nay\nchi de OpenAPI/FE co union type; test `test_openapi_contract` giu no khop\nvoi du lieu seed (them thanh pho moi ma quen them vao day -> test do)."
+      },
+      "ConfidenceLevel": {
+        "type": "string",
+        "enum": [
+          "verified",
+          "published_unverified",
+          "estimated"
+        ],
+        "title": "ConfidenceLevel"
+      },
+      "CoverageCategoryRowOut": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/SchoolCategory"
+          },
+          "schoolsTotal": {
+            "type": "integer",
+            "title": "Schoolstotal"
+          },
+          "schoolsWithData": {
+            "type": "integer",
+            "title": "Schoolswithdata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "schoolsTotal",
+          "schoolsWithData"
+        ],
+        "title": "CoverageCategoryRowOut"
+      },
+      "CoverageCityRowOut": {
+        "properties": {
+          "cityCode": {
+            "$ref": "#/components/schemas/CityCode"
+          },
+          "cityName": {
+            "type": "string",
+            "title": "Cityname"
+          },
+          "schoolsTotal": {
+            "type": "integer",
+            "title": "Schoolstotal"
+          },
+          "schoolsWithData": {
+            "type": "integer",
+            "title": "Schoolswithdata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cityCode",
+          "cityName",
+          "schoolsTotal",
+          "schoolsWithData"
+        ],
+        "title": "CoverageCityRowOut"
+      },
+      "CoverageMajorGroupRowOut": {
+        "properties": {
+          "groupCode": {
+            "$ref": "#/components/schemas/MajorGroupCode"
+          },
+          "groupName": {
+            "type": "string",
+            "title": "Groupname"
+          },
+          "programsWithTuition": {
+            "type": "integer",
+            "title": "Programswithtuition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "groupCode",
+          "groupName",
+          "programsWithTuition"
+        ],
+        "title": "CoverageMajorGroupRowOut"
+      },
+      "CoverageOut": {
+        "properties": {
+          "snapshotDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshotdate"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CoverageTotalsOut"
+          },
+          "byCity": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageCityRowOut"
+            },
+            "type": "array",
+            "title": "Bycity"
+          },
+          "byCategory": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageCategoryRowOut"
+            },
+            "type": "array",
+            "title": "Bycategory"
+          },
+          "byMajorGroup": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageMajorGroupRowOut"
+            },
+            "type": "array",
+            "title": "Bymajorgroup"
+          },
+          "schools": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageSchoolRowOut"
+            },
+            "type": "array",
+            "title": "Schools"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshotDate",
+          "totals",
+          "byCity",
+          "byCategory",
+          "byMajorGroup",
+          "schools"
+        ],
+        "title": "CoverageOut"
+      },
+      "CoverageSchoolRowOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "shortName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortname"
+          },
+          "cityCode": {
+            "$ref": "#/components/schemas/CityCode"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SchoolCategory"
+          },
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          },
+          "latestSourceDocType": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceDocType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latestSourceDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestsourcedate"
+          },
+          "lastUpdated": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastupdated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "shortName",
+          "cityCode",
+          "category",
+          "nPrograms",
+          "latestSourceDocType",
+          "latestSourceDate",
+          "lastUpdated"
+        ],
+        "title": "CoverageSchoolRowOut"
+      },
+      "CoverageTotalsOut": {
+        "properties": {
+          "schoolsTotal": {
+            "type": "integer",
+            "title": "Schoolstotal"
+          },
+          "schoolsWithData": {
+            "type": "integer",
+            "title": "Schoolswithdata"
+          },
+          "programsWithTuition": {
+            "type": "integer",
+            "title": "Programswithtuition"
+          },
+          "tuitionRecords": {
+            "type": "integer",
+            "title": "Tuitionrecords"
+          },
+          "sourcesCited": {
+            "type": "integer",
+            "title": "Sourcescited"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schoolsTotal",
+          "schoolsWithData",
+          "programsWithTuition",
+          "tuitionRecords",
+          "sourcesCited"
+        ],
+        "title": "CoverageTotalsOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "db": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Db"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "db"
+        ],
+        "title": "HealthOut",
+        "description": "Pydantic response model — FastAPI dung de validate + sinh OpenAPI schema."
+      },
+      "IncreaseSourceKind": {
+        "type": "string",
+        "enum": [
+          "published_roadmap",
+          "default_estimate"
+        ],
+        "title": "IncreaseSourceKind"
+      },
+      "MajorGroupCode": {
+        "type": "string",
+        "enum": [
+          "CNTT",
+          "KY_THUAT",
+          "KINH_TE",
+          "Y_DUOC",
+          "LUAT",
+          "LOGISTICS"
+        ],
+        "title": "MajorGroupCode",
+        "description": "Ma nhom nganh — bang tra cuu `major_groups`, khop nhu CityCode."
+      },
+      "MajorOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "groupCode": {
+            "$ref": "#/components/schemas/MajorGroupCode"
+          },
+          "standardYears": {
+            "type": "integer",
+            "title": "Standardyears"
+          },
+          "requiresPracticeLicense": {
+            "type": "boolean",
+            "title": "Requirespracticelicense"
+          },
+          "practiceProfession": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practiceprofession"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "code",
+          "groupCode",
+          "standardYears",
+          "requiresPracticeLicense",
+          "practiceProfession"
+        ],
+        "title": "MajorOut",
+        "description": "Khop `Major` domain.ts."
+      },
+      "MajorRowOut": {
+        "properties": {
+          "program": {
+            "$ref": "#/components/schemas/ProgramOut"
+          },
+          "school": {
+            "$ref": "#/components/schemas/SchoolOut"
+          },
+          "major": {
+            "$ref": "#/components/schemas/MajorOut"
+          },
+          "year1": {
+            "$ref": "#/components/schemas/TuitionRecordOut"
+          },
+          "increase": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramIncreaseOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "program",
+          "school",
+          "major",
+          "year1",
+          "increase"
+        ],
+        "title": "MajorRowOut",
+        "description": "Khop `MajorRow` domain.ts — 1 dong o man hinh S1 (`GET /api/v1/majors`)."
+      },
+      "ProgramDetailOut": {
+        "properties": {
+          "program": {
+            "$ref": "#/components/schemas/ProgramOut"
+          },
+          "year1": {
+            "$ref": "#/components/schemas/TuitionRecordOut"
+          },
+          "increase": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgramIncreaseOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "yearlyAmounts": {
+            "items": {
+              "$ref": "#/components/schemas/YearlyAmountOut"
+            },
+            "type": "array",
+            "title": "Yearlyamounts"
+          },
+          "totalCourse": {
+            "type": "integer",
+            "title": "Totalcourse"
+          },
+          "totalWithLicense": {
+            "type": "integer",
+            "title": "Totalwithlicense"
+          }
+        },
+        "type": "object",
+        "required": [
+          "program",
+          "year1",
+          "increase",
+          "yearlyAmounts",
+          "totalCourse",
+          "totalWithLicense"
+        ],
+        "title": "ProgramDetailOut",
+        "description": "1 he dao tao (track/language/campus) trong trang chi tiet nganh-truong (S3)."
+      },
+      "ProgramDetailResponseOut": {
+        "properties": {
+          "school": {
+            "$ref": "#/components/schemas/SchoolOut"
+          },
+          "major": {
+            "$ref": "#/components/schemas/MajorOut"
+          },
+          "programs": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramDetailOut"
+            },
+            "type": "array",
+            "title": "Programs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "school",
+          "major",
+          "programs"
+        ],
+        "title": "ProgramDetailResponseOut",
+        "description": "Khop response cua `GET /api/v1/schools/{school_slug}/majors/{major_slug}` (S3) —\ngom TAT CA programs cung (school, major), dung schema.md §3."
+      },
+      "ProgramIncreaseOut": {
+        "properties": {
+          "programId": {
+            "type": "string",
+            "title": "Programid"
+          },
+          "annualIncreasePct": {
+            "type": "number",
+            "title": "Annualincreasepct"
+          },
+          "increaseSource": {
+            "$ref": "#/components/schemas/IncreaseSourceKind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "programId",
+          "annualIncreasePct",
+          "increaseSource"
+        ],
+        "title": "ProgramIncreaseOut",
+        "description": "Khop `ProgramIncrease` domain.ts."
+      },
+      "ProgramLanguage": {
+        "type": "string",
+        "enum": [
+          "vi",
+          "en",
+          "vi_en"
+        ],
+        "title": "ProgramLanguage",
+        "description": "Cot `programs.language` la `text` (schema.md §2), khong phai ENUM — nhung\nvan dung enum nay lam kieu Python + nguon cho CHECK constraint."
+      },
+      "ProgramOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "schoolSlug": {
+            "type": "string",
+            "title": "Schoolslug"
+          },
+          "majorSlug": {
+            "type": "string",
+            "title": "Majorslug"
+          },
+          "track": {
+            "$ref": "#/components/schemas/ProgramTrack"
+          },
+          "language": {
+            "$ref": "#/components/schemas/ProgramLanguage"
+          },
+          "campus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campus"
+          },
+          "displayName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Displayname"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "schoolSlug",
+          "majorSlug",
+          "track",
+          "language",
+          "campus",
+          "displayName"
+        ],
+        "title": "ProgramOut",
+        "description": "Khop `Program` domain.ts — FE dung slug cho school/major, BE dung FK\n(join luc build response, khong doi cot DB)."
+      },
+      "ProgramTrack": {
+        "type": "string",
+        "enum": [
+          "dai_tra",
+          "chat_luong_cao",
+          "tien_tien",
+          "quoc_te"
+        ],
+        "title": "ProgramTrack",
+        "description": "He dao tao — hoc phi chenh 3-5 lan, khong bao gio tron khi tinh trung vi."
+      },
+      "SchoolCategory": {
+        "type": "string",
+        "enum": [
+          "cong_lap",
+          "cong_lap_tu_chu",
+          "tu_thuc",
+          "tu_thuc_von_nuoc_ngoai"
+        ],
+        "title": "SchoolCategory",
+        "description": "Gop `type` + `autonomy_status` cua brief thanh 1 enum (schema.md §3 schools)."
+      },
+      "SchoolDetailResponseOut": {
+        "properties": {
+          "school": {
+            "$ref": "#/components/schemas/SchoolOut"
+          },
+          "trackStats": {
+            "items": {
+              "$ref": "#/components/schemas/SchoolTrackStatOut"
+            },
+            "type": "array",
+            "title": "Trackstats"
+          },
+          "programs": {
+            "items": {
+              "$ref": "#/components/schemas/SchoolProgramRowOut"
+            },
+            "type": "array",
+            "title": "Programs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "school",
+          "trackStats",
+          "programs"
+        ],
+        "title": "SchoolDetailResponseOut",
+        "description": "Khop response cua `GET /api/v1/schools/{school_slug}` (F7)."
+      },
+      "SchoolOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "shortName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortname"
+          },
+          "cityCode": {
+            "$ref": "#/components/schemas/CityCode"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SchoolCategory"
+          },
+          "logoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logourl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "shortName",
+          "cityCode",
+          "category",
+          "logoUrl"
+        ],
+        "title": "SchoolOut",
+        "description": "Khop `School` domain.ts."
+      },
+      "SchoolProgramRowOut": {
+        "properties": {
+          "program": {
+            "$ref": "#/components/schemas/ProgramOut"
+          },
+          "major": {
+            "$ref": "#/components/schemas/MajorOut"
+          },
+          "year1": {
+            "$ref": "#/components/schemas/TuitionRecordOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "program",
+          "major",
+          "year1"
+        ],
+        "title": "SchoolProgramRowOut",
+        "description": "Khop `SchoolProgramRow` domain.ts — 1 dong trong bang danh sach nganh\ncua 1 truong (F7). `year1.source` luon None o day — F12 (nguon) chi hien\no trang F6, khong lap lai o F7 (xem plan Tuan 4)."
+      },
+      "SchoolRowOut": {
+        "properties": {
+          "school": {
+            "$ref": "#/components/schemas/SchoolOut"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/SchoolStatsOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "school",
+          "stats"
+        ],
+        "title": "SchoolRowOut",
+        "description": "Khop `SchoolRow` domain.ts — 1 dong o man hinh S2 (`GET /api/v1/schools`)."
+      },
+      "SchoolStatsOut": {
+        "properties": {
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          },
+          "minAmount": {
+            "type": "integer",
+            "title": "Minamount"
+          },
+          "minMajorName": {
+            "type": "string",
+            "title": "Minmajorname"
+          },
+          "medianAmount": {
+            "type": "number",
+            "title": "Medianamount"
+          },
+          "maxAmount": {
+            "type": "integer",
+            "title": "Maxamount"
+          },
+          "maxMajorName": {
+            "type": "string",
+            "title": "Maxmajorname"
+          },
+          "increaseSummary": {
+            "type": "string",
+            "title": "Increasesummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nPrograms",
+          "minAmount",
+          "minMajorName",
+          "medianAmount",
+          "maxAmount",
+          "maxMajorName",
+          "increaseSummary"
+        ],
+        "title": "SchoolStatsOut",
+        "description": "Khop `SchoolStats` domain.ts."
+      },
+      "SchoolTrackStatOut": {
+        "properties": {
+          "track": {
+            "$ref": "#/components/schemas/ProgramTrack"
+          },
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          },
+          "minAmount": {
+            "type": "integer",
+            "title": "Minamount"
+          },
+          "minMajorName": {
+            "type": "string",
+            "title": "Minmajorname"
+          },
+          "medianAmount": {
+            "type": "number",
+            "title": "Medianamount"
+          },
+          "maxAmount": {
+            "type": "integer",
+            "title": "Maxamount"
+          },
+          "maxMajorName": {
+            "type": "string",
+            "title": "Maxmajorname"
+          }
+        },
+        "type": "object",
+        "required": [
+          "track",
+          "nPrograms",
+          "minAmount",
+          "minMajorName",
+          "medianAmount",
+          "maxAmount",
+          "maxMajorName"
+        ],
+        "title": "SchoolTrackStatOut",
+        "description": "Khop `SchoolTrackStat` domain.ts — 1 hang / he dao tao trong 1 truong\n(F7 chart Min-Max noi bo truong). Cung VIEW `school_track_stats` voi\nSchoolStatsOut nhung loc theo school_id thay vi track — moi truong co toi\nda 1 dong / he da co chuong trinh."
+      },
+      "SourceDocType": {
+        "type": "string",
+        "enum": [
+          "de_an_tuyen_sinh",
+          "thong_bao_hoc_phi",
+          "quy_dinh_nghe",
+          "khac"
+        ],
+        "title": "SourceDocType"
+      },
+      "SourceOut": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "docType": {
+            "$ref": "#/components/schemas/SourceDocType"
+          },
+          "publishedDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisheddate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "docType",
+          "publishedDate"
+        ],
+        "title": "SourceOut",
+        "description": "Khop `Source` domain.ts (F12) — chi gan duoc voi ban ghi CONG BO that\n(Nam 1); cac nam du phong la so tinh, khong co source_id that."
+      },
+      "TuitionRecordOut": {
+        "properties": {
+          "programId": {
+            "type": "string",
+            "title": "Programid"
+          },
+          "academicYear": {
+            "type": "string",
+            "title": "Academicyear"
+          },
+          "amountPerYear": {
+            "type": "integer",
+            "title": "Amountperyear"
+          },
+          "isProjected": {
+            "type": "boolean",
+            "title": "Isprojected"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/ConfidenceLevel"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "programId",
+          "academicYear",
+          "amountPerYear",
+          "isProjected",
+          "confidence",
+          "source"
+        ],
+        "title": "TuitionRecordOut",
+        "description": "Khop `TuitionRecord` domain.ts. KHONG lo needs_review/review_reason —\nchua co UI hien thi (xem migration 0002 + plan Tuan 2)."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "YearlyAmountOut": {
+        "properties": {
+          "academicYear": {
+            "type": "string",
+            "title": "Academicyear"
+          },
+          "amountPerYear": {
+            "type": "integer",
+            "title": "Amountperyear"
+          },
+          "isProjected": {
+            "type": "boolean",
+            "title": "Isprojected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "academicYear",
+          "amountPerYear",
+          "isProjected"
+        ],
+        "title": "YearlyAmountOut",
+        "description": "1 nam trong bang hoc phi tinh luy tien cua 1 program (S3) — so **tinh**,\nkhong phai ban ghi DB (khac TuitionRecordOut: khong co program_id/confidence)."
+      }
+    }
+  }
+}

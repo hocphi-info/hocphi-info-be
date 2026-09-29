@@ -97,6 +97,14 @@ logs: ## Theo doi log moi service
 ps: ## Trang thai cac container
 	$(COMPOSE) ps
 
+# ── Hop dong API (OpenAPI) ────────────────────────────────────────────────────
+.PHONY: openapi openapi-check
+openapi: ## Xuat openapi.json tu app (FE sinh type TS tu file nay) — commit ket qua
+	$(UV) python -m scripts.export_openapi
+
+openapi-check: ## Bao loi neu openapi.json khong khop code (chay trong CI)
+	$(UV) python -m scripts.export_openapi --check
+
 # ── Kiem tra chat luong (chay truoc khi commit — xem AGENTS.md) ───────────────
 .PHONY: lint fmt typecheck test check
 lint: ## ruff check
@@ -111,7 +119,7 @@ typecheck: ## mypy
 test: ## pytest
 	$(UV) pytest -q
 
-check: lint typecheck test ## Chay ca lint + mypy + pytest
+check: lint typecheck openapi-check test ## Chay ca lint + mypy + pytest
 
 # ── Don dep ──────────────────────────────────────────────────────────────────
 .PHONY: clean
