@@ -18,7 +18,14 @@ from app.observability import (
     configure_sql_logging,
     get_request_id,
 )
-from app.v1 import coverage, majors, program_detail, school_detail, schools
+from app.v1 import (
+    coverage,
+    majors,
+    program_detail,
+    school_detail,
+    schools,
+    taxonomy,
+)
 
 # Dung structlog TRUOC khi tao app / bat ky log nao — mot lan / process.
 configure_logging()
@@ -34,7 +41,8 @@ app = FastAPI(
         "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
         "GET /api/v1/majors (?search=), /api/v1/schools (?search=), "
         "/api/v1/schools/{school_slug}/majors/{major_slug}, "
-        "/api/v1/schools/{school_slug}, /api/v1/coverage."
+        "/api/v1/schools/{school_slug}, /api/v1/coverage, "
+        "/api/v1/taxonomy[/{code}]."
     ),
 )
 
@@ -73,3 +81,4 @@ app.include_router(schools.router)
 app.include_router(program_detail.router)
 app.include_router(school_detail.router)
 app.include_router(coverage.router)
+app.include_router(taxonomy.router)
