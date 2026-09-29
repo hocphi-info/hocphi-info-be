@@ -16,7 +16,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from app.enums import MajorGroupCode
 from app.models import Major, MajorAlias, TaxonomyNode
 from app.schemas.common import MajorOut, TaxonomyNodeOut, TaxonomyOut
 
@@ -71,8 +70,6 @@ def to_major_out(major: Major, ctx: MajorContext) -> MajorOut:
         slug=major.slug,
         name=major.name,
         code=major.code,
-        # Buoc "mo rong": van tra 6 nhom cu cho FE chua nang cap; bo o migration 0006.
-        group_code=MajorGroupCode(major.group_code),
         taxonomy=ctx.taxonomy.get(major.code) if major.code is not None else None,
         aliases=ctx.aliases.get(major.id, []),
         standard_years=major.standard_years,

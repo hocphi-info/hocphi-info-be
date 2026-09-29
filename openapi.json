@@ -353,28 +353,6 @@
         "title": "CoverageFieldRowOut",
         "description": "1 linh vuc (danh muc Bo GD&DT) co du lieu. `field_code = null` la dong\n\"Chua phan loai\" (nganh chua co ma 7 so)."
       },
-      "CoverageMajorGroupRowOut": {
-        "properties": {
-          "groupCode": {
-            "$ref": "#/components/schemas/MajorGroupCode"
-          },
-          "groupName": {
-            "type": "string",
-            "title": "Groupname"
-          },
-          "programsWithTuition": {
-            "type": "integer",
-            "title": "Programswithtuition"
-          }
-        },
-        "type": "object",
-        "required": [
-          "groupCode",
-          "groupName",
-          "programsWithTuition"
-        ],
-        "title": "CoverageMajorGroupRowOut"
-      },
       "CoverageOut": {
         "properties": {
           "snapshotDate": {
@@ -406,13 +384,6 @@
             "type": "array",
             "title": "Bycategory"
           },
-          "byMajorGroup": {
-            "items": {
-              "$ref": "#/components/schemas/CoverageMajorGroupRowOut"
-            },
-            "type": "array",
-            "title": "Bymajorgroup"
-          },
           "byField": {
             "items": {
               "$ref": "#/components/schemas/CoverageFieldRowOut"
@@ -434,7 +405,6 @@
           "totals",
           "byCity",
           "byCategory",
-          "byMajorGroup",
           "byField",
           "schools"
         ],
@@ -601,19 +571,6 @@
         ],
         "title": "IncreaseSourceKind"
       },
-      "MajorGroupCode": {
-        "type": "string",
-        "enum": [
-          "CNTT",
-          "KY_THUAT",
-          "KINH_TE",
-          "Y_DUOC",
-          "LUAT",
-          "LOGISTICS"
-        ],
-        "title": "MajorGroupCode",
-        "description": "Ma nhom nganh — bang tra cuu `major_groups`, khop nhu CityCode."
-      },
       "MajorOut": {
         "properties": {
           "slug": {
@@ -634,9 +591,6 @@
               }
             ],
             "title": "Code"
-          },
-          "groupCode": {
-            "$ref": "#/components/schemas/MajorGroupCode"
           },
           "taxonomy": {
             "anyOf": [
@@ -680,7 +634,6 @@
           "slug",
           "name",
           "code",
-          "groupCode",
           "taxonomy",
           "aliases",
           "standardYears",

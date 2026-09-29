@@ -109,8 +109,7 @@ async def test_majors_expose_taxonomy_and_aliases(db: AsyncSession) -> None:
         "group": {"code": "74801", "name": "Máy tính"},
     }
     assert khmt["aliases"] == ["computer science", "cs", "khmt"]
-    # Cu van con trong buoc "mo rong" (FE chua nang cap van chay).
-    assert khmt["groupCode"] == "CNTT"
+    assert "groupCode" not in khmt  # 6 nhom tu dat cu da bi bo (migration 0006)
 
     art = _major_of(rows, "digital-art")
     assert art["code"] is None and art["taxonomy"] is None and art["aliases"] == []

@@ -168,7 +168,7 @@ Full detail + rationale: [`docs/schema.md`](docs/schema.md). Condensed diagram:
 ```mermaid
 erDiagram
     cities ||--o{ schools : "city_code"
-    major_groups ||--o{ majors : "group_code"
+    taxonomy_nodes ||--o{ majors : "code (NULL = unclassified)"
     schools ||--o{ programs : "school_id"
     majors ||--o{ programs : "major_id"
     programs ||--o{ tuition_records : "program_id"
@@ -189,7 +189,6 @@ erDiagram
         text id PK
         text slug UK
         text code "level-IV major code, not unique"
-        text group_code FK
         smallint standard_years "3..7, default 4"
         boolean requires_practice_license
     }
@@ -232,7 +231,7 @@ erDiagram
 
 Supporting tables: `app_settings` (key/value — `current_intake_year`, `default_increase_pct`…).
 The `school_track_stats` VIEW (Min–Max / median / #majors per
-`(school, track)`) powers screen S2. `cities` / `major_groups` / `app_settings` are static
+`(school, track)`) powers screen S2. `cities` / `taxonomy_nodes` / `app_settings` are static
 lookup tables keyed by `code` / `key` — no ULID, no soft delete. Business tables all carry
 `created_at` / `updated_at` / `deleted_at` (soft delete: queries default to
 `WHERE deleted_at IS NULL`).

@@ -5,7 +5,7 @@
 
 import re
 
-from app.models import AppSetting, City, MajorGroup, School
+from app.models import AppSetting, City, School
 from scripts.seed import main as run_seed
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,9 +16,6 @@ _ULID_RE = re.compile(r"^[0-9A-HJKMNP-TV-Z]{26}$")
 async def test_lookup_tables_seeded_by_migration(db: AsyncSession) -> None:
     cities = (await db.execute(select(City))).scalars().all()
     assert {c.code for c in cities} == {"HCM", "HN"}
-
-    groups = (await db.execute(select(MajorGroup))).scalars().all()
-    assert len(groups) == 6
 
     setting_keys = (await db.execute(select(AppSetting.key))).scalars().all()
     assert set(setting_keys) == {

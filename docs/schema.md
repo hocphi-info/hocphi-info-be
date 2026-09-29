@@ -41,7 +41,6 @@
 ```mermaid
 erDiagram
   cities ||--o{ schools : "city_code"
-  major_groups ||--o{ majors : "group_code (SẼ BỎ ở migration 0006)"
   taxonomy_nodes ||--o{ taxonomy_nodes : "parent_code"
   taxonomy_nodes ||--o{ majors : "code (NULL = Chưa phân loại)"
   majors ||--o{ major_aliases : "major_id"
@@ -72,7 +71,6 @@ erDiagram
     text     slug UK
     text     name
     text     code "mã ngành cấp IV, không unique"
-    text     group_code FK
     smallint standard_years "số năm chuẩn của khoá, 3..7, mặc định 4"
     boolean  requires_practice_license
     text     practice_profession
@@ -170,12 +168,12 @@ Mọi bảng nghiệp vụ (không phải bảng tra cứu key/value) dùng:
   tính đến bản ghi đã xoá mềm (partial unique index `WHERE deleted_at IS NULL`)
   để cho phép tạo lại slug/tổ hợp trùng sau khi bản ghi cũ đã bị xoá.
 
-`cities`, `major_groups`, `app_settings` là bảng tra cứu tĩnh khoá bằng `code`/`key`
+`cities`, `taxonomy_nodes`, `app_settings` là bảng tra cứu tĩnh khoá bằng `code`/`key`
 — **không** áp quy ước này (không cần ULID, không cần soft delete).
 
-### `cities`, `major_groups` — tra cứu
+### `cities` — tra cứu
 Seed cố định (sẽ đưa lại vào migration seed khi viết lại):
-`HCM`, `HN`; 6 nhóm ngành (`CNTT`, `KY_THUAT`, `KINH_TE`, `Y_DUOC`, `LUAT`, `LOGISTICS`).
+`HCM`, `HN`. (6 nhóm ngành tự đặt `major_groups` đã bị bỏ ở migration 0006, thay bằng `taxonomy_nodes` bên dưới.)
 Khoá vẫn là `code` (text ngắn, không phải ULID) — đây là bảng tra cứu tĩnh, không
 cần sắp xếp theo thời gian tạo.
 

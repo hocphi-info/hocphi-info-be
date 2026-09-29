@@ -64,7 +64,7 @@ section, matching `hocphi-info-fe`'s learning-log style — see `docs/plans/`.
   admin API, an auth middleware, or a write endpoint without the owner asking first — it's
   a deliberate MVP scope cut, not an oversight.
 - **Primary keys are ULIDs (`text`, `gen_ulid()` default in Postgres)**, except the small
-  static lookup tables (`cities`, `major_groups`, `app_settings`), which are keyed by a plain
+  static lookup tables (`cities`, `taxonomy_nodes`, `app_settings`), which are keyed by a plain
   `code`/`key` string — no ULID, no soft-delete on those.
 - **Soft delete on business tables**: `created_at` / `updated_at` / `deleted_at`, default
   queries filter `WHERE deleted_at IS NULL`.

@@ -14,11 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.markers import needs_crawled_seeds
 
-MAJOR_GROUP_CODES = {"CNTT", "KINH_TE", "KY_THUAT", "LOGISTICS", "LUAT", "Y_DUOC"}
-
 
 async def test_coverage_empty_db_returns_zero_shape(db: AsyncSession) -> None:
-    # Khong goi run_seed(): schools/programs/tuition rong; cities + major_groups
+    # Khong goi run_seed(): schools/programs/tuition rong; cities
     # van co (seed trong migration 0001, khong bi TRUNCATE boi fixture `db`).
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -42,9 +40,8 @@ async def test_coverage_empty_db_returns_zero_shape(db: AsyncSession) -> None:
     assert all(
         r["schoolsTotal"] == 0 and r["schoolsWithData"] == 0 for r in body["byCity"]
     )
-    # major_groups LEFT JOIN -> ca 6 nhom, programsWithTuition = 0.
-    assert {r["groupCode"] for r in body["byMajorGroup"]} == MAJOR_GROUP_CODES
-    assert all(r["programsWithTuition"] == 0 for r in body["byMajorGroup"])
+    # Chua co chuong trinh -> khong linh vuc nao (byField chi liet ke cai co du lieu).
+    assert body["byField"] == []
     # Khong co truong nao -> khong nhom category nao.
     assert body["byCategory"] == []
 
@@ -85,13 +82,14 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     assert by_city["HN"]["schoolsTotal"] == 25
     assert by_city["HN"]["schoolsWithData"] == 3
 
-    by_group = {r["groupCode"]: r["programsWithTuition"] for r in body["byMajorGroup"]}
-    assert by_group.keys() == MAJOR_GROUP_CODES
-    # HCMUT he tieu chuan fan-out: phan lon 41 nganh vao KY_THUAT, vai nganh
-    # KINH_TE (kinh-te-xay-dung, quan-ly-cong-nghiep, kinh-te-tai-nguyen...).
-    assert by_group["KINH_TE"] == 64
-    assert by_group["KY_THUAT"] == 90
-    assert sum(by_group.values()) == 230
+    by_field = {r["fieldCode"]: r["programsWithTuition"] for r in body["byField"]}
+    # Linh vuc theo danh muc Bo GD&DT (seeds/004-005). HCMUT he tieu chuan fan-out
+    # lam 752 (Ky thuat) lon nhat; None = "Chua phan loai" (24 chuong trinh).
+    assert by_field["752"] == 36
+    assert by_field["734"] == 24
+    assert by_field["748"] == 21
+    assert by_field[None] == 24
+    assert sum(by_field.values()) == 230
 
 
 @needs_crawled_seeds
@@ -151,7 +149,7 @@ async def test_coverage_seeded_numbers_reconcile(db: AsyncSession) -> None:
         == totals["schoolsWithData"]
     )
     assert (
-        sum(r["programsWithTuition"] for r in body["byMajorGroup"])
+        sum(r["programsWithTuition"] for r in body["byField"])
         == totals["programsWithTuition"]
     )
     assert sum(s["nPrograms"] for s in body["schools"]) == totals["programsWithTuition"]

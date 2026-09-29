@@ -23,7 +23,6 @@ async def test_standard_years_check_constraint(db: AsyncSession) -> None:
         Major(
             slug="nganh-thu-nghiem",
             name="Nganh thu nghiem",
-            group_code="CNTT",
             standard_years=2,  # CHECK: BETWEEN 3 AND 7
         )
     )
@@ -38,7 +37,6 @@ async def test_practice_profession_required_check_constraint(
         Major(
             slug="nganh-hanh-nghe",
             name="Nganh hanh nghe",
-            group_code="CNTT",
             requires_practice_license=True,
             practice_profession=None,  # CHECK: bat buoc khi requires_practice_license
         )

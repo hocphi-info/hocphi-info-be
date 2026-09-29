@@ -6,7 +6,7 @@ nen file nay la "nguon su that" giua hai repo — test do o day thay vi de loi l
 ra luc runtime tren production.
 """
 
-from app.enums import CityCode, MajorGroupCode
+from app.enums import CityCode
 from scripts.export_openapi import OPENAPI_PATH, render
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,11 +23,4 @@ async def test_city_codes_match_lookup_table(db: AsyncSession) -> None:
     rows = (await db.execute(text("SELECT code FROM cities"))).scalars().all()
     assert {c.value for c in CityCode} == set(rows), (
         "Enum CityCode lech bang `cities` — cap nhat app/enums.py."
-    )
-
-
-async def test_major_group_codes_match_lookup_table(db: AsyncSession) -> None:
-    rows = (await db.execute(text("SELECT code FROM major_groups"))).scalars().all()
-    assert {g.value for g in MajorGroupCode} == set(rows), (
-        "Enum MajorGroupCode lech bang `major_groups` — cap nhat app/enums.py."
     )
