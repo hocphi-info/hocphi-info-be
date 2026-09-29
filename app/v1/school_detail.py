@@ -32,9 +32,7 @@ async def get_school_detail(
     session: AsyncSession = Depends(get_session),
 ) -> SchoolDetailResponseOut:
     school = await session.scalar(
-        select(School).where(
-            School.slug == school_slug, School.deleted_at.is_(None)
-        )
+        select(School).where(School.slug == school_slug, School.deleted_at.is_(None))
     )
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")

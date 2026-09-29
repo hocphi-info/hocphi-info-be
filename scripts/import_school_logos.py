@@ -50,9 +50,7 @@ async def main() -> None:
 
     missing = [c for c in REQUIRED_COLUMNS if c not in fieldnames]
     if missing:
-        print(
-            f"Header thieu cot {missing}. Can du: {','.join(REQUIRED_COLUMNS)}"
-        )
+        print(f"Header thieu cot {missing}. Can du: {','.join(REQUIRED_COLUMNS)}")
         sys.exit(1)
 
     updated = unchanged = skipped_empty = bad_url = not_found = 0

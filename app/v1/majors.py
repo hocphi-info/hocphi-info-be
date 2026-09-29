@@ -126,9 +126,7 @@ async def list_majors(
             r
             for r in result
             if q
-            in normalize(
-                f"{r.school.name} {r.school.short_name or ''} {r.major.name}"
-            )
+            in normalize(f"{r.school.name} {r.school.short_name or ''} {r.major.name}")
         ]
 
     return result

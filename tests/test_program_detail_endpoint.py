@@ -148,10 +148,7 @@ async def test_get_program_detail_campus_split(db: AsyncSession) -> None:
     assert khanh_hoa["year1"]["amountPerYear"] == 20_500_000
 
     # displayName giu chuyen nganh day du cho ca 2 (dong 4 duoc backfill).
-    assert (
-        main["program"]["displayName"]
-        == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"
-    )
+    assert main["program"]["displayName"] == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"
     assert (
         khanh_hoa["program"]["displayName"]
         == "Du lịch (Chuyên ngành Hướng dẫn du lịch)"

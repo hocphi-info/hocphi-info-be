@@ -85,4 +85,3 @@ class SourceDocType(StrEnum):
     THONG_BAO_HOC_PHI = "thong_bao_hoc_phi"
     QUY_DINH_NGHE = "quy_dinh_nghe"
     KHAC = "khac"
-

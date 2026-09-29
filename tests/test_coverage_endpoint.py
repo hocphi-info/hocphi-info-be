@@ -150,8 +150,6 @@ async def test_coverage_seeded_numbers_reconcile(db: AsyncSession) -> None:
         sum(r["programsWithTuition"] for r in body["byMajorGroup"])
         == totals["programsWithTuition"]
     )
-    assert (
-        sum(s["nPrograms"] for s in body["schools"]) == totals["programsWithTuition"]
-    )
+    assert sum(s["nPrograms"] for s in body["schools"]) == totals["programsWithTuition"]
     assert sum(r["schoolsTotal"] for r in body["byCity"]) == totals["schoolsTotal"]
     assert len(body["schools"]) == totals["schoolsTotal"]

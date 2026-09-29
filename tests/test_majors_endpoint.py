@@ -99,9 +99,7 @@ async def test_list_majors_search_also_matches_school_name(
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get(
-            "/api/v1/majors", params={"search": "ton duc thang"}
-        )
+        resp = await client.get("/api/v1/majors", params={"search": "ton duc thang"})
 
     assert resp.status_code == 200
     rows = resp.json()

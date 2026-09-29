@@ -79,11 +79,18 @@ def _curl(url: str) -> tuple[bytes, str, int]:
     try:
         proc = subprocess.run(
             [
-                "curl", "--silent", "--show-error", "--location",
-                "--max-time", str(TIMEOUT_GIAY),
-                "--max-filesize", str(MAX_BYTES),
-                "--user-agent", USER_AGENT,
-                "--write-out", "\n%{http_code}\t%{content_type}",
+                "curl",
+                "--silent",
+                "--show-error",
+                "--location",
+                "--max-time",
+                str(TIMEOUT_GIAY),
+                "--max-filesize",
+                str(MAX_BYTES),
+                "--user-agent",
+                USER_AGENT,
+                "--write-out",
+                "\n%{http_code}\t%{content_type}",
                 url,
             ],
             capture_output=True,

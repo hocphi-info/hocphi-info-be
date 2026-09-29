@@ -99,9 +99,7 @@ async def get_program_detail(
 
     default_increase_pct = float(
         await session.scalar(
-            select(AppSetting.value).where(
-                AppSetting.key == "default_increase_pct"
-            )
+            select(AppSetting.value).where(AppSetting.key == "default_increase_pct")
         )
     )
     post_grad_total = await session.scalar(
