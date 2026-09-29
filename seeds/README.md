@@ -56,3 +56,19 @@ khi đưa vào `scripts/seed.py` (xem `.claude/skills/crawl-truong/SKILL.md` m�
 mục 12). Batch này lấy vào **tháng 9/2026** — nếu dự án còn duy trì, chạy lại skill
 cho từng trường (`school_slug`) vào khoảng tháng 8-9/2027 trước khi tuyển sinh
 đợt mới, đừng dùng lại số cũ.
+
+## Phân loại ngành (taxonomy) — `004`, `005`, `006`
+
+> ⚠️ **Dữ liệu này chưa đầy đủ và sẽ phải cập nhật.** Hiện hocphi.info mới có học phí của một
+> phần nhỏ trong 50 trường pilot; mỗi lần crawl thêm trường sẽ xuất hiện thêm ngành, tên ngành
+> lạ và cách gọi khác. Sau **mỗi đợt crawl**, rà lại `005` (ngành mới chưa có dòng nào?) và `006`
+> (bộ alias mới chỉ phủ các ngành hiện có). Ngành mới trong `002_majors.sql` mà thiếu dòng ở `005`
+> sẽ hiện là "Chưa phân loại" (không lỗi) — nhưng nên gán mã khi đã xác nhận được.
+
+| File | Vai trò | Nguồn / cách cập nhật |
+|---|---|---|
+| `004_taxonomy.csv` | Danh mục thống kê ngành đào tạo **trình độ đại học** của Bộ GD&ĐT: `code,level,parent_code,name` (level 1 = lĩnh vực 3 số, 2 = nhóm ngành 5 số, 3 = ngành 7 số). 475 nút (23/75/377). | Thông tư 09/2022/TT-BGDĐT (Công báo 485+486), lấy ngày 2026-09-29 từ `congbao.chinhphu.vn`. Bỏ các nhóm "Khác" rỗng. **Bộ còn cập nhật danh mục ngoài Thông tư gốc** (ngành mới/thí điểm, đăng trên cổng thông tin của Bộ) — khi có, thêm dòng vào file này, không cần migration. |
+| `005_major_taxonomy.csv` | Ánh xạ mỗi ngành (`major_slug` của `002_majors.sql`) → mã ngành 7 số (`taxonomy_code`). **Để trống = "Chưa phân loại"** và bắt buộc có `note` ghi lý do. | Người duyệt. 118 dòng khớp đúng tên danh mục, 2 dòng khác chính tả, **23 dòng chưa phân loại** (tên riêng của trường / ngành thí điểm / tên nhóm). Không đoán mã: chỉ điền khi xác nhận cùng ngành. Đây là *nguồn sự thật*: seed lại sẽ **ghi đè** `majors.code` theo file này. |
+| `006_major_aliases.csv` | Tên gọi khác để tìm kiếm (`cntt`, `it`, `khmt`, `computer science`…): `major_slug,alias`. | Người curate. Khớp bằng nhau hoặc tiền tố ≥ 3 ký tự (không khớp chuỗi con). Cố ý **không** thêm alias nhập nhằng (vd `kt`, `httt` — "Hệ thống thông tin" của danh mục khác với "Hệ thống thông tin quản lý" đang có). Seed chỉ *thêm*; muốn xoá alias phải xoá tay trong DB. |
+
+Nạp bằng `uv run python -m scripts.seed` (idempotent; thứ tự 001 → 002 → 004 → 005 → 006).
