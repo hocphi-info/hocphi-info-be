@@ -15,6 +15,12 @@ primary_region = 'sin'
 PORT = '8000'
 ALLOW_ORIGINS = 'https://hocphi.info,https://www.hocphi.info'
 
+# Migration schema chay TRUOC khi doi traffic sang image moi (may tam thoi, cung image).
+# Chi schema — seed du lieu van chay tay (xem README §VI). Migration phai o dang
+# "them truoc, bo sau" (expand/contract) de image cu van chay duoc trong luc doi.
+[deploy]
+  release_command = 'alembic upgrade head'
+
 [http_service]
 internal_port = 8000
 force_https = true

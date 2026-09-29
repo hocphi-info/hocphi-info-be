@@ -323,11 +323,12 @@ TAG=v$(date +%Y.%m.%d); git tag "$TAG" && git push origin "$TAG"   # -> GitHub A
   'suspend'` → máy ở trạng thái `stopped` khi rảnh, và `fly ssh console` **không** tự
   bật máy (báo `app ... has no started VMs`). Bật 1 máy bất kỳ bằng `fly machine
   start` (`fly status` để xem id), seed xong máy tự `suspend` lại — không cần stop tay.
-- **Có migration mới** thì deploy (tag) trước, rồi chạy trước seed:
-  `fly ssh console -a hocphi-info-api -C "sh -lc 'alembic upgrade head && python -m scripts.seed'"`
-- Muốn migrate tự động mỗi lần deploy: thêm
-  `[deploy] release_command = "alembic upgrade head"` vào `fly.toml`. Seed nên vẫn để
-  tay — nó là thao tác dữ liệu, không phải schema.
+- **Migration tự chạy khi deploy** (từ 2026-09-29): `fly.toml` có
+  `[deploy] release_command = 'alembic upgrade head'` — Fly chạy nó trên máy tạm với image
+  mới *trước* khi chuyển traffic, deploy dừng nếu migration lỗi. Vì vậy migration phải theo kiểu
+  **thêm trước, bỏ sau** (image cũ vẫn chạy được trên schema mới). Seed vẫn để tay — nó là
+  thao tác dữ liệu, không phải schema. Sau deploy có thay đổi seed: bật máy rồi
+  `fly ssh console -a hocphi-info-api -C "python -m scripts.seed"`.
 
 ## VII. Lộ trình
 
