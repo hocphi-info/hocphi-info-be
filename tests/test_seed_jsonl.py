@@ -12,6 +12,8 @@ from scripts.seed_majors_mapping import ROW_TO_MAJOR_SLUG
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 
 def _mapped_slugs() -> set[str]:
     """Moi slug xuat hien trong ROW_TO_MAJOR_SLUG — gia tri co the la str hoac
@@ -31,6 +33,7 @@ def _mapped_slugs() -> set[str]:
 EXPECTED_LOADED_ROWS = 230
 
 
+@needs_crawled_seeds
 async def test_seed_loads_only_approved_rows(db: AsyncSession) -> None:
     await run_seed()
 
@@ -74,6 +77,7 @@ async def test_seed_fans_out_one_jsonl_line_to_many_programs(db: AsyncSession) -
     assert len({r.program_id for r in rows}) == 41
 
 
+@needs_crawled_seeds
 async def test_seed_is_idempotent_on_second_run(db: AsyncSession) -> None:
     await run_seed()
     await run_seed()

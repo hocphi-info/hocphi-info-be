@@ -12,6 +12,8 @@ from httpx import ASGITransport, AsyncClient
 from scripts.seed import main as run_seed
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 MAJOR_GROUP_CODES = {"CNTT", "KINH_TE", "KY_THUAT", "LOGISTICS", "LUAT", "Y_DUOC"}
 
 
@@ -47,6 +49,7 @@ async def test_coverage_empty_db_returns_zero_shape(db: AsyncSession) -> None:
     assert body["byCategory"] == []
 
 
+@needs_crawled_seeds
 async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     await run_seed()
 
@@ -91,6 +94,7 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     assert sum(by_group.values()) == 230
 
 
+@needs_crawled_seeds
 async def test_coverage_seeded_schools_rows_shape(db: AsyncSession) -> None:
     await run_seed()
 

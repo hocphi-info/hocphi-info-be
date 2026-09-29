@@ -9,6 +9,8 @@ from httpx import ASGITransport, AsyncClient
 from scripts.seed import main as run_seed
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 
 async def test_get_program_detail_404_when_school_not_found(db: AsyncSession) -> None:
     await run_seed()
@@ -31,6 +33,7 @@ async def test_get_program_detail_404_when_no_program_seeded(db: AsyncSession) -
     assert resp.status_code == 404
 
 
+@needs_crawled_seeds
 async def test_get_program_detail_standard_years_4(db: AsyncSession) -> None:
     await run_seed()
 
@@ -64,6 +67,7 @@ async def test_get_program_detail_standard_years_4(db: AsyncSession) -> None:
     assert program["increase"] is None
 
 
+@needs_crawled_seeds
 async def test_get_program_detail_standard_years_6_duoc_hoc(db: AsyncSession) -> None:
     await run_seed()
 
@@ -86,6 +90,7 @@ async def test_get_program_detail_standard_years_6_duoc_hoc(db: AsyncSession) ->
     assert program["totalWithLicense"] == program["totalCourse"]
 
 
+@needs_crawled_seeds
 async def test_get_program_detail_year1_has_source(db: AsyncSession) -> None:
     """F12 — seed.py gan source_id tu source_url trong jsonl (Tuan 4)."""
     await run_seed()
@@ -106,6 +111,7 @@ async def test_get_program_detail_year1_has_source(db: AsyncSession) -> None:
     assert "source" not in program["yearlyAmounts"][1]
 
 
+@needs_crawled_seeds
 async def test_get_program_detail_orders_multiple_tracks(db: AsyncSession) -> None:
     await run_seed()
 
@@ -121,6 +127,7 @@ async def test_get_program_detail_orders_multiple_tracks(db: AsyncSession) -> No
     assert set(tracks) == {"tien_tien", "chat_luong_cao"}
 
 
+@needs_crawled_seeds
 async def test_get_program_detail_campus_split(db: AsyncSession) -> None:
     """TDTU Du lich: 2 program cung (school, major, track, language) khac `campus`
     — co so chinh (campus=None, 31,26tr) va Phan hieu Khanh Hoa ("Khánh Hòa",

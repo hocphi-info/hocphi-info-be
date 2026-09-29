@@ -9,6 +9,8 @@ from httpx import ASGITransport, AsyncClient
 from scripts.seed import main as run_seed
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 
 async def test_list_majors_empty_when_no_data(db: AsyncSession) -> None:
     async with AsyncClient(
@@ -19,6 +21,7 @@ async def test_list_majors_empty_when_no_data(db: AsyncSession) -> None:
     assert resp.json() == []
 
 
+@needs_crawled_seeds
 async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     db: AsyncSession,
 ) -> None:
@@ -72,6 +75,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     )
 
 
+@needs_crawled_seeds
 async def test_list_majors_search_filters_by_major_name_without_diacritics(
     db: AsyncSession,
 ) -> None:
@@ -91,6 +95,7 @@ async def test_list_majors_search_filters_by_major_name_without_diacritics(
     assert len(rows) >= 1
 
 
+@needs_crawled_seeds
 async def test_list_majors_search_also_matches_school_name(
     db: AsyncSession,
 ) -> None:
