@@ -10,18 +10,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, MajorGroupCode, ProgramLanguage
+from app.enums import CityCode, ProgramLanguage
 from app.models import Major, Program, ProgramIncrease, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
-    MajorOut,
     MajorRowOut,
     ProgramIncreaseOut,
     ProgramOut,
     SchoolOut,
     TuitionRecordOut,
 )
-from app.text import MIN_QUERY_LEN, normalize
+from app.taxonomy import load_major_context, to_major_out
+from app.text import MIN_QUERY_LEN, alias_matches, normalize
 
 router = APIRouter(tags=["majors"])
 
@@ -31,7 +31,8 @@ async def list_majors(
     search: str | None = Query(
         None,
         description=(
-            "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky), "
+            "Loc theo TEN TRUONG + ten viet tat + TEN NGANH (khop bat ky) hoac "
+            "TEN GOI KHAC cua nganh (alias: bang han / tien to >= 3 ky tu), "
             "bo dau, khong phan biet hoa/thuong. Toi thieu "
             f"{MIN_QUERY_LEN} ky tu sau khi chuan hoa; ngan hon -> tra []."
         ),
@@ -67,6 +68,9 @@ async def list_majors(
     )
     rows = (await session.execute(stmt)).all()
 
+    # 1 lan nap taxonomy + alias cho moi nganh xuat hien (khong N+1).
+    ctx = await load_major_context(session, {row[2] for row in rows})
+
     result = [
         MajorRowOut(
             program=ProgramOut(
@@ -86,15 +90,7 @@ async def list_majors(
                 category=school.category,
                 logo_url=school.logo_url,
             ),
-            major=MajorOut(
-                slug=major.slug,
-                name=major.name,
-                code=major.code,
-                group_code=MajorGroupCode(major.group_code),
-                standard_years=major.standard_years,
-                requires_practice_license=major.requires_practice_license,
-                practice_profession=major.practice_profession,
-            ),
+            major=to_major_out(major, ctx),
             year1=TuitionRecordOut(
                 program_id=year1.program_id,
                 academic_year=year1.academic_year,
@@ -128,6 +124,9 @@ async def list_majors(
             for r in result
             if q
             in normalize(f"{r.school.name} {r.school.short_name or ''} {r.major.name}")
+            # Ten goi khac ("cntt", "it"): bang / tien to, KHONG chuoi con — xem
+            # app/text.py::alias_matches.
+            or any(alias_matches(q, normalize(a)) for a in r.major.aliases)
         ]
 
     return result

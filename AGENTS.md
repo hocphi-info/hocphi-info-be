@@ -42,7 +42,9 @@ app/
     # each file = router + its Pydantic request/response models, colocated
 alembic/versions/     # 0001_initial_schema.py written by hand (gen_ulid(), ENUMs, VIEW, seed)
 scripts/seed.py        # manual data load — reads seeds/*.sql via AsyncSession
-seeds/                 # hand-curated *.sql (no admin API — see below)
+seeds/                 # hand-curated *.sql + CSV (no admin API — see below). 004-006 = major taxonomy
+                        # (Ministry catalog, major->code mapping, search aliases) — see seeds/README.md;
+                        # NEEDS UPDATING as more schools are crawled
 tests/                 # conftest.py: alembic upgrade against an isolated test DB,
                         # SAVEPOINT-wrapped session per test (rolls back, never touches dev data)
 docs/schema.md          # schema rationale + ERD — the source of truth `app/models.py` follows

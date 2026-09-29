@@ -41,7 +41,10 @@
 ```mermaid
 erDiagram
   cities ||--o{ schools : "city_code"
-  major_groups ||--o{ majors : "group_code"
+  major_groups ||--o{ majors : "group_code (SẼ BỎ ở migration 0006)"
+  taxonomy_nodes ||--o{ taxonomy_nodes : "parent_code"
+  taxonomy_nodes ||--o{ majors : "code (NULL = Chưa phân loại)"
+  majors ||--o{ major_aliases : "major_id"
   schools ||--o{ programs : "school_id"
   majors ||--o{ programs : "major_id"
   programs ||--o{ tuition_records : "program_id"
@@ -175,6 +178,27 @@ Seed cố định (sẽ đưa lại vào migration seed khi viết lại):
 `HCM`, `HN`; 6 nhóm ngành (`CNTT`, `KY_THUAT`, `KINH_TE`, `Y_DUOC`, `LUAT`, `LOGISTICS`).
 Khoá vẫn là `code` (text ngắn, không phải ULID) — đây là bảng tra cứu tĩnh, không
 cần sắp xếp theo thời gian tạo.
+
+### `taxonomy_nodes`, `major_aliases` — phân loại ngành (từ migration 0005)
+`taxonomy_nodes` = danh mục thống kê ngành đào tạo **trình độ đại học** của Bộ GD&ĐT
+(TT 09/2022/TT-BGDĐT), một bảng tự tham chiếu cho 3 cấp: `level` 1 = lĩnh vực (mã 3 số,
+vd `748`), 2 = nhóm ngành (5 số, `74801`), 3 = ngành (7 số, `7480101`). Mã con bắt đầu
+bằng mã cha. Các CHECK giữ luật này ở DB: `level ∈ {1,2,3}`, cấp 1 không có cha, độ dài mã
+đúng cấp, tiền tố mã. Khoá là `code` (bảng tra cứu tĩnh, không ULID/soft-delete). Nạp từ
+`seeds/004_taxonomy.csv` (xem `seeds/README.md` — nguồn và cách cập nhật).
+
+`majors.code` (cột cũ, nullable) giờ là **FK tới `taxonomy_nodes.code`** (phải là nút cấp 3 —
+test giữ, CHECK không xuyên bảng được). `NULL` = **Chưa phân loại**: ngành tên riêng của
+trường / ngành thí điểm chưa có trong danh mục (không đoán mã; lý do ghi ở
+`seeds/005_major_taxonomy.csv`). Lĩnh vực và nhóm ngành của một ngành **suy ra** qua
+`parent_code`, không lưu ở `majors`.
+
+`major_aliases(major_id, alias, alias_normalized)` — tên gọi khác để tìm kiếm ("cntt", "it",
+"computer science"), gắn vào `majors` của hocphi (không gắn vào nút danh mục) để ngành chưa
+phân loại vẫn có alias. Khớp bằng nhau / tiền tố ≥ 3 ký tự (`app/text.py::alias_matches`).
+
+> **Cần cập nhật khi crawl thêm trường**: dữ liệu ngành + alias hiện chỉ phủ các trường đã
+> có học phí. Ngành mới → thêm dòng `005`/`006` (xem `seeds/README.md`).
 
 ### `app_settings` — cấu hình dẫn xuất
 | key                         | mặc định | ý nghĩa                                                        |

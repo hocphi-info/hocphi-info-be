@@ -7,12 +7,12 @@ tu `hocphi-info-fe/src/lib/derive.ts:totalCourseCost()`.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, MajorGroupCode, ProgramLanguage
+from app.enums import CityCode, ProgramLanguage
 from app.models import (
     AppSetting,
     Major,
@@ -21,22 +21,28 @@ from app.models import (
     ProgramIncrease,
     School,
     Source,
+    TaxonomyNode,
     TuitionRecord,
 )
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
-    MajorOut,
     ProgramDetailOut,
     ProgramDetailResponseOut,
     ProgramIncreaseOut,
     ProgramOut,
+    RelatedMajorOut,
     SchoolOut,
     SourceOut,
     TuitionRecordOut,
     YearlyAmountOut,
 )
+from app.taxonomy import MajorContext, load_major_context, to_major_out
+from app.v1.schools import STATS_TRACK
 
 router = APIRouter(tags=["program-detail"])
+
+# So nganh gan hien toi da tren trang chi tiet.
+RELATED_MAJORS_LIMIT = 6
 
 
 def _compute_yearly_amounts(
@@ -58,6 +64,58 @@ def _compute_yearly_amounts(
         )
         amount *= 1 + increase_pct / 100
     return out
+
+
+async def _related_majors(
+    session: AsyncSession, major: Major, ctx: MajorContext
+) -> list[RelatedMajorOut]:
+    """Nganh CUNG NHOM NGANH (cha 5 so cua ma nganh) co du lieu hoc phi, khong tinh
+    chinh nganh dang xem. So truong + khoang hoc phi Nam 1 chi tren he DAI TRA
+    (STATS_TRACK) — dung nguyen tac "khong tron he" cua S2. Nganh chua phan loai
+    (khong co nhom) -> rong."""
+    taxonomy = ctx.taxonomy.get(major.code) if major.code is not None else None
+    if taxonomy is None:
+        return []
+
+    latest_tr = latest_published_tuition_subquery()
+    amount = latest_tr.c.amount_per_year
+    rows = (
+        await session.execute(
+            select(
+                Major.slug,
+                Major.name,
+                func.count(distinct(Program.school_id)),
+                func.min(amount),
+                func.max(amount),
+            )
+            .select_from(Program)
+            .join(Major, Major.id == Program.major_id)
+            .join(School, School.id == Program.school_id)
+            .join(TaxonomyNode, TaxonomyNode.code == Major.code)
+            .join(latest_tr, latest_tr.c.program_id == Program.id)
+            .where(
+                TaxonomyNode.parent_code == taxonomy.group.code,
+                Major.id != major.id,
+                Program.track == STATS_TRACK,
+                Program.deleted_at.is_(None),
+                Major.deleted_at.is_(None),
+                School.deleted_at.is_(None),
+            )
+            .group_by(Major.id, Major.slug, Major.name)
+            .order_by(func.count(distinct(Program.school_id)).desc(), Major.name)
+            .limit(RELATED_MAJORS_LIMIT)
+        )
+    ).all()
+    return [
+        RelatedMajorOut(
+            slug=slug,
+            name=name,
+            n_schools=n_schools,
+            min_year1_amount=min_amount,
+            max_year1_amount=max_amount,
+        )
+        for slug, name, n_schools, min_amount, max_amount in rows
+    ]
 
 
 @router.get(
@@ -167,6 +225,8 @@ async def get_program_detail(
             )
         )
 
+    ctx = await load_major_context(session, [major])
+
     return ProgramDetailResponseOut(
         school=SchoolOut(
             slug=school.slug,
@@ -176,14 +236,7 @@ async def get_program_detail(
             category=school.category,
             logo_url=school.logo_url,
         ),
-        major=MajorOut(
-            slug=major.slug,
-            name=major.name,
-            code=major.code,
-            group_code=MajorGroupCode(major.group_code),
-            standard_years=major.standard_years,
-            requires_practice_license=major.requires_practice_license,
-            practice_profession=major.practice_profession,
-        ),
+        major=to_major_out(major, ctx),
         programs=programs,
+        related_majors=await _related_majors(session, major, ctx),
     )

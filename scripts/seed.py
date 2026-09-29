@@ -2,7 +2,7 @@
 
     uv run python -m scripts.seed
 
-Ba buoc tuan tu, moi buoc tu commit rieng (khong dung 1 transaction lon cho ca
+Nam buoc tuan tu, moi buoc tu commit rieng (khong dung 1 transaction lon cho ca
 script — neu buoc sau loi, buoc truoc van con, chay lai an toan vi moi buoc
 deu idempotent):
 
@@ -18,6 +18,13 @@ deu idempotent):
      => fan-out: 1 dong JSONL (1 muc cong bo o muc HE) sinh N `programs` +
      N `tuition_records`, moi nganh 1 bo (cung amount, cung source).
 
+  0. (truoc buoc 2) taxonomy — phan loai nganh theo danh muc Bo GD&DT, 3 file CSV:
+     seeds/004_taxonomy.csv (nut cay), 005_major_taxonomy.csv (nganh -> ma 7 so),
+     006_major_aliases.csv (ten goi khac). Xem seeds/README.md. LUU Y khac cac
+     buoc con lai: 004 va 005 la "nguon su that da duyet" nen UPSERT/UPDATE (sua
+     CSV -> lan seed sau sua theo, ke ca ghi de `majors.code`); 006 chi THEM
+     (xoa alias phai xoa tay trong DB).
+
 Idempotent: `programs` dung "get or create" (SELECT truoc, INSERT neu thieu,
 dua vao UNIQUE (school,major,track,language,campus)); `tuition_records` SELECT
 truoc theo UNIQUE (program_id, academic_year), INSERT neu thieu. Chay lai
@@ -25,13 +32,24 @@ script nhieu lan khong nhan doi du lieu.
 """
 
 import asyncio
+import csv
 import sys
 from pathlib import Path
 
 from app.db import SessionLocal, engine
-from app.models import Major, Program, School, Source, TuitionRecord
+from app.models import (
+    Major,
+    MajorAlias,
+    Program,
+    School,
+    Source,
+    TaxonomyNode,
+    TuitionRecord,
+)
+from app.text import normalize
 from crawler.schema import TuitionRow
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scripts.seed_majors_mapping import ROW_TO_DISPLAY_NAME, ROW_TO_MAJOR_SLUG
@@ -56,6 +74,102 @@ async def run_sql_seed_file(name: str) -> None:
         await session.execute(text(sql))
         await session.commit()
     print(f"  [xong] {name}")
+
+
+def _read_csv(name: str) -> list[dict[str, str]]:
+    # utf-8-sig: tu bo BOM neu file duoc luu qua Excel.
+    with (SEEDS_DIR / name).open(encoding="utf-8-sig", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+async def load_taxonomy(session: AsyncSession) -> int:
+    """seeds/004_taxonomy.csv -> `taxonomy_nodes`. UPSERT theo `code`, nap theo
+    thu tu level (cha truoc con — FK tu tham chieu). Tra ve so nut."""
+    rows = sorted(_read_csv("004_taxonomy.csv"), key=lambda r: int(r["level"]))
+    values = [
+        {
+            "code": r["code"],
+            "level": int(r["level"]),
+            "parent_code": r["parent_code"] or None,
+            "name": r["name"],
+        }
+        for r in rows
+    ]
+    for level in (1, 2, 3):
+        batch = [v for v in values if v["level"] == level]
+        stmt = pg_insert(TaxonomyNode).values(batch)
+        await session.execute(
+            stmt.on_conflict_do_update(
+                index_elements=["code"],
+                set_={
+                    "level": stmt.excluded.level,
+                    "parent_code": stmt.excluded.parent_code,
+                    "name": stmt.excluded.name,
+                },
+            )
+        )
+    return len(values)
+
+
+async def apply_major_taxonomy(session: AsyncSession) -> tuple[int, list[str]]:
+    """seeds/005_major_taxonomy.csv -> `majors.code`. UPDATE theo `slug`: file CSV
+    la nguon su that (ghi de ca khi da co gia tri), `taxonomy_code` trong = NULL
+    (Chua phan loai). Tra ve (so nganh da xu ly, danh sach slug khong ton tai)."""
+    applied = 0
+    missing: list[str] = []
+    for r in _read_csv("005_major_taxonomy.csv"):
+        result = await session.execute(
+            update(Major)
+            .where(Major.slug == r["major_slug"], Major.deleted_at.is_(None))
+            .values(code=r["taxonomy_code"] or None)
+        )
+        if result.rowcount:  # type: ignore[attr-defined]
+            applied += 1
+        else:
+            missing.append(r["major_slug"])
+    return applied, missing
+
+
+async def load_aliases(session: AsyncSession) -> tuple[int, list[str]]:
+    """seeds/006_major_aliases.csv -> `major_aliases`. Chi THEM (ON CONFLICT DO
+    NOTHING). Tra ve (so dong xu ly, danh sach slug khong ton tai)."""
+    rows = (
+        await session.execute(
+            select(Major.slug, Major.id).where(Major.deleted_at.is_(None))
+        )
+    ).all()
+    ids: dict[str, str] = dict(tuple(r) for r in rows)
+    values: list[dict[str, str]] = []
+    missing: list[str] = []
+    for r in _read_csv("006_major_aliases.csv"):
+        major_id = ids.get(r["major_slug"])
+        if major_id is None:
+            missing.append(r["major_slug"])
+            continue
+        values.append(
+            {
+                "major_id": major_id,
+                "alias": r["alias"],
+                "alias_normalized": normalize(r["alias"]),
+            }
+        )
+    if values:
+        await session.execute(
+            pg_insert(MajorAlias).values(values).on_conflict_do_nothing()
+        )
+    return len(values), missing
+
+
+async def _run_taxonomy_seed() -> None:
+    async with SessionLocal() as session:
+        n = await load_taxonomy(session)
+        applied, missing = await apply_major_taxonomy(session)
+        n_alias, alias_missing = await load_aliases(session)
+        await session.commit()
+    print(f"  [xong] taxonomy: {n} nut, {applied} nganh gan ma, {n_alias} alias")
+    for label, slugs in (("005", missing), ("006", alias_missing)):
+        if slugs:
+            print(f"  [canh bao] {label}: slug khong co trong `majors`: {slugs}")
 
 
 async def _get_or_create_program(
@@ -226,6 +340,7 @@ async def main() -> None:
     print(f"Nap seed tu {SEEDS_DIR}")
     for name in SQL_SEED_FILES:
         await run_sql_seed_file(name)
+    await _run_taxonomy_seed()
 
     total_loaded = 0
     total_skipped = 0

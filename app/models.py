@@ -92,6 +92,22 @@ class MajorGroup(Base):
     majors: Mapped[list[Major]] = relationship(back_populates="group")
 
 
+class TaxonomyNode(Base):
+    """Danh muc thong ke nganh dao tao cua Bo GD&DT (TT 09/2022), 3 cap trong 1 bang
+    tu tham chieu: 1 = linh vuc (3 so), 2 = nhom nganh (5 so), 3 = nganh (7 so).
+    Ma con bat dau bang ma cha; cac CHECK o migration 0005 giu luat do. Nap tu
+    seeds/004_taxonomy.csv."""
+
+    __tablename__ = "taxonomy_nodes"
+
+    code: Mapped[str] = mapped_column(Text, primary_key=True)
+    level: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    parent_code: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("taxonomy_nodes.code"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class AppSetting(Base):
     """Cau hinh dan xuat (schema.md §3): current_intake_year, course_years_default,
     default_increase_pct, default_increase_band_pct. Value luu dang text, tang API
@@ -155,8 +171,13 @@ class Major(Base, TimestampSoftDelete):
 
     slug: Mapped[str] = mapped_column(Text, nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    # Ma nganh cap IV — KHONG unique (nhieu truong trung ma), nullable (nganh moi).
-    code: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Ma nganh 7 so cua Bo GD&DT (cap IV) -> FK toi taxonomy_nodes (nut cap 3).
+    # KHONG unique (nhieu nganh cua hocphi co the cung 1 ma), NULL = "Chua phan loai"
+    # (ten rieng cua truong / nganh thi diem chua co trong danh muc — xem
+    # seeds/005_major_taxonomy.csv). Linh vuc + nhom nganh SUY RA qua parent_code.
+    code: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("taxonomy_nodes.code"), nullable=True
+    )
     group_code: Mapped[str] = mapped_column(
         Text, ForeignKey("major_groups.code"), nullable=False
     )
@@ -174,6 +195,20 @@ class Major(Base, TimestampSoftDelete):
     post_grad_requirements: Mapped[list[PostGradRequirement]] = relationship(
         back_populates="major"
     )
+
+
+class MajorAlias(Base):
+    """Ten goi khac cua 1 nganh de tim kiem ("cntt", "it", "computer science").
+    Gan vao `majors` cua hocphi (khong gan vao nut danh muc) de nganh chua phan
+    loai van co alias. `alias_normalized` = normalize(alias), tinh luc nap seed."""
+
+    __tablename__ = "major_aliases"
+
+    major_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("majors.id", ondelete="CASCADE"), primary_key=True
+    )
+    alias: Mapped[str] = mapped_column(Text, nullable=False)
+    alias_normalized: Mapped[str] = mapped_column(Text, primary_key=True)
 
 
 class Program(Base, TimestampSoftDelete):
