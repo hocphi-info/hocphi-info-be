@@ -27,6 +27,7 @@ from sqlalchemy import and_, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
+from app.enums import CityCode, MajorGroupCode, SchoolCategory, SourceDocType
 from app.models import City, Major, MajorGroup, Program, School, Source, TuitionRecord
 from app.schemas.common import CamelModel
 
@@ -43,20 +44,20 @@ class CoverageTotalsOut(CamelModel):
 
 
 class CoverageCityRowOut(CamelModel):
-    city_code: str
+    city_code: CityCode
     city_name: str
     schools_total: int
     schools_with_data: int
 
 
 class CoverageCategoryRowOut(CamelModel):
-    category: str
+    category: SchoolCategory
     schools_total: int
     schools_with_data: int
 
 
 class CoverageMajorGroupRowOut(CamelModel):
-    group_code: str
+    group_code: MajorGroupCode
     group_name: str
     programs_with_tuition: int
 
@@ -65,13 +66,13 @@ class CoverageSchoolRowOut(CamelModel):
     slug: str
     name: str
     short_name: str | None
-    city_code: str
-    category: str
+    city_code: CityCode
+    category: SchoolCategory
     n_programs: int
     # doc_type + ngay cua `source` moi nhat trong so cac ban ghi da cong bo cua
     # truong; None khi truong chua co source nao (confidence != verified). FE map
     # doc_type -> nhan nguoi doc ("De an TS 2026"), None -> "—".
-    latest_source_doc_type: str | None
+    latest_source_doc_type: SourceDocType | None
     latest_source_date: date | None
     last_updated: date | None
 
@@ -244,7 +245,7 @@ async def get_coverage(
         ),
         by_city=[
             CoverageCityRowOut(
-                city_code=code,
+                city_code=CityCode(code),
                 city_name=name,
                 schools_total=total,
                 schools_with_data=with_data,
@@ -253,7 +254,7 @@ async def get_coverage(
         ],
         by_category=[
             CoverageCategoryRowOut(
-                category=category.value,
+                category=category,
                 schools_total=total,
                 schools_with_data=with_data,
             )
@@ -261,7 +262,7 @@ async def get_coverage(
         ],
         by_major_group=[
             CoverageMajorGroupRowOut(
-                group_code=code,
+                group_code=MajorGroupCode(code),
                 group_name=name,
                 programs_with_tuition=n,
             )
@@ -272,12 +273,10 @@ async def get_coverage(
                 slug=slug,
                 name=name,
                 short_name=short_name,
-                city_code=city_code,
-                category=category.value,
+                city_code=CityCode(city_code),
+                category=category,
                 n_programs=n_programs,
-                latest_source_doc_type=(
-                    doc_type.value if doc_type is not None else None
-                ),
+                latest_source_doc_type=doc_type,
                 latest_source_date=published_date,
                 last_updated=last_updated.date() if last_updated is not None else None,
             )

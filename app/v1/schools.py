@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import enums
 from app.db import get_session
+from app.enums import CityCode
 from app.models import Major, Program, ProgramIncrease, School
 from app.schemas.common import SchoolOut, SchoolRowOut, SchoolStatsOut
 from app.text import MIN_QUERY_LEN, normalize
@@ -122,8 +123,8 @@ async def list_schools(
                     slug=school.slug,
                     name=school.name,
                     short_name=school.short_name,
-                    city_code=school.city_code,
-                    category=school.category.value,
+                    city_code=CityCode(school.city_code),
+                    category=school.category,
                     logo_url=school.logo_url,
                 ),
                 stats=SchoolStatsOut(

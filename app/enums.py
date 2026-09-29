@@ -85,3 +85,23 @@ class SourceDocType(StrEnum):
     THONG_BAO_HOC_PHI = "thong_bao_hoc_phi"
     QUY_DINH_NGHE = "quy_dinh_nghe"
     KHAC = "khac"
+
+
+class CityCode(StrEnum):
+    """Ma thanh pho — bang tra cuu `cities`, KHONG phai ENUM Postgres. Enum nay
+    chi de OpenAPI/FE co union type; test `test_openapi_contract` giu no khop
+    voi du lieu seed (them thanh pho moi ma quen them vao day -> test do)."""
+
+    HCM = "HCM"
+    HN = "HN"
+
+
+class MajorGroupCode(StrEnum):
+    """Ma nhom nganh — bang tra cuu `major_groups`, khop nhu CityCode."""
+
+    CNTT = "CNTT"
+    KY_THUAT = "KY_THUAT"
+    KINH_TE = "KINH_TE"
+    Y_DUOC = "Y_DUOC"
+    LUAT = "LUAT"
+    LOGISTICS = "LOGISTICS"
