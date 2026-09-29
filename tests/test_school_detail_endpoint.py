@@ -8,6 +8,8 @@ from httpx import ASGITransport, AsyncClient
 from scripts.seed import main as run_seed
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 
 async def test_get_school_detail_404_when_school_not_found(db: AsyncSession) -> None:
     await run_seed()
@@ -19,6 +21,7 @@ async def test_get_school_detail_404_when_school_not_found(db: AsyncSession) -> 
     assert resp.status_code == 404
 
 
+@needs_crawled_seeds
 async def test_get_school_detail_multi_track(db: AsyncSession) -> None:
     await run_seed()
 
@@ -58,6 +61,7 @@ async def test_get_school_detail_multi_track(db: AsyncSession) -> None:
     assert all(p["year1"]["source"] is None for p in body["programs"])
 
 
+@needs_crawled_seeds
 async def test_get_school_detail_single_program_school(db: AsyncSession) -> None:
     await run_seed()
 

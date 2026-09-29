@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
+from app.enums import CityCode, MajorGroupCode, ProgramLanguage
 from app.models import Major, Program, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
@@ -32,9 +33,7 @@ async def get_school_detail(
     session: AsyncSession = Depends(get_session),
 ) -> SchoolDetailResponseOut:
     school = await session.scalar(
-        select(School).where(
-            School.slug == school_slug, School.deleted_at.is_(None)
-        )
+        select(School).where(School.slug == school_slug, School.deleted_at.is_(None))
     )
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
@@ -97,8 +96,8 @@ async def get_school_detail(
             slug=school.slug,
             name=school.name,
             short_name=school.short_name,
-            city_code=school.city_code,
-            category=school.category.value,
+            city_code=CityCode(school.city_code),
+            category=school.category,
             logo_url=school.logo_url,
         ),
         track_stats=track_stats,
@@ -108,8 +107,8 @@ async def get_school_detail(
                     id=program.id,
                     school_slug=school.slug,
                     major_slug=major.slug,
-                    track=program.track.value,
-                    language=program.language,
+                    track=program.track,
+                    language=ProgramLanguage(program.language),
                     campus=program.campus,
                     display_name=program.display_name,
                 ),
@@ -117,7 +116,7 @@ async def get_school_detail(
                     slug=major.slug,
                     name=major.name,
                     code=major.code,
-                    group_code=major.group_code,
+                    group_code=MajorGroupCode(major.group_code),
                     standard_years=major.standard_years,
                     requires_practice_license=major.requires_practice_license,
                     practice_profession=major.practice_profession,
@@ -127,7 +126,7 @@ async def get_school_detail(
                     academic_year=year1.academic_year,
                     amount_per_year=year1.amount_per_year,
                     is_projected=year1.is_projected,
-                    confidence=year1.confidence.value,
+                    confidence=year1.confidence,
                 ),
             )
             for program, major, year1 in program_rows

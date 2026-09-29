@@ -14,6 +14,8 @@ from scripts.import_school_logos import main as run_import
 from scripts.seed import main as run_seed
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 
 async def test_list_schools_empty_when_no_data(db: AsyncSession) -> None:
     async with AsyncClient(
@@ -24,6 +26,7 @@ async def test_list_schools_empty_when_no_data(db: AsyncSession) -> None:
     assert resp.json() == []
 
 
+@needs_crawled_seeds
 async def test_list_schools_only_includes_schools_with_dai_tra_programs(
     db: AsyncSession,
 ) -> None:
@@ -62,6 +65,7 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
     assert uit_row["school"]["logoUrl"] is None  # chua chay import_school_logos
 
 
+@needs_crawled_seeds
 async def test_list_schools_exposes_logo_url_after_import(
     db: AsyncSession, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -84,6 +88,7 @@ async def test_list_schools_exposes_logo_url_after_import(
     assert uit_row["school"]["logoUrl"] == "https://example.org/uit.png"
 
 
+@needs_crawled_seeds
 async def test_list_schools_search_matches_by_short_name_without_diacritics(
     db: AsyncSession,
 ) -> None:

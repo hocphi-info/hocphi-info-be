@@ -3,8 +3,12 @@
 Tach khoi `app/models.py` (ORM) — day la lop DTO rieng, "lap" tay tu ket qua
 query (join nhieu bang) chu khong tra thang ORM object. `CamelModel` tu sinh
 alias camelCase tu ten field snake_case (`alias_generator=to_camel`), khong
-can viet tay `Field(alias=...)` moi field. `hocphi-info-fe/src/types/domain.ts`
-la "hop dong" — moi field o day PHAI khop ten + kieu ben do.
+can viet tay `Field(alias=...)` moi field.
+
+Hop dong voi FE = `openapi.json` (xuat tu day bang `make openapi`, commit vao
+repo). FE SINH type TypeScript tu file do (`hocphi-info-fe`: `npm run gen:api`),
+khong con viet tay `domain.ts` cho phan khop API. Sua model o day -> chay
+`make openapi`; `tests/test_openapi_contract.py` va CI do neu quen.
 """
 
 from __future__ import annotations
@@ -14,9 +18,27 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from app.enums import (
+    CityCode,
+    ConfidenceLevel,
+    IncreaseSourceKind,
+    MajorGroupCode,
+    ProgramLanguage,
+    ProgramTrack,
+    SchoolCategory,
+    SourceDocType,
+)
+
 
 class CamelModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    # `json_schema_serialization_defaults_required`: field co default (vd
+    # `logo_url = None`) van LUON co mat trong JSON tra ra -> danh dau `required`
+    # trong OpenAPI, de FE sinh type `string | null` thay vi `?: ...`.
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        json_schema_serialization_defaults_required=True,
+    )
 
 
 class SchoolOut(CamelModel):
@@ -25,8 +47,8 @@ class SchoolOut(CamelModel):
     slug: str
     name: str
     short_name: str | None
-    city_code: str
-    category: str
+    city_code: CityCode
+    category: SchoolCategory
     # URL logo truong (schools.logo_url) — NULL = chua co; FE hien chu viet tat.
     logo_url: str | None = None
 
@@ -37,7 +59,7 @@ class MajorOut(CamelModel):
     slug: str
     name: str
     code: str | None
-    group_code: str
+    group_code: MajorGroupCode
     standard_years: int
     requires_practice_license: bool
     practice_profession: str | None
@@ -50,8 +72,8 @@ class ProgramOut(CamelModel):
     id: str
     school_slug: str
     major_slug: str
-    track: str
-    language: str
+    track: ProgramTrack
+    language: ProgramLanguage
     # NULL = co so chinh. Chuoi tu do (vd "Khánh Hòa") khi la phan hieu/co so khac.
     campus: str | None = None
     # Ten hien thi rieng cua chuong trinh khi lech ten `majors` dung chung
@@ -64,7 +86,7 @@ class SourceOut(CamelModel):
     (Nam 1); cac nam du phong la so tinh, khong co source_id that."""
 
     url: str
-    doc_type: str
+    doc_type: SourceDocType
     published_date: date | None
 
 
@@ -76,7 +98,7 @@ class TuitionRecordOut(CamelModel):
     academic_year: str
     amount_per_year: int
     is_projected: bool
-    confidence: str
+    confidence: ConfidenceLevel
     source: SourceOut | None = None
 
 
@@ -85,7 +107,7 @@ class ProgramIncreaseOut(CamelModel):
 
     program_id: str
     annual_increase_pct: float
-    increase_source: str
+    increase_source: IncreaseSourceKind
 
 
 class MajorRowOut(CamelModel):
@@ -123,7 +145,7 @@ class SchoolTrackStatOut(CamelModel):
     SchoolStatsOut nhung loc theo school_id thay vi track — moi truong co toi
     da 1 dong / he da co chuong trinh."""
 
-    track: str
+    track: ProgramTrack
     n_programs: int
     min_amount: int
     min_major_name: str

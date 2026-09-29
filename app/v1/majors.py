@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
+from app.enums import CityCode, MajorGroupCode, ProgramLanguage
 from app.models import Major, Program, ProgramIncrease, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
@@ -72,8 +73,8 @@ async def list_majors(
                 id=program.id,
                 school_slug=school.slug,
                 major_slug=major.slug,
-                track=program.track.value,
-                language=program.language,
+                track=program.track,
+                language=ProgramLanguage(program.language),
                 campus=program.campus,
                 display_name=program.display_name,
             ),
@@ -81,15 +82,15 @@ async def list_majors(
                 slug=school.slug,
                 name=school.name,
                 short_name=school.short_name,
-                city_code=school.city_code,
-                category=school.category.value,
+                city_code=CityCode(school.city_code),
+                category=school.category,
                 logo_url=school.logo_url,
             ),
             major=MajorOut(
                 slug=major.slug,
                 name=major.name,
                 code=major.code,
-                group_code=major.group_code,
+                group_code=MajorGroupCode(major.group_code),
                 standard_years=major.standard_years,
                 requires_practice_license=major.requires_practice_license,
                 practice_profession=major.practice_profession,
@@ -99,13 +100,13 @@ async def list_majors(
                 academic_year=year1.academic_year,
                 amount_per_year=year1.amount_per_year,
                 is_projected=year1.is_projected,
-                confidence=year1.confidence.value,
+                confidence=year1.confidence,
             ),
             increase=(
                 ProgramIncreaseOut(
                     program_id=increase.program_id,
                     annual_increase_pct=float(increase.annual_increase_pct),
-                    increase_source=increase.increase_source.value,
+                    increase_source=increase.increase_source,
                 )
                 if increase is not None
                 else None
@@ -126,9 +127,7 @@ async def list_majors(
             r
             for r in result
             if q
-            in normalize(
-                f"{r.school.name} {r.school.short_name or ''} {r.major.name}"
-            )
+            in normalize(f"{r.school.name} {r.school.short_name or ''} {r.major.name}")
         ]
 
     return result
