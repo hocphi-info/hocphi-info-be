@@ -55,7 +55,9 @@ _SEEDED_TABLES = (
     "program_increase",
     "post_grad_requirements",
     "programs",
+    "major_aliases",
     "majors",
+    "taxonomy_nodes",
     "schools",
 )
 
