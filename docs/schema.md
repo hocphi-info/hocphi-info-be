@@ -195,6 +195,10 @@ trường / ngành thí điểm chưa có trong danh mục (không đoán mã; l
 "computer science"), gắn vào `majors` của hocphi (không gắn vào nút danh mục) để ngành chưa
 phân loại vẫn có alias. Khớp bằng nhau / tiền tố ≥ 3 ký tự (`app/text.py::alias_matches`).
 
+**Đọc cây qua API** (`app/v1/taxonomy.py`): `GET /api/v1/taxonomy` liệt kê lĩnh vực **có dữ liệu** (+ tổng ngành chưa phân loại);
+`GET /api/v1/taxonomy/{code}` (mã 3/5/7 số hoặc `unclassified`) trả `path` (tổ tiên), `children` (con trực tiếp có dữ liệu, số gộp từ hậu duệ) và `majors`
+(ngành của hocphi có dữ liệu dưới nút; khoảng học phí năm 1 chỉ hệ đại trà). Hai chiều duyệt đều dùng `WITH RECURSIVE` trên `parent_code`.
+
 > **Cần cập nhật khi crawl thêm trường**: dữ liệu ngành + alias hiện chỉ phủ các trường đã
 > có học phí. Ngành mới → thêm dòng `005`/`006` (xem `seeds/README.md`).
 

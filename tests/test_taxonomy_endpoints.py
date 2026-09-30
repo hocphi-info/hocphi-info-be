@@ -1,89 +1,13 @@
 """API phan loai nganh: `major.taxonomy` / `aliases`, `relatedMajors`, `byField`,
-`?search=` theo alias.
-
-TU DUNG DU LIEU NHO (2 truong, vai nganh) — KHONG dung seeds/*.jsonl (khong con
-track trong git, xem tests/markers.py) nen chay day du tren CI. Nganh + danh muc +
-alias lay tu seeds/002..006 (co track). Ghi that vao DB qua `SessionLocal` (nhu
-`scripts.seed`) vi endpoint doc bang session rieng, khong thay SAVEPOINT cua
-fixture `db`; fixture `db` o day chi de TRUNCATE sach truoc moi test.
+`?search=` theo alias. Du lieu test: tests/factories.py (khong dung jsonl).
 """
 
-from pathlib import Path
-
-from app.db import SessionLocal
-from app.enums import ConfidenceLevel, ProgramTrack, SchoolCategory, TuitionUnit
 from app.main import app
-from app.models import Major, Program, School, TuitionRecord
 from app.text import alias_matches
 from httpx import ASGITransport, AsyncClient
-from scripts.seed import (
-    SEEDS_DIR,
-    apply_major_taxonomy,
-    load_aliases,
-    load_taxonomy,
-)
-from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# (truong, nganh, he, hoc phi nam 1)
-PROGRAMS = [
-    ("truong-a", "khoa-hoc-may-tinh", ProgramTrack.DAI_TRA, 30_000_000),
-    ("truong-a", "ky-thuat-phan-mem", ProgramTrack.DAI_TRA, 32_000_000),
-    ("truong-a", "ky-thuat-phan-mem", ProgramTrack.CHAT_LUONG_CAO, 90_000_000),
-    ("truong-a", "tri-tue-nhan-tao", ProgramTrack.CHAT_LUONG_CAO, 80_000_000),
-    ("truong-a", "cong-nghe-thong-tin", ProgramTrack.DAI_TRA, 28_000_000),
-    ("truong-a", "digital-art", ProgramTrack.DAI_TRA, 25_000_000),
-    ("truong-b", "khoa-hoc-may-tinh", ProgramTrack.DAI_TRA, 40_000_000),
-    ("truong-b", "ky-thuat-phan-mem", ProgramTrack.DAI_TRA, 44_000_000),
-]
-
-
-# Doc 1 lan luc import (ham async khong nen doc file blocking).
-MAJORS_SQL = (Path(SEEDS_DIR) / "002_majors.sql").read_text(encoding="utf-8")
-
-
-async def _seed(*, with_taxonomy: bool = True) -> None:
-    async with SessionLocal() as s:
-        await s.execute(text(MAJORS_SQL))
-        if with_taxonomy:
-            await load_taxonomy(s)
-            await apply_major_taxonomy(s)
-            await load_aliases(s)
-
-        schools = {
-            slug: School(
-                slug=slug,
-                name=name,
-                short_name=slug.upper(),
-                city_code="HCM",
-                category=SchoolCategory.CONG_LAP,
-            )
-            for slug, name in (("truong-a", "Truong A"), ("truong-b", "Truong B"))
-        }
-        s.add_all(schools.values())
-        majors = {m.slug: m for m in (await s.scalars(select(Major))).all()}
-        await s.flush()
-
-        for school_slug, major_slug, track, amount in PROGRAMS:
-            program = Program(
-                school_id=schools[school_slug].id,
-                major_id=majors[major_slug].id,
-                track=track,
-                language="vi",
-            )
-            s.add(program)
-            await s.flush()
-            s.add(
-                TuitionRecord(
-                    program_id=program.id,
-                    academic_year="2026-2027",
-                    amount_per_year=amount,
-                    unit_original=TuitionUnit.DONG_NAM,
-                    amount_original=amount,
-                    confidence=ConfidenceLevel.PUBLISHED_UNVERIFIED,
-                )
-            )
-        await s.commit()
+from tests.factories import PROGRAMS, seed_minimal
 
 
 def _client() -> AsyncClient:
@@ -98,7 +22,7 @@ def _major_of(rows: list[dict], slug: str) -> dict:
 
 
 async def test_majors_expose_taxonomy_and_aliases(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
         rows = (await client.get("/api/v1/majors")).json()
 
@@ -117,7 +41,7 @@ async def test_majors_expose_taxonomy_and_aliases(db: AsyncSession) -> None:
 
 async def test_majors_before_taxonomy_is_seeded_still_ok(db: AsyncSession) -> None:
     # Kich ban rollout: image moi da chay nhung `scripts.seed` chua nap taxonomy.
-    await _seed(with_taxonomy=False)
+    await seed_minimal(with_taxonomy=False)
     async with _client() as client:
         resp = await client.get("/api/v1/majors")
         coverage = (await client.get("/api/v1/coverage")).json()
@@ -135,7 +59,7 @@ async def test_majors_before_taxonomy_is_seeded_still_ok(db: AsyncSession) -> No
 
 
 async def test_search_matches_aliases_by_equality_or_prefix(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
 
         async def slugs(q: str) -> set[str]:
@@ -167,7 +91,7 @@ def test_alias_matches_rule() -> None:
 
 
 async def test_related_majors_same_group_dai_tra_only(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
         detail = (
             await client.get("/api/v1/schools/truong-a/majors/khoa-hoc-may-tinh")
@@ -189,7 +113,7 @@ async def test_related_majors_same_group_dai_tra_only(db: AsyncSession) -> None:
 
 
 async def test_related_majors_empty_for_unclassified_major(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
         detail = (
             await client.get("/api/v1/schools/truong-a/majors/digital-art")
@@ -199,7 +123,7 @@ async def test_related_majors_empty_for_unclassified_major(db: AsyncSession) -> 
 
 
 async def test_school_detail_majors_carry_taxonomy(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
         detail = (await client.get("/api/v1/schools/truong-a")).json()
     by_slug = {p["major"]["slug"]: p["major"] for p in detail["programs"]}
@@ -211,7 +135,7 @@ async def test_school_detail_majors_carry_taxonomy(db: AsyncSession) -> None:
 
 
 async def test_coverage_by_field_counts_and_reconciles(db: AsyncSession) -> None:
-    await _seed()
+    await seed_minimal()
     async with _client() as client:
         body = (await client.get("/api/v1/coverage")).json()
 

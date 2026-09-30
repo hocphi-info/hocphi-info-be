@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "hocphi.info API",
-    "description": "Tra cuu & so sanh hoc phi dai hoc Viet Nam. GET /api/v1/majors (?search=), /api/v1/schools (?search=), /api/v1/schools/{school_slug}/majors/{major_slug}, /api/v1/schools/{school_slug}, /api/v1/coverage.",
+    "description": "Tra cuu & so sanh hoc phi dai hoc Viet Nam. GET /api/v1/majors (?search=), /api/v1/schools (?search=), /api/v1/schools/{school_slug}/majors/{major_slug}, /api/v1/schools/{school_slug}, /api/v1/coverage, /api/v1/taxonomy[/{code}].",
     "version": "0.4.0"
   },
   "paths": {
@@ -245,6 +245,69 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CoverageOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/taxonomy": {
+      "get": {
+        "tags": [
+          "taxonomy"
+        ],
+        "summary": "Get Taxonomy Roots",
+        "operationId": "get_taxonomy_roots_api_v1_taxonomy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyRootsOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/taxonomy/{code}": {
+      "get": {
+        "tags": [
+          "taxonomy"
+        ],
+        "summary": "Get Taxonomy Node",
+        "operationId": "get_taxonomy_node_api_v1_taxonomy__code__get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyNodeDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1149,6 +1212,157 @@
         "title": "SourceOut",
         "description": "Khop `Source` domain.ts (F12) — chi gan duoc voi ban ghi CONG BO that\n(Nam 1); cac nam du phong la so tinh, khong co source_id that."
       },
+      "TaxonomyChildOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "level": {
+            "type": "integer",
+            "title": "Level"
+          },
+          "nMajors": {
+            "type": "integer",
+            "title": "Nmajors"
+          },
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "level",
+          "nMajors",
+          "nPrograms"
+        ],
+        "title": "TaxonomyChildOut",
+        "description": "Nut con truc tiep CO du lieu; so dem gop tu TOAN BO hau due."
+      },
+      "TaxonomyMajorOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "nSchools": {
+            "type": "integer",
+            "title": "Nschools"
+          },
+          "minYear1Amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minyear1Amount"
+          },
+          "maxYear1Amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxyear1Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "code",
+          "nSchools",
+          "minYear1Amount",
+          "maxYear1Amount"
+        ],
+        "title": "TaxonomyMajorOut",
+        "description": "Nganh cua hocphi co du lieu duoi nut dang xem."
+      },
+      "TaxonomyNodeDetailOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "level": {
+            "type": "integer",
+            "title": "Level"
+          },
+          "nMajors": {
+            "type": "integer",
+            "title": "Nmajors"
+          },
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyNodeRefOut"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyChildOut"
+            },
+            "type": "array",
+            "title": "Children"
+          },
+          "majors": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyMajorOut"
+            },
+            "type": "array",
+            "title": "Majors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "level",
+          "nMajors",
+          "nPrograms",
+          "path",
+          "children",
+          "majors"
+        ],
+        "title": "TaxonomyNodeDetailOut"
+      },
       "TaxonomyNodeOut": {
         "properties": {
           "code": {
@@ -1168,6 +1382,29 @@
         "title": "TaxonomyNodeOut",
         "description": "1 nut cua danh muc nganh cua Bo GD&DT (ma + ten chinh thuc)."
       },
+      "TaxonomyNodeRefOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "level": {
+            "type": "integer",
+            "title": "Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "level"
+        ],
+        "title": "TaxonomyNodeRefOut"
+      },
       "TaxonomyOut": {
         "properties": {
           "field": {
@@ -1184,6 +1421,52 @@
         ],
         "title": "TaxonomyOut",
         "description": "Vi tri cua nganh trong danh muc Bo GD&DT: linh vuc (3 so) va nhom nganh\n(5 so). Chi co khi nganh da co ma 7 so; nganh \"Chua phan loai\" -> `taxonomy`\nla null o `MajorOut`."
+      },
+      "TaxonomyRootsOut": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyChildOut"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "unclassified": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomySummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "fields",
+          "unclassified"
+        ],
+        "title": "TaxonomyRootsOut",
+        "description": "Cac linh vuc co du lieu (+ tong nganh chua phan loai neu > 0)."
+      },
+      "TaxonomySummaryOut": {
+        "properties": {
+          "nMajors": {
+            "type": "integer",
+            "title": "Nmajors"
+          },
+          "nPrograms": {
+            "type": "integer",
+            "title": "Nprograms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nMajors",
+          "nPrograms"
+        ],
+        "title": "TaxonomySummaryOut"
       },
       "TuitionRecordOut": {
         "properties": {
