@@ -22,6 +22,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.markers import needs_crawled_seeds
+
 _HEADER = ("slug", "name", "tuition_disclosure", "checked_on", "evidence_url", "note")
 _EVIDENCE = "https://example.org/hoc-phi"
 _HSU_ROW = (
@@ -146,6 +148,8 @@ async def test_check_requires_evidence_when_level_set(db: AsyncSession) -> None:
         await db.flush()
 
 
+# /schools/dh-hoa-sen tra 404 khi thieu dh-hoa-sen.jsonl (khong track trong git -> CI).
+@needs_crawled_seeds
 async def test_api_exposes_tuition_disclosure(db: AsyncSession, csv_path: Path) -> None:
     await run_seed()
     _write_csv(
