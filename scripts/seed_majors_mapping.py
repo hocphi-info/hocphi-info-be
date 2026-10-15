@@ -391,6 +391,182 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str | list[str]]] = {
             "tam-ly-hoc",
         ],
     },
+    # 2026-10-16 — them 13 file (Tuan crawl batch 2). Chi map vao nganh DA CO
+    # trong seeds/002_majors.sql; dong 'ap dung chung' khong liet ke nganh -> bo qua
+    # (giu quy uoc cua uet/ueb). Cac file con lai chua co dong nao map duoc:
+    # aof, buh, dh-gtvt-tphcm, dh-van-lang, haui, hlu, huce, rmit-vietnam, tmu,
+    # ueb, uel, uet, utc — can danh sach nganh tung he truoc khi fan-out.
+    # bav.jsonl bo qua: 1-4 (khoi nganh / CLC ap dung chung),
+    # 7, 9 (lien ket khong neu nganh)
+    "bav.jsonl": {
+        5: "ke-toan",  # dinh huong Nhat Ban — display_name rieng
+        6: [
+            "tai-chinh-ngan-hang",
+            "quan-tri-kinh-doanh",
+            "marketing",
+        ],  # UWE: Ngan hang & TC quoc te, QTKD quoc te, Marketing
+        8: "logistics-va-quan-ly-chuoi-cung-ung",  # Genoa (QTKD trung dong 6)
+    },
+    # dh-fpt-ha-noi.jsonl bo qua: 6,7,9,12,13,26-28,31,34,35: chua co nganh;
+    # 15,17,19: trung UNIQUE voi Ngon ngu X; 37: trung tri-tue-nhan-tao
+    "dh-fpt-ha-noi.jsonl": {
+        1: "cong-nghe-thong-tin",
+        2: "ky-thuat-phan-mem",
+        3: "tri-tue-nhan-tao",
+        4: "khoa-hoc-du-lieu",
+        5: "an-toan-thong-tin",
+        8: "he-thong-thong-tin",
+        10: "truyen-thong-da-phuong-tien",
+        11: "quan-he-cong-chung",
+        14: "ngon-ngu-anh",
+        16: "ngon-ngu-han",
+        18: "ngon-ngu-trung-quoc",
+        20: "luat",
+        21: "luat-kinh-te",
+        22: "marketing",
+        23: "kinh-doanh-quoc-te",
+        24: "thuong-mai-dien-tu",
+        25: "quan-tri-kinh-doanh",
+        29: "quan-tri-khach-san",
+        30: "quan-tri-dich-vu-du-lich-va-lu-hanh",
+        32: "logistics-va-quan-ly-chuoi-cung-ung",
+        33: "cong-nghe-tai-chinh",
+        36: "tai-chinh-ngan-hang",
+        38: "an-ninh-mang",
+    },
+    # dh-fpt-tphcm.jsonl bo qua: nhu dh-fpt-ha-noi.jsonl
+    "dh-fpt-tphcm.jsonl": {
+        1: "cong-nghe-thong-tin",
+        2: "ky-thuat-phan-mem",
+        3: "tri-tue-nhan-tao",
+        4: "khoa-hoc-du-lieu",
+        5: "an-toan-thong-tin",
+        8: "he-thong-thong-tin",
+        10: "truyen-thong-da-phuong-tien",
+        11: "quan-he-cong-chung",
+        14: "ngon-ngu-anh",
+        16: "ngon-ngu-han",
+        18: "ngon-ngu-trung-quoc",
+        20: "luat",
+        21: "luat-kinh-te",
+        22: "marketing",
+        23: "kinh-doanh-quoc-te",
+        24: "thuong-mai-dien-tu",
+        25: "quan-tri-kinh-doanh",
+        29: "quan-tri-khach-san",
+        30: "quan-tri-dich-vu-du-lich-va-lu-hanh",
+        32: "logistics-va-quan-ly-chuoi-cung-ung",
+        33: "cong-nghe-tai-chinh",
+        36: "tai-chinh-ngan-hang",
+        38: "an-ninh-mang",
+    },
+    # ftu2.jsonl bo qua: 6: Truyen thong Marketing tich hop — chua co nganh
+    "ftu2.jsonl": {
+        1: "kinh-te-doi-ngoai",
+        2: "kinh-te-doi-ngoai",
+        3: "logistics-va-quan-ly-chuoi-cung-ung",  # DHNNQT Logistics toan cau
+        4: "quan-tri-kinh-doanh",
+        5: "quan-tri-kinh-doanh",
+        7: "tai-chinh-ngan-hang",
+        8: "tai-chinh-ngan-hang",
+        9: "ke-toan",  # nhom C: Ke toan - Kiem toan -> chi nap Ke toan
+    },
+    "hmu.jsonl": {
+        1: "y-khoa",
+        2: "y-hoc-co-truyen",
+        3: "khuc-xa-nhan-khoa",
+        4: "ky-thuat-xet-nghiem-y-hoc",
+        5: "ky-thuat-phuc-hoi-chuc-nang",
+        6: "dieu-duong",
+        7: "ho-sinh",
+        8: "ky-thuat-hinh-anh-y-hoc",
+        9: "rang-ham-mat",
+        10: "ky-thuat-phuc-hinh-rang",
+        11: "y-khoa",
+        12: "dieu-duong",
+        13: "ky-thuat-xet-nghiem-y-hoc",
+        14: "ky-thuat-phuc-hoi-chuc-nang",
+        15: "ky-thuat-hinh-anh-y-hoc",
+        16: "y-hoc-du-phong",
+        17: "y-te-cong-cong",
+        18: "dinh-duong",
+        19: "tam-ly-hoc",
+        20: "cong-tac-xa-hoi",
+    },
+    "hup.jsonl": {
+        1: "duoc-hoc",
+        2: "hoa-duoc",
+        3: "cong-nghe-sinh-hoc",
+        4: "hoa-hoc",
+        5: "duoc-hoc",
+    },
+    # hus.jsonl bo qua: 3,8,9,11,15-19,22-24,26: chua co nganh dung ma
+    # (vd 'KH may tinh va thong tin' != KHMT)
+    "hus.jsonl": {
+        1: "toan-hoc",
+        2: "toan-tin",
+        4: "khoa-hoc-du-lieu",
+        5: "vat-ly-hoc",
+        6: "khoa-hoc-vat-lieu",
+        7: "cong-nghe-ban-dan",
+        10: "hoa-hoc",
+        12: "hoa-duoc",
+        13: "sinh-hoc",
+        14: "cong-nghe-sinh-hoc",
+        20: "khoa-hoc-moi-truong",
+        21: "cong-nghe-ky-thuat-moi-truong",
+        25: "hai-duong-hoc",
+        27: "dia-chat-hoc",
+        28: "quan-ly-tai-nguyen-va-moi-truong",
+    },
+    # hust.jsonl bo qua: 3,4,11 (ap dung chung), 9 (PFIEV), 10 (IPE)
+    "hust.jsonl": {
+        1: "quan-tri-kinh-doanh",  # TROY-BA
+        2: "khoa-hoc-may-tinh",  # TROY-IT
+        5: "ke-toan",  # nhom C — bo qua KH tinh toan, Hoa my pham
+        6: "khoa-hoc-du-lieu",  # Elitech KHDL & TTNT
+        7: "logistics-va-quan-ly-chuoi-cung-ung",
+        8: "cong-nghe-thong-tin",  # nhom C: CNTT Viet Nhat / Viet Phap
+    },
+    # ptit.jsonl bo qua: 1,2,4: ap dung chung
+    "ptit.jsonl": {
+        3: [
+            "cong-nghe-thong-tin",
+            "tri-tue-nhan-tao",
+        ],  # CNTT (dinh huong ung dung), CNTT Viet-Nhat, TTNT — bo qua Game
+    },
+    # ueh.jsonl bo qua: con lai: he ap dung chung, khong neu nganh
+    "ueh.jsonl": {
+        7: "ke-toan-acca",  # ACCA/ICAEW nganh Ke toan/Kiem toan
+    },
+    # ufm.jsonl bo qua: 2,3,6,7: ap dung chung; 4: Kiem toan — chua co nganh
+    "ufm.jsonl": {
+        1: "ngon-ngu-anh",
+        5: "cong-nghe-tai-chinh",
+    },
+    # ussh-hn.jsonl bo qua: nganh trong nhom chua co trong majors deu bi bo qua
+    "ussh-hn.jsonl": {
+        1: [
+            "bao-chi",
+            "tam-ly-hoc",
+            "quan-tri-khach-san",
+            "quan-he-cong-chung",
+            "quan-tri-dich-vu-du-lich-va-lu-hanh",
+        ],
+        2: [
+            "viet-nam-hoc",
+            "xa-hoi-hoc",
+        ],
+        3: [
+            "cong-tac-xa-hoi",
+            "triet-hoc",
+            "truyen-thong-da-phuong-tien",
+        ],
+    },
+    # vnua.jsonl bo qua: 1-3,5: nhom nganh ap dung chung
+    "vnua.jsonl": {
+        4: "thu-y",
+    },
 }
 
 # {ten_file_jsonl: {so_dong: display_name}} — ghi de `programs.display_name` khi
@@ -403,4 +579,29 @@ ROW_TO_DISPLAY_NAME: dict[str, dict[int, str]] = {
         4: "Du lịch (Chuyên ngành Hướng dẫn du lịch)",  # Phan hieu Khanh Hoa
         28: "Du lịch (Chuyên ngành Hướng dẫn du lịch)",  # co so chinh TP.HCM
     },
+    # 2026-10-16 — ten goc chi tiet hon ten nganh dung chung.
+    "bav.jsonl": {5: "Kế toán định hướng Nhật Bản"},
+    "dh-fpt-ha-noi.jsonl": {
+        4: "Khoa học dữ liệu và ứng dụng",
+        38: "An ninh mạng và An toàn số",
+        32: "Logistics và quản lý chuỗi cung ứng toàn cầu",
+    },
+    "dh-fpt-tphcm.jsonl": {
+        4: "Khoa học dữ liệu và ứng dụng",
+        38: "An ninh mạng và An toàn số",
+        32: "Logistics và quản lý chuỗi cung ứng toàn cầu",
+    },
+    "ftu2.jsonl": {
+        3: "Logistics toàn cầu và đổi mới chuỗi cung ứng",
+        9: "Kế toán - Kiểm toán",
+    },
+    "hus.jsonl": {7: "Công nghệ bán dẫn (thuộc ngành Khoa học vật liệu)"},
+    "hust.jsonl": {
+        1: "Quản trị kinh doanh (TROY-BA)",
+        2: "Khoa học máy tính (TROY-IT)",
+        6: "Khoa học Dữ liệu và Trí tuệ nhân tạo (Elitech)",
+        7: "Logistics và Quản lý chuỗi cung ứng (Elitech)",
+    },
+    "hup.jsonl": {5: "Dược học (liên kết ĐH Sydney)"},
+    "ueh.jsonl": {7: "Kế toán/Kiểm toán tích hợp ACCA và ICAEW"},
 }

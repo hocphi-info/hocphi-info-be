@@ -57,6 +57,18 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
         "dh-bach-khoa-tphcm",  # he Chuong trinh tieu chuan (fan-out 41 nganh)
         "dh-thang-long",
         "dh-y-khoa-pham-ngoc-thach",
+        # batch 2 (2026-10-16). hust, ueh chi co he CLC/quoc te -> khong co mat.
+        "bav",
+        "dh-fpt-ha-noi",
+        "dh-fpt-tphcm",
+        "ftu2",
+        "hmu",
+        "hup",
+        "hus",
+        "ptit",
+        "ufm",
+        "ussh-hn",
+        "vnua",
     }
 
     uit_row = next(r for r in rows if r["school"]["slug"] == "uit")

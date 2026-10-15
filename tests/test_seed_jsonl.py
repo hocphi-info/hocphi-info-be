@@ -32,7 +32,9 @@ def _mapped_slugs() -> set[str]:
 # khong cap nhat hang so; 179 la baseline dung trên main.)
 # 2026-10-16: -1 dh-van-lang (bo mapping) + 25 dh-thang-long (25 nganh, 1-1) = 254.
 # 2026-10-16: +14 dh-y-khoa-pham-ngoc-thach (4 nganh 1-1 + dong 5 fan-out 10) = 268.
-EXPECTED_LOADED_ROWS = 268
+# 2026-10-16: +121 batch 2 (13 file: bav, dh-fpt-*, ftu2, hmu, hup, hus, hust, ptit,
+# ueh, ufm, ussh-hn, vnua) = 389.
+EXPECTED_LOADED_ROWS = 389
 
 
 @needs_crawled_seeds

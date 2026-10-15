@@ -36,7 +36,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     rows = resp.json()
     # 1 row / program-co-tuition. 179 baseline + 51 HCMUT (fan-out he tieu chuan
     # 41 nganh + 10 nganh cac he khac). Xem tests/test_seed_jsonl.py.
-    assert len(rows) == 268  # +14 dh-y-khoa-pham-ngoc-thach
+    assert len(rows) == 389  # +121 batch 2 (2026-10-16)
 
     row = next(
         r
