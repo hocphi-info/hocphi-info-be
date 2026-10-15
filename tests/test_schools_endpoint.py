@@ -44,7 +44,6 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
     # chat_luong_cao/tien_tien/quoc_te KHONG xuat hien.
     assert slugs == {
         "tdtu",
-        "dh-van-lang",
         "uit",
         "ussh-tphcm",
         "hutech",

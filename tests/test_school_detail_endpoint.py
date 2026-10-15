@@ -68,7 +68,7 @@ async def test_get_school_detail_single_program_school(db: AsyncSession) -> None
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/v1/schools/dh-van-lang")
+        resp = await client.get("/api/v1/schools/dh-hoa-sen")
 
     assert resp.status_code == 200
     body = resp.json()
