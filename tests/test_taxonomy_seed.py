@@ -3,7 +3,7 @@
 Cac file CSV/SQL nay CO track trong git nen test chay day du tren CI (khac cac test
 dung seeds/*.jsonl — xem tests/markers.py). Hai nhom:
 
-1. Kiem tra file (thuan Python, khong DB): cay hop le, anh xa 143 nganh day du,
+1. Kiem tra file (thuan Python, khong DB): cay hop le, anh xa 148 nganh day du,
    alias khong tro vao nganh khong ton tai.
 2. Kiem tra DB (fixture `db`, SAVEPOINT): nap idempotent, rang buoc CHECK/FK cua
    migration 0005 tu choi du lieu sai.
@@ -117,7 +117,7 @@ async def test_taxonomy_seed_loads_and_is_idempotent(db: AsyncSession) -> None:
     for _ in range(2):  # lan 2 khong duoc nhan doi / loi
         assert await load_taxonomy(db) == 475
         applied, missing = await apply_major_taxonomy(db)
-        assert (applied, missing) == (143, [])
+        assert (applied, missing) == (150, [])
         n_alias, alias_missing = await load_aliases(db)
         assert alias_missing == [] and n_alias == len(_csv("006_major_aliases.csv"))
 
@@ -150,13 +150,13 @@ async def test_every_classified_major_points_at_a_level_3_node(
     n_unclassified = await db.scalar(
         text("SELECT count(*) FROM majors WHERE code IS NULL")
     )
-    assert n_unclassified == 23
+    assert n_unclassified == 25
 
 
 async def test_apply_major_taxonomy_reports_unknown_slug(db: AsyncSession) -> None:
     await load_taxonomy(db)  # khong nap `majors` -> moi slug deu "khong ton tai"
     applied, missing = await apply_major_taxonomy(db)
-    assert applied == 0 and len(missing) == 143
+    assert applied == 0 and len(missing) == 150
 
 
 @pytest.mark.parametrize(

@@ -63,10 +63,10 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     # dong 2-8 them 10 nganh). HCMUT them 5 school co du lieu va 6 source moi.
     assert body["totals"] == {
         "schoolsTotal": 50,
-        "schoolsWithData": 15,
-        "programsWithTuition": 230,
-        "tuitionRecords": 230,
-        "sourcesCited": 17,
+        "schoolsWithData": 16,  # +dh-y-khoa-pham-ngoc-thach
+        "programsWithTuition": 268,
+        "tuitionRecords": 268,
+        "sourcesCited": 18,
     }
     # snapshotDate = max(tuition_records.updated_at)::date -> chuoi "YYYY-MM-DD".
     assert isinstance(body["snapshotDate"], str)
@@ -77,19 +77,19 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
         "cityCode": "HCM",
         "cityName": "TP. Ho Chi Minh",
         "schoolsTotal": 25,
-        "schoolsWithData": 12,  # +dh-bach-khoa-tphcm (con lai co tu cac dot truoc)
+        "schoolsWithData": 12,  # -dh-van-lang (bo mapping), +dh-y-khoa-pham-ngoc-thach
     }
     assert by_city["HN"]["schoolsTotal"] == 25
-    assert by_city["HN"]["schoolsWithData"] == 3
+    assert by_city["HN"]["schoolsWithData"] == 4  # +dh-thang-long
 
     by_field = {r["fieldCode"]: r["programsWithTuition"] for r in body["byField"]}
     # Linh vuc theo danh muc Bo GD&DT (seeds/004-005). HCMUT he tieu chuan fan-out
     # lam 752 (Ky thuat) lon nhat; None = "Chua phan loai" (24 chuong trinh).
     assert by_field["752"] == 36
-    assert by_field["734"] == 24
-    assert by_field["748"] == 21
-    assert by_field[None] == 24
-    assert sum(by_field.values()) == 230
+    assert by_field["734"] == 31  # +7 dh-thang-long
+    assert by_field["748"] == 25  # +4 dh-thang-long
+    assert by_field[None] == 26  # +2 PNT (khuc xa, gay me hoi suc)
+    assert sum(by_field.values()) == 268
 
 
 @needs_crawled_seeds

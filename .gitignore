@@ -29,6 +29,7 @@ crawler/work/
 seeds/*.jsonl
 !seeds/dh-bach-khoa-tphcm.jsonl
 !seeds/dh-khoa-hoc-tu-nhien-tphcm.jsonl
+!seeds/dh-thang-long.jsonl
 
 # Claude Code — skill co commit, settings ca nhan thi khong
 .claude/settings.local.json

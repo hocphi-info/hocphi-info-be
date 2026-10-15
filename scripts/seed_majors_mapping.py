@@ -71,9 +71,6 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str | list[str]]] = {
         # 3,4: trung (school,major,track,language,campus) voi dong 1 -> dung
         # UNIQUE constraint cua `programs` — bo qua (owner chot khong mo schema).
     },
-    "dh-van-lang.jsonl": {
-        1: "du-lich",
-    },
     "ussh-tphcm.jsonl": {
         1: "triet-hoc",
         2: "xa-hoi-hoc",
@@ -341,6 +338,58 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str | list[str]]] = {
         6: "ky-thuat-dien-tu-vien-thong",  # CTNB chuyen tiep Nhat — nganh neu ten
         7: ["khoa-hoc-may-tinh", "co-ky-thuat"],  # CTHNB dinh huong Nhat — neu ten
         8: ["tri-tue-nhan-tao", "cong-nghe-thong-tin"],  # lien ket UTS — neu ten
+    },
+    "dh-thang-long.jsonl": {
+        # 25 nganh, muc Nam 1/hoc ky x 2 ky (anh bang hoc phi tren thanglong.edu.vn).
+        # 15, 16: chuong trinh rieng (7340101A / 7340301A) -> slug rieng, khong gop
+        # vao quan-tri-kinh-doanh / ke-toan (dung UNIQUE program, gia khac).
+        1: "thanh-nhac",
+        2: "thiet-ke-do-hoa",
+        3: "ngon-ngu-anh",
+        4: "ngon-ngu-trung-quoc",
+        5: "ngon-ngu-nhat",
+        6: "ngon-ngu-han",
+        7: "kinh-te-quoc-te",
+        8: "viet-nam-hoc",
+        9: "truyen-thong-da-phuong-tien",
+        10: "quan-tri-kinh-doanh",
+        11: "marketing",
+        12: "thuong-mai-dien-tu",
+        13: "tai-chinh-ngan-hang",
+        14: "ke-toan",
+        15: "quan-tri-kinh-doanh-chuan-nghe-nghiep-quoc-te",
+        16: "ke-toan-acca",
+        17: "luat-kinh-te",
+        18: "khoa-hoc-may-tinh",
+        19: "he-thong-thong-tin",
+        20: "cong-nghe-thong-tin",
+        21: "tri-tue-nhan-tao",
+        22: "logistics-va-quan-ly-chuoi-cung-ung",
+        23: "dieu-duong",
+        24: "quan-tri-dich-vu-du-lich-va-lu-hanh",
+        25: "quan-tri-khach-san",
+    },
+    # 2026-10-16 — DH Y khoa Pham Ngoc Thach, de an tuyen sinh 2026 trang 11.
+    # Dong 1-4: muc rieng tung nganh. Dong 5 "Cac nganh cu nhan" (47 tr/nam):
+    # FAN-OUT ra 10 nganh con lai trong danh sach 14 nganh truong dao tao
+    # (owner doi chieu danh sach nganh, 2026-10-16).
+    "dh-y-khoa-pham-ngoc-thach.jsonl": {
+        1: "y-khoa",
+        2: "rang-ham-mat",
+        3: "duoc-hoc",
+        4: "y-hoc-co-truyen",
+        5: [
+            "khuc-xa-nhan-khoa",
+            "ky-thuat-xet-nghiem-y-hoc",
+            "ky-thuat-hinh-anh-y-hoc",
+            "ky-thuat-phuc-hoi-chuc-nang",
+            "ky-thuat-gay-me-hoi-suc",
+            "dieu-duong",
+            "dinh-duong",
+            "ho-sinh",
+            "y-te-cong-cong",
+            "tam-ly-hoc",
+        ],
     },
 }
 

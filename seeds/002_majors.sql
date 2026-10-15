@@ -174,5 +174,17 @@ INSERT INTO majors (slug, name, code, standard_years) VALUES
   ('dia-ky-thuat-xay-dung',                   'Địa kỹ thuật xây dựng',                   NULL, 4),
   ('ky-thuat-dau-khi',                        'Kỹ thuật dầu khí',                        NULL, 4),
   ('kinh-te-tai-nguyen-thien-nhien',          'Kinh tế tài nguyên thiên nhiên',          NULL,  4),
-  ('ky-thuat-moi-truong',                     'Kỹ thuật môi trường',                     NULL, 4)
+  ('ky-thuat-moi-truong',                     'Kỹ thuật môi trường',                     NULL, 4),
+  -- +5 ngành (2026-10-16) — ĐH Thăng Long (seeds/dh-thang-long.jsonl). 2 ngành cuối là
+  -- chương trình riêng giá riêng (mã đề án 7340101A / 7340301A) nên cần slug riêng:
+  -- gộp vào quan-tri-kinh-doanh / ke-toan sẽ đụng UNIQUE program với ngành thường.
+  ('kinh-te-quoc-te',                         'Kinh tế quốc tế',                         NULL, 4),
+  ('viet-nam-hoc',                            'Việt Nam học',                            NULL, 4),
+  ('he-thong-thong-tin',                      'Hệ thống thông tin',                      NULL, 4),
+  ('quan-tri-kinh-doanh-chuan-nghe-nghiep-quoc-te', 'Quản trị kinh doanh định hướng chuẩn nghề nghiệp quốc tế', NULL, 4),
+  ('ke-toan-acca',                            'Kế toán định hướng chứng chỉ quốc tế ACCA', NULL, 4),
+  -- +2 ngành (2026-10-16) — ĐH Y khoa Phạm Ngọc Thạch (seeds/dh-y-khoa-pham-ngoc-thach.jsonl
+  -- dòng 5 "Các ngành cử nhân" fan-out ra 10 ngành; 8 ngành kia đã có slug).
+  ('khuc-xa-nhan-khoa',                       'Khúc xạ nhãn khoa',                       NULL, 4),
+  ('ky-thuat-gay-me-hoi-suc',                 'Kỹ thuật gây mê hồi sức',                 NULL, 4)
 ON CONFLICT (slug) WHERE deleted_at IS NULL DO NOTHING;

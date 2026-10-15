@@ -36,7 +36,7 @@ async def test_list_majors_returns_seeded_rows_with_camelcase_shape(
     rows = resp.json()
     # 1 row / program-co-tuition. 179 baseline + 51 HCMUT (fan-out he tieu chuan
     # 41 nganh + 10 nganh cac he khac). Xem tests/test_seed_jsonl.py.
-    assert len(rows) == 230
+    assert len(rows) == 268  # +14 dh-y-khoa-pham-ngoc-thach
 
     row = next(
         r
@@ -89,8 +89,9 @@ async def test_list_majors_search_filters_by_major_name_without_diacritics(
     assert resp.status_code == 200
     rows = resp.json()
     assert rows, "phai co it nhat 1 dong khop 'ke toan'"
-    # Moi dong tra ve deu la nganh Ke toan (khop qua ten nganh, khong dau).
-    assert {r["major"]["slug"] for r in rows} == {"ke-toan"}
+    # Moi dong tra ve deu la nganh Ke toan (khop qua ten nganh, khong dau) —
+    # ke-toan-acca (DH Thang Long) ten cung bat dau bang "Ke toan".
+    assert {r["major"]["slug"] for r in rows} == {"ke-toan", "ke-toan-acca"}
     # /api/v1/majors tra 1 dong / program -> nhieu truong day Ke toan -> nhieu dong.
     assert len(rows) >= 1
 
