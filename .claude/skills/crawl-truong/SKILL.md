@@ -196,6 +196,16 @@ tong ket → **khong the quy doi ra dong/nam ma khong bia**. Day khac voi truong
 UIT (co the tinh duoc, chi la sai vi chon nham hang) — o day THUC SU thieu du lieu,
 khong phai loi doc.
 
+**Chu du an chot (2026-10-15): DUOC quy doi tin chi khi tai lieu cua truong ghi CA tong
+tin chi/khoa LAN thoi gian khoa (nam, hoac so thang/so hoc ky de suy ra nam).** Vi du
+HLU: "840.000 d/tin chi. Thu 5 thang/hoc ky, 40 thang/khoa hoc, 140 tin chi/khoa hoc"
+=> 4 nam (40 thang / 10 thang/nam) => `credits_per_year_assumed = 35`. Bat buoc ghi
+cach suy ra trong `review_reason`. Van KHONG quy doi khi:
+- chi co don gia ma khong co tong tin chi (HaUI QD 920, ULAW QD 1335) — tim xem de an co
+  "hoc phi nam thu nhat"/"tuong duong khoang X trieu/nam" khong (HaUI, BAV co);
+- mot chuong trinh co NHIEU don gia theo loai hoc phan (HANU theo khoi kien thuc,
+  UIT/HLU CLC, ULAW) — bay #1, khong biet ty le tin chi moi loai.
+
 **8. "Dong/hoc ky" — DA CO don vi `dong_hoc_ky` (migration 0007, 2026-10-15),
 nhung so hoc ky/nam KHONG luon la 2.** HUST cong bo chuong trinh TROY la "30 trieu
 dong/mot hoc ky" voi "mot nam hoc gom 3 hoc ky"; FPT cung 3 ky/nam. Cach ghi:
