@@ -1032,6 +1032,16 @@
               }
             ],
             "title": "Logourl"
+          },
+          "tuitionDisclosure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TuitionDisclosureOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1041,7 +1051,8 @@
           "shortName",
           "cityCode",
           "category",
-          "logoUrl"
+          "logoUrl",
+          "tuitionDisclosure"
         ],
         "title": "SchoolOut",
         "description": "Khop `School` domain.ts."
@@ -1467,6 +1478,51 @@
           "nPrograms"
         ],
         "title": "TaxonomySummaryOut"
+      },
+      "TuitionDisclosure": {
+        "type": "string",
+        "enum": [
+          "theo_nganh",
+          "khong_minh_bach"
+        ],
+        "title": "TuitionDisclosure",
+        "description": "Muc do truong cong khai hoc phi (danh gia tay, cap truong — migration 0008).\n\nChi 2 muc, owner chot 2026-10-16. NULL o DB = chua danh gia (FE khong hien)."
+      },
+      "TuitionDisclosureOut": {
+        "properties": {
+          "level": {
+            "$ref": "#/components/schemas/TuitionDisclosure"
+          },
+          "checkedOn": {
+            "type": "string",
+            "format": "date",
+            "title": "Checkedon"
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "title": "Evidenceurl"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level",
+          "checkedOn",
+          "evidenceUrl",
+          "note"
+        ],
+        "title": "TuitionDisclosureOut",
+        "description": "Danh gia muc cong khai hoc phi cua truong (migration 0008).\n\nNhan dinh cua nguoi van hanh, nen luon di kem ngay kiem tra + link bang\nchung de nguoi doc tu doi chieu."
       },
       "TuitionRecordOut": {
         "properties": {

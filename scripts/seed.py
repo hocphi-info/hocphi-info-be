@@ -324,6 +324,7 @@ async def _load_jsonl_file(filename: str) -> tuple[int, int]:
                             amount_original=row.amount_original,
                             credits_per_year_assumed=row.credits_per_year_assumed,
                             duration_years_assumed=row.duration_years_assumed,
+                            semesters_per_year_assumed=row.semesters_per_year_assumed,
                             is_projected=row.is_projected,
                             confidence=row.confidence,
                             needs_review=row.needs_review,

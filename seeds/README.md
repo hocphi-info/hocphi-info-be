@@ -20,6 +20,30 @@ Idempotent (UPDATE theo slug, chạy lại cho cùng kết quả). Slug lạ ch�
 không làm script dừng. Cột `schools.logo_url` đã có sẵn từ migration `0001` —
 **không** cần migration mới.
 
+## `007_school_tuition_disclosure.csv` — mức công khai học phí (đánh giá tay)
+
+6 cột `slug,name,tuition_disclosure,checked_on,evidence_url,note`. Khoá join là
+**`slug`**; `name` chỉ để người điền nhìn. `tuition_disclosure` chỉ có 2 mức:
+
+| Giá trị | Màu | Khi nào |
+|---|---|---|
+| `theo_nganh` | xanh | Trường công bố học phí cụ thể **cho từng ngành/chương trình**, xem được trước khi nộp hồ sơ |
+| `khong_minh_bach` | đỏ | Chỉ có một khoảng chung quá rộng cho cả trường (vd Hoa Sen "45–85 triệu/năm tùy chương trình"), hoặc không công bố gì |
+
+Để trống `tuition_disclosure` = chưa đánh giá (bỏ qua dòng, FE không hiện badge).
+Có mức thì **bắt buộc** `checked_on` (`YYYY-MM-DD`) + `evidence_url` (`http(s)://`,
+trang chứng minh đánh giá) — DB có CHECK `ck_schools_disclosure_evidence`.
+`note` hiện nguyên văn trên trang trường: viết **sự kiện kiểm chứng được**,
+không viết nhận xét cảm tính.
+
+```
+uv run python -m scripts.import_school_disclosure --dry-run   # xem tóm tắt
+uv run python -m scripts.import_school_disclosure             # UPDATE 4 cột schools.tuition_disclosure*
+```
+
+Cột tạo ở migration `0008`. Prod: deploy rồi
+`fly ssh console -a hocphi-info-api -C "python -m scripts.import_school_disclosure"`.
+
 ## `*.jsonl` — output AI-crawler, batch **2026-09**
 
 Học phí thu thập bằng skill `.claude/skills/crawl-truong/` (Claude Code tự

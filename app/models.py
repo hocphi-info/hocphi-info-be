@@ -122,6 +122,13 @@ class School(Base, TimestampSoftDelete):
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
+        # Da danh gia muc cong khai hoc phi => phai co ngay kiem tra + bang chung.
+        CheckConstraint(
+            "tuition_disclosure IS NULL OR "
+            "(tuition_disclosure_checked_on IS NOT NULL "
+            "AND tuition_disclosure_evidence_url IS NOT NULL)",
+            name="ck_schools_disclosure_evidence",
+        ),
     )
 
     slug: Mapped[str] = mapped_column(Text, nullable=False)  # khoa URL cong khai
@@ -135,6 +142,19 @@ class School(Base, TimestampSoftDelete):
     )
     website: Mapped[str | None] = mapped_column(Text, nullable=True)
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Danh gia muc do cong khai hoc phi (migration 0008) — NULL = chua danh gia.
+    # Nhap tay qua seeds/007_school_tuition_disclosure.csv; khi co muc thi bat
+    # buoc co ngay kiem tra + link bang chung (ck_schools_disclosure_evidence).
+    tuition_disclosure: Mapped[enums.TuitionDisclosure | None] = mapped_column(
+        _pg_enum(enums.TuitionDisclosure, enums.TUITION_DISCLOSURE), nullable=True
+    )
+    tuition_disclosure_checked_on: Mapped[date | None] = mapped_column(
+        Date, nullable=True
+    )
+    tuition_disclosure_evidence_url: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )
+    tuition_disclosure_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     city: Mapped[City] = relationship(back_populates="schools")
     programs: Mapped[list[Program]] = relationship(back_populates="school")
@@ -295,6 +315,11 @@ class TuitionRecord(Base, TimestampSoftDelete):
             "unit_original <> 'dong_toan_khoa' OR duration_years_assumed IS NOT NULL",
             name="ck_tuition_duration_when_toan_khoa",
         ),
+        # unit_original = 'dong_hoc_ky' => phai co semesters_per_year_assumed.
+        CheckConstraint(
+            "unit_original <> 'dong_hoc_ky' OR semesters_per_year_assumed IS NOT NULL",
+            name="ck_tuition_semesters_when_hoc_ky",
+        ),
         # confidence = 'verified' => phai co source_id + verified_at.
         CheckConstraint(
             "confidence <> 'verified' "
@@ -324,6 +349,10 @@ class TuitionRecord(Base, TimestampSoftDelete):
     # (7/9 hoc ky) thay vi so nam tron (vd HUTECH: Dieu duong 3,5 nam).
     duration_years_assumed: Mapped[Decimal | None] = mapped_column(
         Numeric(3, 1), nullable=True
+    )
+    # So hoc ky CHINH/nam (khong tinh hoc ky he) — khong luon la 2: FPT 3 ky/nam.
+    semesters_per_year_assumed: Mapped[int | None] = mapped_column(
+        SmallInteger, nullable=True
     )
     is_projected: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")

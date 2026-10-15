@@ -41,6 +41,7 @@ def quy_doi_ve_dong_nam(
     unit_original: enums.TuitionUnit,
     credits_per_year: int | None,
     duration_years: Decimal | None = None,
+    semesters_per_year: int | None = None,
 ) -> int:
     """Quy doi so goc ve dong/nam. Day la NGUON SU THAT cho amount_per_year.
 
@@ -69,6 +70,15 @@ def quy_doi_ve_dong_nam(
                     "unit_original='dong_toan_khoa' bat buoc co duration_years_assumed"
                 )
             return round(Decimal(amount_original) / duration_years)
+        case enums.TuitionUnit.DONG_HOC_KY:
+            # amount_original = hoc phi 1 HOC KY CHINH. So ky/nam KHONG luon la 2
+            # (FPT: 3 ky/nam) — phai lay tu tai lieu, khong ngam dinh. Khong tinh
+            # hoc ky he, cung quy uoc voi DONG_THANG (chi 2 ky chinh = 10 thang).
+            if semesters_per_year is None:
+                raise ValueError(
+                    "unit_original='dong_hoc_ky' bat buoc co semesters_per_year_assumed"
+                )
+            return amount_original * semesters_per_year
 
 
 class Evidence(BaseModel):
@@ -114,6 +124,8 @@ class TuitionRow(BaseModel):
     credits_per_year_assumed: int | None = Field(default=None, gt=0, le=100)
     duration_years_assumed: Decimal | None = Field(default=None, gt=0, le=10)
     """Ho tro .5 nam (7/9 hoc ky) — vd 3.5, 4.5. Xem Numeric(3,1) o app/models.py."""
+    semesters_per_year_assumed: int | None = Field(default=None, gt=0, le=4)
+    """So hoc ky CHINH/nam khi unit_original='dong_hoc_ky' — lay tu tai lieu."""
 
     amount_per_year: int = Field(gt=0)
     """Dong/nam sau quy doi. Validator ep = quy_doi_ve_dong_nam(...)."""
@@ -159,6 +171,7 @@ class TuitionRow(BaseModel):
             self.unit_original,
             self.credits_per_year_assumed,
             self.duration_years_assumed,
+            self.semesters_per_year_assumed,
         )
         if self.amount_per_year != mong_doi:
             raise ValueError(
@@ -186,6 +199,12 @@ class TuitionRow(BaseModel):
             ly_do.append(
                 "amount_per_year suy ra tu hoc phi toan khoa / so nam dao tao (gia "
                 "dinh chia deu theo nam) — khong phai muc tung nam truong cong bo rieng"
+            )
+        if self.unit_original is enums.TuitionUnit.DONG_HOC_KY:
+            ly_do.append(
+                f"amount_per_year = muc/hoc ky x {self.semesters_per_year_assumed} "
+                "hoc ky chinh/nam — so hoc ky/nam can doi chieu voi lich dao tao "
+                "cua truong; khong tinh hoc ky he"
             )
         if self.confidence is enums.ConfidenceLevel.ESTIMATED:
             ly_do.append("confidence=estimated")

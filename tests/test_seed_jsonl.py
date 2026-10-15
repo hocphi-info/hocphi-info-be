@@ -30,7 +30,9 @@ def _mapped_slugs() -> set[str]:
 # them 10 nganh nua. Xem scripts/seed_majors_mapping.py "dh-bach-khoa-tphcm.jsonl".
 # (Con so cu 151 da lac hau tu truoc dot nay — nhieu file mapping them vao ma
 # khong cap nhat hang so; 179 la baseline dung trên main.)
-EXPECTED_LOADED_ROWS = 230
+# 2026-10-16: -1 dh-van-lang (bo mapping) + 25 dh-thang-long (25 nganh, 1-1) = 254.
+# 2026-10-16: +14 dh-y-khoa-pham-ngoc-thach (4 nganh 1-1 + dong 5 fan-out 10) = 268.
+EXPECTED_LOADED_ROWS = 268
 
 
 @needs_crawled_seeds

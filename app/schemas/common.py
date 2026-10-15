@@ -26,6 +26,7 @@ from app.enums import (
     ProgramTrack,
     SchoolCategory,
     SourceDocType,
+    TuitionDisclosure,
 )
 
 
@@ -40,6 +41,20 @@ class CamelModel(BaseModel):
     )
 
 
+class TuitionDisclosureOut(CamelModel):
+    """Danh gia muc cong khai hoc phi cua truong (migration 0008).
+
+    Nhan dinh cua nguoi van hanh, nen luon di kem ngay kiem tra + link bang
+    chung de nguoi doc tu doi chieu."""
+
+    level: TuitionDisclosure
+    checked_on: date
+    evidence_url: str
+    # Giai thich ngan, viet theo kieu su kien (vd "chi cong bo khoang 45-85
+    # trieu/nam cho ca truong") — FE hien nguyen van.
+    note: str | None
+
+
 class SchoolOut(CamelModel):
     """Khop `School` domain.ts."""
 
@@ -50,6 +65,8 @@ class SchoolOut(CamelModel):
     category: SchoolCategory
     # URL logo truong (schools.logo_url) — NULL = chua co; FE hien chu viet tat.
     logo_url: str | None = None
+    # null = chua danh gia (FE khong hien badge).
+    tuition_disclosure: TuitionDisclosureOut | None = None
 
 
 class TaxonomyNodeOut(CamelModel):

@@ -196,13 +196,32 @@ tong ket → **khong the quy doi ra dong/nam ma khong bia**. Day khac voi truong
 UIT (co the tinh duoc, chi la sai vi chon nham hang) — o day THUC SU thieu du lieu,
 khong phai loi doc.
 
-**8. "Dong/hoc ky" la don vi that nhung schema hien tai KHONG co, va so hoc ky/nam
-KHONG luon la 2.** HUST cong bo chuong trinh TROY (lien ket cap bang nuoc ngoai) la
-"30 trieu dong/mot hoc ky", nhung "mot nam hoc gom 3 hoc ky" (khong phai 2). Neu tu
-y nhan 2 se sai 33%. `TuitionUnit` enum (`app/enums.py`) chi co
-`dong_nam | dong_thang | dong_tin_chi` — khong co `dong_hoc_ky`. **Khong tu them
-gia tri enum hay tu quy doi** — bao lai cho nguoi van hanh de quyet dinh co can
-mo rong schema khong, dung tu xu ly bang each nhan nham so hoc ky.
+**Chu du an chot (2026-10-15): DUOC quy doi tin chi khi tai lieu cua truong ghi CA tong
+tin chi/khoa LAN thoi gian khoa (nam, hoac so thang/so hoc ky de suy ra nam).** Vi du
+HLU: "840.000 d/tin chi. Thu 5 thang/hoc ky, 40 thang/khoa hoc, 140 tin chi/khoa hoc"
+=> 4 nam (40 thang / 10 thang/nam) => `credits_per_year_assumed = 35`. Bat buoc ghi
+cach suy ra trong `review_reason`. Van KHONG quy doi khi:
+- chi co don gia ma khong co tong tin chi (HaUI QD 920, ULAW QD 1335) — tim xem de an co
+  "hoc phi nam thu nhat"/"tuong duong khoang X trieu/nam" khong (HaUI, BAV co);
+- mot chuong trinh co NHIEU don gia theo loai hoc phan (HANU theo khoi kien thuc,
+  UIT/HLU CLC, ULAW) — bay #1, khong biet ty le tin chi moi loai.
+
+**8. "Dong/hoc ky" — DA CO don vi `dong_hoc_ky` (migration 0007, 2026-10-15),
+nhung so hoc ky/nam KHONG luon la 2.** HUST cong bo chuong trinh TROY la "30 trieu
+dong/mot hoc ky" voi "mot nam hoc gom 3 hoc ky"; FPT cung 3 ky/nam. Cach ghi:
+- `unit_original = "dong_hoc_ky"`, `amount_original` = muc 1 hoc ky CHINH y nguyen.
+- `semesters_per_year_assumed` = so hoc ky CHINH/nam, lay tu tai lieu (de an, quy che
+  dao tao, lich nam hoc cua truong). Khong tinh hoc ky he. Ghi nguon cua con so do
+  vao `review_reason` (vd "de an ghi '8 hoc ky' / 4 nam").
+- **Khong tim duoc so ky/nam trong tai lieu nao cua truong => bo dong**, khong ngam
+  dinh 2. Validator luon danh dau needs_review cho don vi nay.
+- Muc hoc ky khac nhau theo giai doan (FPT: ky 1-3 khac ky 4-6...) => chi lay muc ap
+  dung cho nam hoc dang ghi (thuong la giai doan dau), ghi ro trong `review_reason`.
+- "Hoc ky chinh" theo QUY CHE cua truong, khong theo ten goi: ky Summer cua FPT la ky
+  chinh (quy che: "Mot nam Truong co cac hoc ky Fall, Spring va Summer"), con "hoc ky
+  he" o truong cong lap la ky phu (hoc lai/cai thien) — khong tinh.
+- Quy che ghi khoang thi VAN KHONG du: quy che 2026 cua DH Ngan hang TP.HCM ghi "mot
+  nam hoc co 02 hoac 03 hoc ky chinh" => khong biet nhan 2 hay 3 => bo dong (2026-10-15).
 
 **9. Bang "hoc phi trung binh" hoac khoang gia (VD "tu 50 den 70 trieu/nam") ap
 dung cho NHIEU nganh gop nhom — schema doi 1 con so/nganh, tai lieu cho 1 khoang.**
