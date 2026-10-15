@@ -20,6 +20,8 @@ TUITION_UNIT = "tuition_unit"
 CONFIDENCE_LEVEL = "confidence_level"
 INCREASE_SOURCE_KIND = "increase_source_kind"
 SOURCE_DOC_TYPE = "source_doc_type"
+# Tao o migration 0008 (khong phai 0001) — nen KHONG nam trong ALL_ENUM_TYPES.
+TUITION_DISCLOSURE = "tuition_disclosure"
 
 # Tat ca ten type ENUM — migration 0001 lap qua day de CREATE/DROP.
 ALL_ENUM_TYPES = (
@@ -86,6 +88,20 @@ class SourceDocType(StrEnum):
     THONG_BAO_HOC_PHI = "thong_bao_hoc_phi"
     QUY_DINH_NGHE = "quy_dinh_nghe"
     KHAC = "khac"
+
+
+class TuitionDisclosure(StrEnum):
+    """Muc do truong cong khai hoc phi (danh gia tay, cap truong — migration 0008).
+
+    Chi 2 muc, owner chot 2026-10-16. NULL o DB = chua danh gia (FE khong hien).
+    """
+
+    # Xanh: cong bo hoc phi cu the cho TUNG nganh/chuong trinh, ai cung xem duoc
+    # truoc khi nop ho so.
+    THEO_NGANH = "theo_nganh"
+    # Do: chi cong bo 1 khoang chung qua rong cho ca truong (vd Hoa Sen "45-85
+    # trieu/nam tuy chuong trinh"), hoac khong cong bo gi.
+    KHONG_MINH_BACH = "khong_minh_bach"
 
 
 class CityCode(StrEnum):

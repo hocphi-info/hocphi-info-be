@@ -122,6 +122,13 @@ class School(Base, TimestampSoftDelete):
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
+        # Da danh gia muc cong khai hoc phi => phai co ngay kiem tra + bang chung.
+        CheckConstraint(
+            "tuition_disclosure IS NULL OR "
+            "(tuition_disclosure_checked_on IS NOT NULL "
+            "AND tuition_disclosure_evidence_url IS NOT NULL)",
+            name="ck_schools_disclosure_evidence",
+        ),
     )
 
     slug: Mapped[str] = mapped_column(Text, nullable=False)  # khoa URL cong khai
@@ -135,6 +142,19 @@ class School(Base, TimestampSoftDelete):
     )
     website: Mapped[str | None] = mapped_column(Text, nullable=True)
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Danh gia muc do cong khai hoc phi (migration 0008) — NULL = chua danh gia.
+    # Nhap tay qua seeds/007_school_tuition_disclosure.csv; khi co muc thi bat
+    # buoc co ngay kiem tra + link bang chung (ck_schools_disclosure_evidence).
+    tuition_disclosure: Mapped[enums.TuitionDisclosure | None] = mapped_column(
+        _pg_enum(enums.TuitionDisclosure, enums.TUITION_DISCLOSURE), nullable=True
+    )
+    tuition_disclosure_checked_on: Mapped[date | None] = mapped_column(
+        Date, nullable=True
+    )
+    tuition_disclosure_evidence_url: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )
+    tuition_disclosure_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     city: Mapped[City] = relationship(back_populates="schools")
     programs: Mapped[list[Program]] = relationship(back_populates="school")

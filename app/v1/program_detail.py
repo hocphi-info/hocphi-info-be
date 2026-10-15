@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, ProgramLanguage
+from app.enums import ProgramLanguage
 from app.models import (
     AppSetting,
     Major,
@@ -31,11 +31,11 @@ from app.schemas.common import (
     ProgramIncreaseOut,
     ProgramOut,
     RelatedMajorOut,
-    SchoolOut,
     SourceOut,
     TuitionRecordOut,
     YearlyAmountOut,
 )
+from app.school_out import to_school_out
 from app.taxonomy import MajorContext, load_major_context, to_major_out
 from app.v1.schools import STATS_TRACK
 
@@ -228,14 +228,7 @@ async def get_program_detail(
     ctx = await load_major_context(session, [major])
 
     return ProgramDetailResponseOut(
-        school=SchoolOut(
-            slug=school.slug,
-            name=school.name,
-            short_name=school.short_name,
-            city_code=CityCode(school.city_code),
-            category=school.category,
-            logo_url=school.logo_url,
-        ),
+        school=to_school_out(school),
         major=to_major_out(major, ctx),
         programs=programs,
         related_majors=await _related_majors(session, major, ctx),

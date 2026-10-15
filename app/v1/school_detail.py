@@ -11,17 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, ProgramLanguage
+from app.enums import ProgramLanguage
 from app.models import Major, Program, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
     ProgramOut,
     SchoolDetailResponseOut,
-    SchoolOut,
     SchoolProgramRowOut,
     SchoolTrackStatOut,
     TuitionRecordOut,
 )
+from app.school_out import to_school_out
 from app.taxonomy import load_major_context, to_major_out
 
 router = APIRouter(tags=["school-detail"])
@@ -96,14 +96,7 @@ async def get_school_detail(
     )
 
     return SchoolDetailResponseOut(
-        school=SchoolOut(
-            slug=school.slug,
-            name=school.name,
-            short_name=school.short_name,
-            city_code=CityCode(school.city_code),
-            category=school.category,
-            logo_url=school.logo_url,
-        ),
+        school=to_school_out(school),
         track_stats=track_stats,
         programs=[
             SchoolProgramRowOut(

@@ -10,16 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db import get_session
-from app.enums import CityCode, ProgramLanguage
+from app.enums import ProgramLanguage
 from app.models import Major, Program, ProgramIncrease, School, TuitionRecord
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
     MajorRowOut,
     ProgramIncreaseOut,
     ProgramOut,
-    SchoolOut,
     TuitionRecordOut,
 )
+from app.school_out import to_school_out
 from app.taxonomy import load_major_context, to_major_out
 from app.text import MIN_QUERY_LEN, alias_matches, normalize
 
@@ -82,14 +82,7 @@ async def list_majors(
                 campus=program.campus,
                 display_name=program.display_name,
             ),
-            school=SchoolOut(
-                slug=school.slug,
-                name=school.name,
-                short_name=school.short_name,
-                city_code=CityCode(school.city_code),
-                category=school.category,
-                logo_url=school.logo_url,
-            ),
+            school=to_school_out(school),
             major=to_major_out(major, ctx),
             year1=TuitionRecordOut(
                 program_id=year1.program_id,

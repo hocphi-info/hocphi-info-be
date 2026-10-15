@@ -13,9 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import enums
 from app.db import get_session
-from app.enums import CityCode
 from app.models import Major, Program, ProgramIncrease, School
-from app.schemas.common import SchoolOut, SchoolRowOut, SchoolStatsOut
+from app.schemas.common import SchoolRowOut, SchoolStatsOut
+from app.school_out import to_school_out
 from app.text import MIN_QUERY_LEN, normalize
 
 router = APIRouter(tags=["schools"])
@@ -119,14 +119,7 @@ async def list_schools(
         max_major = majors.get(view_row.max_major_id)
         result.append(
             SchoolRowOut(
-                school=SchoolOut(
-                    slug=school.slug,
-                    name=school.name,
-                    short_name=school.short_name,
-                    city_code=CityCode(school.city_code),
-                    category=school.category,
-                    logo_url=school.logo_url,
-                ),
+                school=to_school_out(school),
                 stats=SchoolStatsOut(
                     n_programs=view_row.n_programs,
                     min_amount=view_row.min_amount,
