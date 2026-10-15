@@ -91,6 +91,52 @@ def test_quy_doi_toan_khoa_nam_le() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("so_ky", "mong_doi"),
+    [
+        # DH Ngan hang TP.HCM 2026-2027: 12.765.500 d/ky x 2 ky chinh.
+        (2, 25_531_000),
+        # Cung muc/ky nhung truong 3 ky/nam (kieu FPT) => khac han — ly do
+        # khong duoc ngam dinh 2.
+        (3, 38_296_500),
+    ],
+)
+def test_quy_doi_hoc_ky(so_ky: int, mong_doi: int) -> None:
+    assert (
+        quy_doi_ve_dong_nam(
+            12_765_500, enums.TuitionUnit.DONG_HOC_KY, None, None, so_ky
+        )
+        == mong_doi
+    )
+
+
+def test_hoc_ky_thieu_so_ky_thi_bi_chan() -> None:
+    with pytest.raises(ValidationError, match="bat buoc co semesters_per_year_assumed"):
+        TuitionRow.model_validate(
+            _row(
+                amount_original=12_765_500,
+                unit_original="dong_hoc_ky",
+                semesters_per_year_assumed=None,
+                amount_per_year=25_531_000,
+            )
+        )
+
+
+def test_hoc_ky_luon_bi_danh_dau_can_review() -> None:
+    r = TuitionRow.model_validate(
+        _row(
+            major_slug="cong-nghe-thong-tin",
+            amount_original=12_765_500,
+            unit_original="dong_hoc_ky",
+            semesters_per_year_assumed=2,
+            amount_per_year=25_531_000,
+        )
+    )
+    assert r.needs_review is True
+    assert r.review_reason is not None
+    assert "hoc ky" in r.review_reason
+
+
 def test_model_tu_tinh_sai_thi_bi_chan() -> None:
     """Rang buoc quan trong nhat: amount_per_year phai = ket qua quy doi."""
     with pytest.raises(ValidationError, match="khong khop quy doi"):

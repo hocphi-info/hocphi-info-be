@@ -295,6 +295,11 @@ class TuitionRecord(Base, TimestampSoftDelete):
             "unit_original <> 'dong_toan_khoa' OR duration_years_assumed IS NOT NULL",
             name="ck_tuition_duration_when_toan_khoa",
         ),
+        # unit_original = 'dong_hoc_ky' => phai co semesters_per_year_assumed.
+        CheckConstraint(
+            "unit_original <> 'dong_hoc_ky' OR semesters_per_year_assumed IS NOT NULL",
+            name="ck_tuition_semesters_when_hoc_ky",
+        ),
         # confidence = 'verified' => phai co source_id + verified_at.
         CheckConstraint(
             "confidence <> 'verified' "
@@ -324,6 +329,10 @@ class TuitionRecord(Base, TimestampSoftDelete):
     # (7/9 hoc ky) thay vi so nam tron (vd HUTECH: Dieu duong 3,5 nam).
     duration_years_assumed: Mapped[Decimal | None] = mapped_column(
         Numeric(3, 1), nullable=True
+    )
+    # So hoc ky CHINH/nam (khong tinh hoc ky he) — khong luon la 2: FPT 3 ky/nam.
+    semesters_per_year_assumed: Mapped[int | None] = mapped_column(
+        SmallInteger, nullable=True
     )
     is_projected: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")

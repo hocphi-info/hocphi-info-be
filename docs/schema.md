@@ -5,7 +5,8 @@
 > [`y-tuong-hoc-phi-dai-hoc.md`](../../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §6.
 > DDL: `alembic/versions/0001_initial_schema.py` (khởi tạo) +
 > `0002_tuition_review_columns.py` (`tuition_records` +`needs_review`/`review_reason`) +
-> `0003_dong_toan_khoa_unit.py` (`TuitionUnit.DONG_TOAN_KHOA` + `duration_years_assumed`).
+> `0003_dong_toan_khoa_unit.py` (`TuitionUnit.DONG_TOAN_KHOA` + `duration_years_assumed`) +
+> `0007_dong_hoc_ky_unit.py` (`TuitionUnit.DONG_HOC_KY` + `semesters_per_year_assumed`).
 >
 > **0.3 (2026-09-05):** thêm `needs_review boolean` + `review_reason text` vào
 > `tuition_records` — giữ trạng thái duyệt của AI-crawler qua tầng DB thay vì
@@ -97,10 +98,11 @@ erDiagram
     text     academic_year "YYYY-YYYY"
     smallint academic_year_start "generated"
     bigint   amount_per_year "đồng/năm, chuẩn hoá"
-    enum     unit_original "dong_nam | dong_thang | dong_tin_chi | dong_toan_khoa"
+    enum     unit_original "dong_nam | dong_thang | dong_tin_chi | dong_toan_khoa | dong_hoc_ky"
     bigint   amount_original
     smallint credits_per_year_assumed
     numeric  duration_years_assumed "0.3 (migration 0003), numeric(3,1) — ho tro 3.5/4.5 nam; bat buoc khi dong_toan_khoa"
+    smallint semesters_per_year_assumed "migration 0007 — so hoc ky chinh/nam; bat buoc khi dong_hoc_ky"
     boolean  is_projected
     enum     confidence "verified | published_unverified | estimated"
     text     source_id FK
@@ -256,6 +258,13 @@ năm liên tiếp; `academic_year_start` là cột **generated** để lọc / s
   (chia đều) — luôn `needs_review = true` vì đây là số suy ra, không phải mức
   trường công bố cho từng năm. UI hiển thị dòng "Giả định chia đều học phí cả
   khoá cho {n} năm".
+- `unit_original = 'dong_hoc_ky'` (migration `0007`, 2026-10-15) **bắt buộc**
+  `semesters_per_year_assumed` (CHECK) — trường công bố học phí **theo học kỳ**
+  (vd FPT ~31,6 triệu/kỳ, ĐH Ngân hàng TP.HCM 12.765.500đ/kỳ).
+  `amount_per_year = amount_original × semesters_per_year_assumed`, chỉ tính
+  **học kỳ chính** (không tính học kỳ hè — cùng quy ước với `dong_thang` = 10
+  tháng). Số kỳ/năm **không mặc định là 2** (FPT, HUST–TROY: 3 kỳ/năm) — phải lấy
+  từ tài liệu của trường; luôn `needs_review = true`.
 - `confidence = 'verified'` **bắt buộc** `source_id` + `verified_at` (CHECK).
 - `source_id` nullable + `ON DELETE SET NULL` → trạng thái "chưa có nguồn" (§9).
 - `needs_review`/`review_reason` (0.3, migration `0002`) — trạng thái duyệt của

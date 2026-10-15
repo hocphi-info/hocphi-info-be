@@ -67,6 +67,7 @@ class TuitionUnit(StrEnum):
     DONG_THANG = "dong_thang"
     DONG_TIN_CHI = "dong_tin_chi"  # bat buoc credits_per_year_assumed (CHECK)
     DONG_TOAN_KHOA = "dong_toan_khoa"  # bat buoc duration_years_assumed (CHECK)
+    DONG_HOC_KY = "dong_hoc_ky"  # bat buoc semesters_per_year_assumed (CHECK)
 
 
 class ConfidenceLevel(StrEnum):
