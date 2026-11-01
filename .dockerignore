@@ -2,5 +2,16 @@
 __pycache__
 .git
 .pytest_cache
+.mypy_cache
+.ruff_cache
+.claude
 *.md
 docs/
+tests/
+# Secret: `fly deploy` chay tu may local nen build context co ca .env* that (vd
+# .env.prod chua mat khau Neon) — KHONG duoc vao image. Config prod lay tu Fly secrets.
+.env
+.env.*
+# HTML/PDF tho cua crawler (~200MB, chi dung luc crawl). Code crawler/ van can:
+# scripts/seed.py import crawler.schema.
+crawler/work/
