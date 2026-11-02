@@ -1,5 +1,5 @@
 """Sau `alembic upgrade head`: bang tra cuu co du dong (seed ngay trong migration
-0001 qua `op.bulk_insert`). Chay `scripts.seed` nap 50 truong, moi `id` la ULID
+0001 qua `op.bulk_insert`). Chay `scripts.seed` nap 51 truong, moi `id` la ULID
 (Crockford base32, 26 ky tu, sinh boi `gen_ulid()` o DB).
 """
 
@@ -26,7 +26,7 @@ async def test_lookup_tables_seeded_by_migration(db: AsyncSession) -> None:
     }
 
 
-async def test_seed_script_loads_50_schools_with_ulid_ids(db: AsyncSession) -> None:
+async def test_seed_script_loads_51_schools_with_ulid_ids(db: AsyncSession) -> None:
     await run_seed()
 
     schools = (
@@ -34,6 +34,6 @@ async def test_seed_script_loads_50_schools_with_ulid_ids(db: AsyncSession) -> N
         .scalars()
         .all()
     )
-    assert len(schools) == 50
+    assert len(schools) == 51
     for school in schools:
         assert _ULID_RE.match(school.id), f"id khong hop le: {school.id!r}"

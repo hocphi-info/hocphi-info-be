@@ -117,7 +117,7 @@ async def test_taxonomy_seed_loads_and_is_idempotent(db: AsyncSession) -> None:
     for _ in range(2):  # lan 2 khong duoc nhan doi / loi
         assert await load_taxonomy(db) == 475
         applied, missing = await apply_major_taxonomy(db)
-        assert (applied, missing) == (150, [])
+        assert (applied, missing) == (155, [])  # +5 nganh vaa (2026-11-02)
         n_alias, alias_missing = await load_aliases(db)
         assert alias_missing == [] and n_alias == len(_csv("006_major_aliases.csv"))
 
@@ -156,7 +156,7 @@ async def test_every_classified_major_points_at_a_level_3_node(
 async def test_apply_major_taxonomy_reports_unknown_slug(db: AsyncSession) -> None:
     await load_taxonomy(db)  # khong nap `majors` -> moi slug deu "khong ton tai"
     applied, missing = await apply_major_taxonomy(db)
-    assert applied == 0 and len(missing) == 150
+    assert applied == 0 and len(missing) == 155
 
 
 @pytest.mark.parametrize(

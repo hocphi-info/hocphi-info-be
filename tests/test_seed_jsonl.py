@@ -34,7 +34,8 @@ def _mapped_slugs() -> set[str]:
 # 2026-10-16: +14 dh-y-khoa-pham-ngoc-thach (4 nganh 1-1 + dong 5 fan-out 10) = 268.
 # 2026-10-16: +121 batch 2 (13 file: bav, dh-fpt-*, ftu2, hmu, hup, hus, hust, ptit,
 # ueh, ufm, ussh-hn, vnua) = 389.
-EXPECTED_LOADED_ROWS = 389
+# 2026-11-02: +22 vaa (22 nganh/chuyen nganh tieng Anh, 1-1) = 411.
+EXPECTED_LOADED_ROWS = 411
 
 
 @needs_crawled_seeds
