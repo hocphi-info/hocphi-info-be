@@ -69,6 +69,7 @@ async def test_list_schools_only_includes_schools_with_dai_tra_programs(
         "ufm",
         "ussh-hn",
         "vnua",
+        "vaa",  # 2026-11-02
     }
 
     uit_row = next(r for r in rows if r["school"]["slug"] == "uit")

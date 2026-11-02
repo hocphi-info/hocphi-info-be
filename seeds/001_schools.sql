@@ -31,6 +31,8 @@ INSERT INTO schools (slug, name, short_name, city_code, category) VALUES
   ('dh-fpt-tphcm',              'ĐH FPT TP.HCM',                          'FPTU-HCM','HCM', 'tu_thuc'),
   ('rmit-vietnam',              'ĐH RMIT Việt Nam',                       'RMIT',    'HCM', 'tu_thuc_von_nuoc_ngoai'),
   ('dh-hoa-sen',                'ĐH Hoa Sen',                            'HSU',     'HCM', 'tu_thuc'),
+  -- Ngoài 50 trường pilot, thêm 2026-11-02 (seeds/vaa.jsonl).
+  ('vaa',                       'Học viện Hàng không Việt Nam',          'VAA',     'HCM', 'cong_lap'),
 -- ── Hà Nội (25) ──────────────────────────────────────────────────────────────
   ('hust',                      'ĐH Bách Khoa Hà Nội',                    'HUST',    'HN',  'cong_lap_tu_chu'),
   ('uet',                       'ĐH Công nghệ (ĐHQGHN)',                  'UET',     'HN',  'cong_lap'),

@@ -186,5 +186,13 @@ INSERT INTO majors (slug, name, code, standard_years) VALUES
   -- +2 ngành (2026-10-16) — ĐH Y khoa Phạm Ngọc Thạch (seeds/dh-y-khoa-pham-ngoc-thach.jsonl
   -- dòng 5 "Các ngành cử nhân" fan-out ra 10 ngành; 8 ngành kia đã có slug).
   ('khuc-xa-nhan-khoa',                       'Khúc xạ nhãn khoa',                       NULL, 4),
-  ('ky-thuat-gay-me-hoi-suc',                 'Kỹ thuật gây mê hồi sức',                 NULL, 4)
+  ('ky-thuat-gay-me-hoi-suc',                 'Kỹ thuật gây mê hồi sức',                 NULL, 4),
+  -- +5 ngành (2026-11-02) — Học viện Hàng không VN (seeds/vaa.jsonl). 2 ngành "Công nghệ
+  -- kỹ thuật ..." là ngành riêng mã 7510xxx, khác ky-thuat-dien-tu-vien-thong /
+  -- ky-thuat-dieu-khien-tu-dong-hoa (mã 7520xxx).
+  ('cong-nghe-ky-thuat-dien-tu-vien-thong',   'Công nghệ kỹ thuật điện tử - viễn thông', NULL, 4),
+  ('cong-nghe-ky-thuat-dieu-khien-tu-dong-hoa', 'Công nghệ kỹ thuật điều khiển và tự động hóa', NULL, 4),
+  ('kien-truc-canh-quan',                     'Kiến trúc cảnh quan',                     NULL, 4),
+  ('kinh-te-van-tai',                         'Kinh tế vận tải',                         NULL, 4),
+  ('quan-ly-hoat-dong-bay',                   'Quản lý hoạt động bay',                   NULL, 4)
 ON CONFLICT (slug) WHERE deleted_at IS NULL DO NOTHING;

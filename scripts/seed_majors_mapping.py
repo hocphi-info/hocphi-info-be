@@ -567,6 +567,33 @@ ROW_TO_MAJOR_SLUG: dict[str, dict[int, str | list[str]]] = {
     "vnua.jsonl": {
         4: "thu-y",
     },
+    # vaa.jsonl (2026-11-02): 1 dong = 1 nganh, cac chuyen nganh cung gia gop vao
+    # dong nganh. 19-22 = chuyen nganh hoc bang tieng Anh (chat_luong_cao/en) ->
+    # program rieng, khong dung UNIQUE voi dong tieng Viet cung nganh.
+    "vaa.jsonl": {
+        1: "ngon-ngu-anh",
+        2: "ngon-ngu-trung-quoc",
+        3: "ngon-ngu-han",
+        4: "kinh-te-so",
+        5: "quan-tri-kinh-doanh",
+        6: "marketing",
+        7: "kinh-doanh-quoc-te",
+        8: "cong-nghe-tai-chinh",
+        9: "quan-tri-nhan-luc",
+        10: "cong-nghe-thong-tin",
+        11: "cong-nghe-ky-thuat-cong-trinh-xay-dung",
+        12: "cong-nghe-ky-thuat-dien-tu-vien-thong",
+        13: "cong-nghe-ky-thuat-dieu-khien-tu-dong-hoa",
+        14: "kien-truc-canh-quan",
+        15: "quan-tri-dich-vu-du-lich-va-lu-hanh",
+        16: "kinh-te-van-tai",
+        17: "quan-ly-hoat-dong-bay",
+        18: "ky-thuat-hang-khong",
+        19: "quan-ly-hoat-dong-bay",
+        20: "kinh-te-van-tai",  # Logistics va van tai da phuong thuc (7840104E)
+        21: "ky-thuat-hang-khong",
+        22: "quan-tri-kinh-doanh",  # Quan tri hang khong (7340101E)
+    },
 }
 
 # {ten_file_jsonl: {so_dong: display_name}} — ghi de `programs.display_name` khi
@@ -604,4 +631,8 @@ ROW_TO_DISPLAY_NAME: dict[str, dict[int, str]] = {
     },
     "hup.jsonl": {5: "Dược học (liên kết ĐH Sydney)"},
     "ueh.jsonl": {7: "Kế toán/Kiểm toán tích hợp ACCA và ICAEW"},
+    "vaa.jsonl": {
+        20: "Logistics và vận tải đa phương thức (học bằng tiếng Anh)",
+        22: "Quản trị hàng không (học bằng tiếng Anh)",
+    },
 }

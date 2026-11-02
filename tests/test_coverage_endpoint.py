@@ -62,11 +62,11 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     # ump/ou-tphcm + dot 2) + 51 HCMUT (dong 1 fan-out 41 nganh he tieu chuan,
     # dong 2-8 them 10 nganh). HCMUT them 5 school co du lieu va 6 source moi.
     assert body["totals"] == {
-        "schoolsTotal": 50,
-        "schoolsWithData": 29,  # +13 truong batch 2 (2026-10-16)
-        "programsWithTuition": 389,
-        "tuitionRecords": 389,
-        "sourcesCited": 31,
+        "schoolsTotal": 51,
+        "schoolsWithData": 30,  # +13 truong batch 2 (2026-10-16), +vaa (2026-11-02)
+        "programsWithTuition": 411,
+        "tuitionRecords": 411,
+        "sourcesCited": 33,  # +2 anh trang 15, 16 cua vaa
     }
     # snapshotDate = max(tuition_records.updated_at)::date -> chuoi "YYYY-MM-DD".
     assert isinstance(body["snapshotDate"], str)
@@ -76,8 +76,8 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     assert by_city["HCM"] == {
         "cityCode": "HCM",
         "cityName": "TP. Ho Chi Minh",
-        "schoolsTotal": 25,
-        "schoolsWithData": 16,  # +dh-fpt-tphcm, ftu2, ufm, ussh-hn... (batch 2)
+        "schoolsTotal": 26,  # +vaa (2026-11-02, ngoai pilot)
+        "schoolsWithData": 17,  # +dh-fpt-tphcm, ftu2, ufm, ussh-hn... (batch 2), +vaa
     }
     assert by_city["HN"]["schoolsTotal"] == 25
     assert by_city["HN"]["schoolsWithData"] == 13  # +9 truong HN batch 2
@@ -85,11 +85,11 @@ async def test_coverage_seeded_totals_match_db(db: AsyncSession) -> None:
     by_field = {r["fieldCode"]: r["programsWithTuition"] for r in body["byField"]}
     # Linh vuc theo danh muc Bo GD&DT (seeds/004-005). HCMUT he tieu chuan fan-out
     # lam 752 (Ky thuat) lon nhat; None = "Chua phan loai" (24 chuong trinh).
-    assert by_field["752"] == 36
-    assert by_field["734"] == 56  # +25 batch 2
-    assert by_field["748"] == 39  # +14 batch 2
+    assert by_field["752"] == 38  # +2 vaa
+    assert by_field["734"] == 62  # +25 batch 2, +6 vaa
+    assert by_field["748"] == 40  # +14 batch 2, +1 vaa
     assert by_field[None] == 32  # +6 batch 2
-    assert sum(by_field.values()) == 389
+    assert sum(by_field.values()) == 411
 
 
 @needs_crawled_seeds
@@ -103,7 +103,7 @@ async def test_coverage_seeded_schools_rows_shape(db: AsyncSession) -> None:
 
     body = resp.json()
     schools = body["schools"]
-    assert len(schools) == 50  # TAT CA truong con song, ke ca nPrograms = 0
+    assert len(schools) == 51  # TAT CA truong con song, ke ca nPrograms = 0
 
     # Sort nPrograms desc -> HUTECH dau bang.
     top = schools[0]
