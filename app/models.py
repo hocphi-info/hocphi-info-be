@@ -449,3 +449,82 @@ class PostGradRequirement(Base, TimestampSoftDelete):
     )
 
     major: Mapped[Major] = relationship(back_populates="post_grad_requirements")
+
+
+# ── Binh luan an danh (migration 0009) ──────────────────────────────────────
+# Duong GHI cong khai duy nhat cua API (owner yeu cau 2026-11-11). Khong co tai
+# khoan: nguoi viet duoc nhan dien bang HMAC cua IP (khong luu IP tho).
+class Comment(Base, TimestampSoftDelete):
+    """1 binh luan hoac tra loi. Cay = bang tu tham chieu (`parent_id`).
+
+    `root_id` + `depth` luu san (tinh 1 lan luc ghi) de doc "20 goc + toan bo con
+    chau" bang 1 truy van `id IN (...) OR root_id IN (...)`, khong can CTE de quy.
+    `deleted_at` (mixin) = tu xoa / owner xoa; `hidden_at` = an do bao cao / owner.
+    """
+
+    __tablename__ = "comments"
+    __table_args__ = (
+        CheckConstraint(
+            "char_length(body) BETWEEN 3 AND 2000", name="ck_comments_body_len"
+        ),
+        CheckConstraint(
+            "author_name IS NULL OR char_length(author_name) BETWEEN 1 AND 40",
+            name="ck_comments_author_name_len",
+        ),
+        CheckConstraint("depth >= 0", name="ck_comments_depth"),
+        CheckConstraint(
+            "(parent_id IS NULL) = (root_id IS NULL)",
+            name="ck_comments_root_matches_parent",
+        ),
+        Index(
+            "ix_comments_thread_roots",
+            "thread_key",
+            "created_at",
+            postgresql_where=text("parent_id IS NULL"),
+        ),
+        Index("ix_comments_root_id", "root_id"),
+        Index("ix_comments_ip_hash_created_at", "ip_hash", "created_at"),
+    )
+
+    # Khoa chuoi = trang: "truong/ueh", "nganh/ueh/kinh-doanh-quoc-te", "bai-viet"...
+    thread_key: Mapped[str] = mapped_column(Text, nullable=False)
+    parent_id: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("comments.id"), nullable=True
+    )
+    root_id: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("comments.id"), nullable=True
+    )
+    depth: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    author_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    author_tag: Mapped[str] = mapped_column(String(8), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    ip_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    delete_token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    hidden_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    hidden_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CommentReport(Base):
+    """1 bao cao / (binh luan, IP). Khong soft-delete — bang phu, xoa cung duoc."""
+
+    __tablename__ = "comment_reports"
+    __table_args__ = (
+        Index("uq_comment_reports_ip", "comment_id", "ip_hash", unique=True),
+    )
+
+    id: Mapped[str] = mapped_column(
+        Text, primary_key=True, server_default=text("gen_ulid()")
+    )
+    comment_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("comments.id", ondelete="CASCADE"), nullable=False
+    )
+    ip_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[enums.CommentReportReason] = mapped_column(
+        _pg_enum(enums.CommentReportReason, enums.COMMENT_REPORT_REASON),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )

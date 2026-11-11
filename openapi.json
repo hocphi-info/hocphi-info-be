@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "hocphi.info API",
-    "description": "Tra cuu & so sanh hoc phi dai hoc Viet Nam. GET /api/v1/majors (?search=), /api/v1/schools (?search=), /api/v1/schools/{school_slug}/majors/{major_slug}, /api/v1/schools/{school_slug}, /api/v1/coverage, /api/v1/taxonomy[/{code}].",
-    "version": "0.4.0"
+    "description": "Tra cuu & so sanh hoc phi dai hoc Viet Nam. GET /api/v1/majors (?search=), /api/v1/schools (?search=), /api/v1/schools/{school_slug}/majors/{major_slug}, /api/v1/schools/{school_slug}, /api/v1/coverage, /api/v1/taxonomy[/{code}]. Binh luan an danh (duong ghi duy nhat): GET/POST /api/v1/comments, DELETE /api/v1/comments/{id}, POST /api/v1/comments/{id}/reports.",
+    "version": "0.5.0"
   },
   "paths": {
     "/health": {
@@ -314,6 +314,208 @@
           }
         }
       }
+    },
+    "/api/v1/comments": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "List Comments",
+        "operationId": "list_comments_api_v1_comments_get",
+        "parameters": [
+          {
+            "name": "thread",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 220,
+              "description": "vd truong/ueh",
+              "title": "Thread"
+            },
+            "description": "vd truong/ueh"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CommentSort",
+              "default": "newest"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Create Comment",
+        "operationId": "create_comment_api_v1_comments_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentCreatedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}": {
+      "delete": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Delete Comment",
+        "operationId": "delete_comment_api_v1_comments__comment_id__delete",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Comment Id"
+            }
+          },
+          {
+            "name": "x-delete-token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "title": "X-Delete-Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}/reports": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Report Comment",
+        "operationId": "report_comment_api_v1_comments__comment_id__reports_post",
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentReportIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -326,6 +528,257 @@
         ],
         "title": "CityCode",
         "description": "Ma thanh pho — bang tra cuu `cities`, KHONG phai ENUM Postgres. Enum nay\nchi de OpenAPI/FE co union type; test `test_openapi_contract` giu no khop\nvoi du lieu seed (them thanh pho moi ma quen them vao day -> test do)."
+      },
+      "CommentCreateIn": {
+        "properties": {
+          "threadKey": {
+            "type": "string",
+            "maxLength": 220,
+            "title": "Threadkey"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
+          "authorName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorname"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 10000,
+            "title": "Body"
+          },
+          "turnstileToken": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnstiletoken"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threadKey",
+          "body"
+        ],
+        "title": "CommentCreateIn"
+      },
+      "CommentCreatedOut": {
+        "properties": {
+          "comment": {
+            "$ref": "#/components/schemas/CommentOut"
+          },
+          "deleteToken": {
+            "type": "string",
+            "title": "Deletetoken"
+          }
+        },
+        "type": "object",
+        "required": [
+          "comment",
+          "deleteToken"
+        ],
+        "title": "CommentCreatedOut"
+      },
+      "CommentListOut": {
+        "properties": {
+          "threadKey": {
+            "type": "string",
+            "title": "Threadkey"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/CommentSort"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/CommentOut"
+            },
+            "type": "array",
+            "title": "Comments"
+          },
+          "nextOffset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextoffset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threadKey",
+          "sort",
+          "total",
+          "comments",
+          "nextOffset"
+        ],
+        "title": "CommentListOut"
+      },
+      "CommentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
+          "rootId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rootid"
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth"
+          },
+          "authorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorname"
+          },
+          "authorTag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authortag"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "isHidden": {
+            "type": "boolean",
+            "title": "Ishidden"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "parentId",
+          "rootId",
+          "depth",
+          "authorName",
+          "authorTag",
+          "body",
+          "isHidden",
+          "createdAt"
+        ],
+        "title": "CommentOut",
+        "description": "1 nut cua cay. Bi an/xoa nhung con tra loi hien thi -> `isHidden=true`, cac\ntruong noi dung = null (giu cho de chuoi khong dut)."
+      },
+      "CommentReportIn": {
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/CommentReportReason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "CommentReportIn"
+      },
+      "CommentReportOut": {
+        "properties": {
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hidden"
+        ],
+        "title": "CommentReportOut"
+      },
+      "CommentReportReason": {
+        "type": "string",
+        "enum": [
+          "spam",
+          "sai_lech",
+          "xuc_pham",
+          "thong_tin_ca_nhan",
+          "khac"
+        ],
+        "title": "CommentReportReason",
+        "description": "Ly do bao cao 1 binh luan (migration 0009). FE hien nhan tieng Viet."
+      },
+      "CommentSort": {
+        "type": "string",
+        "enum": [
+          "newest",
+          "oldest"
+        ],
+        "title": "CommentSort",
+        "description": "Thu tu binh luan GOC (tra loi luon cu -> moi). Khong phai ENUM Postgres."
       },
       "ConfidenceLevel": {
         "type": "string",

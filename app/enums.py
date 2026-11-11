@@ -22,6 +22,8 @@ INCREASE_SOURCE_KIND = "increase_source_kind"
 SOURCE_DOC_TYPE = "source_doc_type"
 # Tao o migration 0008 (khong phai 0001) — nen KHONG nam trong ALL_ENUM_TYPES.
 TUITION_DISCLOSURE = "tuition_disclosure"
+# Tao o migration 0009 (binh luan an danh) — cung KHONG nam trong ALL_ENUM_TYPES.
+COMMENT_REPORT_REASON = "comment_report_reason"
 
 # Tat ca ten type ENUM — migration 0001 lap qua day de CREATE/DROP.
 ALL_ENUM_TYPES = (
@@ -102,6 +104,23 @@ class TuitionDisclosure(StrEnum):
     # Do: chi cong bo 1 khoang chung qua rong cho ca truong (vd Hoa Sen "45-85
     # trieu/nam tuy chuong trinh"), hoac khong cong bo gi.
     KHONG_MINH_BACH = "khong_minh_bach"
+
+
+class CommentReportReason(StrEnum):
+    """Ly do bao cao 1 binh luan (migration 0009). FE hien nhan tieng Viet."""
+
+    SPAM = "spam"  # quang cao / spam
+    SAI_LECH = "sai_lech"  # thong tin sai lech ve hoc phi
+    XUC_PHAM = "xuc_pham"  # xuc pham, quay roi
+    THONG_TIN_CA_NHAN = "thong_tin_ca_nhan"  # lo thong tin ca nhan
+    KHAC = "khac"
+
+
+class CommentSort(StrEnum):
+    """Thu tu binh luan GOC (tra loi luon cu -> moi). Khong phai ENUM Postgres."""
+
+    NEWEST = "newest"
+    OLDEST = "oldest"
 
 
 class CityCode(StrEnum):

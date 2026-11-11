@@ -51,6 +51,8 @@ from sqlalchemy.ext.asyncio import (  # noqa: E402
 # ro ri sang test sau (chi "may man" khong lo neu thu tu file tinh co dat sau
 # tests/test_migrations.py, vi test do lam lai toan bo schema).
 _SEEDED_TABLES = (
+    "comment_reports",
+    "comments",
     "tuition_records",
     "program_increase",
     "post_grad_requirements",

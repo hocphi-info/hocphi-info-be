@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     # Nguong log toi thieu — ten level cua stdlib logging (debug/info/warning/...).
     log_level: str = Field(default="info", alias="LOG_LEVEL")
 
+    # ── Binh luan an danh (migration 0009) ───────────────────────────────────
+    # Khoa HMAC de bam IP (khong luu IP tho) va sinh #tag. Prod PHAI dat bang
+    # `fly secrets set COMMENT_SECRET=$(openssl rand -hex 32)`; gia tri mac dinh
+    # chi de dev/test chay duoc.
+    comment_secret: str = Field(default="dev-insecure-comment-secret")
+    # Secret cua widget Cloudflare Turnstile (chong bot). De trong = BO QUA buoc
+    # xac minh (dev) — moi lan bo qua deu log canh bao `turnstile_disabled`.
+    turnstile_secret_key: str | None = Field(default=None)
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def cors_origins(self) -> list[str]:

@@ -329,6 +329,31 @@ TAG=v$(date +%Y.%m.%d); git tag "$TAG" && git push origin "$TAG"   # -> GitHub A
   thao tác dữ liệu, không phải schema. Sau deploy có thay đổi seed: bật máy rồi
   `fly ssh console -a hocphi-info-api -C "python -m scripts.seed"`.
 
+### Bình luận ẩn danh (migration 0009)
+
+Đường ghi công khai duy nhất: `GET/POST /api/v1/comments`, `DELETE /api/v1/comments/{id}`
+(header `X-Delete-Token`, trong 15 phút), `POST /api/v1/comments/{id}/reports`
+(≥ 3 IP báo cáo → tự ẩn). Biến môi trường:
+
+| Biến | Ý nghĩa |
+|---|---|
+| `COMMENT_SECRET` | Khoá HMAC băm IP + sinh `#tag`. **Prod bắt buộc đặt**: `fly secrets set COMMENT_SECRET=$(openssl rand -hex 32)` |
+| `TURNSTILE_SECRET_KEY` | Secret widget Cloudflare Turnstile. Để trống = bỏ qua xác minh (log `turnstile_disabled`) — chỉ cho dev. Thử local: secret luôn-qua `1x0000000000000000000000000000000AA` |
+
+FE cần `NEXT_PUBLIC_TURNSTILE_SITE_KEY` cùng widget — đặt secret BE và site key FE **cùng lúc**
+(có secret mà FE thiếu site key → mọi bình luận bị từ chối).
+
+Kiểm duyệt (không có trang/API quản trị):
+
+```bash
+uv run python -m scripts.moderate_comments reported          # bị báo cáo nhiều nhất
+uv run python -m scripts.moderate_comments recent --thread truong/ueh
+uv run python -m scripts.moderate_comments hide <id> --reason "quảng cáo"
+uv run python -m scripts.moderate_comments unhide <id>
+uv run python -m scripts.moderate_comments delete <id>
+# prod (bật máy trước như mục seed): fly ssh console -a hocphi-info-api -C "python -m scripts.moderate_comments reported"
+```
+
 ## VII. Lộ trình
 
 Roadmap sản phẩm 7 bước (xem [`../hocphi-info/y-tuong-hoc-phi-dai-hoc.md`](../hocphi-info/y-tuong-hoc-phi-dai-hoc.md) §8):
