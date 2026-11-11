@@ -34,7 +34,7 @@ app/
   config.py          # pydantic-settings BaseSettings (DATABASE_URL, CORS_ORIGINS, LOG_FORMAT)
   db.py              # Base, async engine, async_sessionmaker, get_session() dependency
   enums.py           # Python StrEnum <-> Postgres ENUM (school_category, program_track, …)
-  models.py          # every SQLAlchemy model, one file (11 tables at MVP size)
+  models.py          # every SQLAlchemy model, one file (incl. comments/comment_reports)
   health.py          # GET /health (+ /docs Swagger, auto-generated) — unversioned, infra check
   v1/                # versioned business endpoints, GET /api/v1/...
     __init__.py      # plain package marker, not a router aggregator
@@ -56,8 +56,11 @@ section, matching `hocphi-info-fe`'s learning-log style — see `docs/plans/`.
 
 ## Conventions
 
-- **No admin CRUD, no auth — the API is read-only.** There is no public write path at
-  all. Data enters through `seeds/*.jsonl|sql` + `uv run python -m scripts.seed`
+- **No admin CRUD, no auth — the API is read-only except anonymous comments.** The one
+  public write path is `app/v1/comments.py` (owner asked 2026-11-11): anonymous, nested
+  comments guarded by Turnstile + per-IP rate limit + link/phone blocking + auto-hide on
+  reports; moderation is a CLI script (`scripts/moderate_comments.py`), not an API.
+  Everything else stays read-only. Data enters through `seeds/*.jsonl|sql` + `uv run python -m scripts.seed`
   (idempotent); those seeds are produced by the separate **AI-crawler** repo and reviewed
   by a human before landing here. Data-error feedback from end users goes to email /
   GitHub issues / Facebook, not to an endpoint (F17 was dropped 2026-09-04). Don't add an

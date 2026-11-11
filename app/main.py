@@ -19,6 +19,7 @@ from app.observability import (
     get_request_id,
 )
 from app.v1 import (
+    comments,
     coverage,
     majors,
     program_detail,
@@ -36,13 +37,15 @@ logger = structlog.get_logger("hocphi")
 
 app = FastAPI(
     title="hocphi.info API",
-    version="0.4.0",
+    version="0.5.0",
     description=(
         "Tra cuu & so sanh hoc phi dai hoc Viet Nam. "
         "GET /api/v1/majors (?search=), /api/v1/schools (?search=), "
         "/api/v1/schools/{school_slug}/majors/{major_slug}, "
         "/api/v1/schools/{school_slug}, /api/v1/coverage, "
-        "/api/v1/taxonomy[/{code}]."
+        "/api/v1/taxonomy[/{code}]. "
+        "Binh luan an danh (duong ghi duy nhat): GET/POST /api/v1/comments, "
+        "DELETE /api/v1/comments/{id}, POST /api/v1/comments/{id}/reports."
     ),
 )
 
@@ -82,3 +85,4 @@ app.include_router(program_detail.router)
 app.include_router(school_detail.router)
 app.include_router(coverage.router)
 app.include_router(taxonomy.router)
+app.include_router(comments.router)

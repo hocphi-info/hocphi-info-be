@@ -294,6 +294,17 @@ Tài liệu gốc: `url`, `doc_type`, `page_ref`, `published_date`, `fetched_at`
 > MVP không tự nhận báo lỗi qua API — người dùng phản hồi qua email / GitHub issue /
 > Facebook. Xem README §I.
 
+### `comments`, `comment_reports` — bình luận ẩn danh (migration 0009)
+Đường **ghi** công khai duy nhất (owner yêu cầu 2026-11-11). Một bảng tự tham chiếu:
+`thread_key` (trang: `truong/ueh`, `nganh/ueh/kinh-doanh-quoc-te`, `bai-viet`…),
+`parent_id` (NULL = gốc), `root_id` + `depth` lưu sẵn lúc ghi để đọc "20 gốc + toàn bộ
+con cháu" bằng `id IN (…) OR root_id IN (…)` — không cần CTE đệ quy. Không lưu IP thô:
+`ip_hash` = HMAC(`COMMENT_SECRET`, IP) cho giới hạn tốc độ + chống báo cáo trùng;
+`author_tag` = 4 hex của HMAC(thread + IP) để phân biệt người trong một chuỗi.
+`delete_token_hash` = sha256 mã tự xoá (15 phút). `deleted_at` = tự xoá/owner xoá,
+`hidden_at` + `hidden_reason` = ẩn do ≥ 3 báo cáo (`auto_reports`) hoặc owner.
+`comment_reports`: `UNIQUE (comment_id, ip_hash)`, `reason` ENUM `comment_report_reason`.
+
 ## 4. View `school_track_stats` — phục vụ S2
 
 Khoảng **Min–Max / trung vị / số ngành** cho mỗi `(school, track)`, dựa trên số
