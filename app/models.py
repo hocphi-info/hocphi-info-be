@@ -447,6 +447,9 @@ class PostGradRequirement(Base, TimestampSoftDelete):
     source_id: Mapped[str | None] = mapped_column(
         Text, ForeignKey("sources.id", ondelete="SET NULL"), nullable=True
     )
+    # Ghi chu ngan FE hien nguyen van duoi buoc (migration 0010): cach uoc luong,
+    # hoac khoan dinh ky KHONG cong vao tong (vd doan phi).
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     major: Mapped[Major] = relationship(back_populates="post_grad_requirements")
 

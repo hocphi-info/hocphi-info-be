@@ -26,6 +26,8 @@ from app.models import (
 )
 from app.queries import latest_published_tuition_subquery
 from app.schemas.common import (
+    PostGradOut,
+    PostGradStepOut,
     ProgramDetailOut,
     ProgramDetailResponseOut,
     ProgramIncreaseOut,
@@ -118,6 +120,62 @@ async def _related_majors(
     ]
 
 
+async def load_post_grad(session: AsyncSession, major: Major) -> PostGradOut | None:
+    """Lo trinh hanh nghe cua nganh (F10). None khi nganh khong can cap phep —
+    ke ca khi con sot dong buoc (bo nap authoritative da xoa, day chi la chot an
+    toan). Tong tinh tu chinh cac buoc vua doc — khong luu cot tong (AGENTS.md)."""
+    if not major.requires_practice_license or major.practice_profession is None:
+        return None
+    rows = (
+        await session.execute(
+            select(PostGradRequirement, Source)
+            .outerjoin(
+                Source,
+                (Source.id == PostGradRequirement.source_id)
+                & Source.deleted_at.is_(None),
+            )
+            .where(
+                PostGradRequirement.major_id == major.id,
+                PostGradRequirement.deleted_at.is_(None),
+            )
+            .order_by(PostGradRequirement.step_order)
+        )
+    ).all()
+    steps = [
+        PostGradStepOut(
+            step_order=step.step_order,
+            step_name=step.step_name,
+            provider=step.provider,
+            duration_months=step.duration_months,
+            cost_min=step.cost_min,
+            cost_max=step.cost_max,
+            confidence=step.confidence,
+            note=step.note,
+            source=(
+                SourceOut(
+                    url=source.url,
+                    doc_type=source.doc_type,
+                    published_date=source.published_date,
+                    checked_at=source.checked_at,
+                )
+                if source is not None
+                else None
+            ),
+        )
+        for step, source in rows
+    ]
+    checked = [s.source.checked_at for s in steps if s.source and s.source.checked_at]
+    return PostGradOut(
+        profession=major.practice_profession,
+        steps=steps,
+        total_cost_min=sum(s.cost_min for s in steps),
+        total_cost_max=sum(s.cost_max for s in steps),
+        total_months=sum(s.duration_months or 0 for s in steps),
+        has_unknown_duration=any(s.duration_months is None for s in steps),
+        checked_at=min(checked) if checked else None,
+    )
+
+
 @router.get(
     "/api/v1/schools/{school_slug}/majors/{major_slug}",
     response_model=ProgramDetailResponseOut,
@@ -161,13 +219,10 @@ async def get_program_detail(
             select(AppSetting.value).where(AppSetting.key == "default_increase_pct")
         )
     )
-    post_grad_total = await session.scalar(
-        select(func.coalesce(func.sum(PostGradRequirement.cost_max), 0)).where(
-            PostGradRequirement.major_id == major.id,
-            PostGradRequirement.deleted_at.is_(None),
-        )
-    )
-    assert post_grad_total is not None  # COALESCE(..., 0) luon ra 1 gia tri
+    post_grad = await load_post_grad(session, major)
+    # Giu nguyen dinh nghia cu (schema.md §5: tong hoc phi + Σ cost_max) cho client
+    # dang doc `total_with_license` (hocphi-info-mcp). FE moi dung `post_grad`.
+    post_grad_total = post_grad.total_cost_max if post_grad is not None else 0
 
     programs: list[ProgramDetailOut] = []
     for program, _school, _major, year1, increase, source in rows:
@@ -232,4 +287,5 @@ async def get_program_detail(
         major=to_major_out(major, ctx),
         programs=programs,
         related_majors=await _related_majors(session, major, ctx),
+        post_grad=post_grad,
     )

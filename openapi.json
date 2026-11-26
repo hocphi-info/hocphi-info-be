@@ -1195,6 +1195,141 @@
         "title": "MajorRowOut",
         "description": "Khop `MajorRow` domain.ts — 1 dong o man hinh S1 (`GET /api/v1/majors`)."
       },
+      "PostGradOut": {
+        "properties": {
+          "profession": {
+            "type": "string",
+            "title": "Profession"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PostGradStepOut"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "totalCostMin": {
+            "type": "integer",
+            "title": "Totalcostmin"
+          },
+          "totalCostMax": {
+            "type": "integer",
+            "title": "Totalcostmax"
+          },
+          "totalMonths": {
+            "type": "integer",
+            "title": "Totalmonths"
+          },
+          "hasUnknownDuration": {
+            "type": "boolean",
+            "title": "Hasunknownduration"
+          },
+          "checkedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profession",
+          "steps",
+          "totalCostMin",
+          "totalCostMax",
+          "totalMonths",
+          "hasUnknownDuration",
+          "checkedAt"
+        ],
+        "title": "PostGradOut",
+        "description": "Chi phi hanh nghe sau tot nghiep cua nganh (F10) — 1 lan / trang, KHONG lap\ntheo tung he dao tao (khac `total_course`). `steps` rong = nganh can cap phep\nnhung chua co so lieu (FE chi hien canh bao, khong hien tong)."
+      },
+      "PostGradStepOut": {
+        "properties": {
+          "stepOrder": {
+            "type": "integer",
+            "title": "Steporder"
+          },
+          "stepName": {
+            "type": "string",
+            "title": "Stepname"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "durationMonths": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Durationmonths"
+          },
+          "costMin": {
+            "type": "integer",
+            "title": "Costmin"
+          },
+          "costMax": {
+            "type": "integer",
+            "title": "Costmax"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/ConfidenceLevel"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "stepOrder",
+          "stepName",
+          "provider",
+          "durationMonths",
+          "costMin",
+          "costMax",
+          "confidence",
+          "note",
+          "source"
+        ],
+        "title": "PostGradStepOut",
+        "description": "1 buoc trong lo trinh TOI THIEU de duoc hanh nghe (F10) — gan theo NGANH,\ndu lieu tu seeds/009 (scripts/seed_post_grad.py)."
+      },
       "ProgramDetailOut": {
         "properties": {
           "program": {
@@ -1262,6 +1397,16 @@
             },
             "type": "array",
             "title": "Relatedmajors"
+          },
+          "postGrad": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostGradOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1269,7 +1414,8 @@
           "school",
           "major",
           "programs",
-          "relatedMajors"
+          "relatedMajors",
+          "postGrad"
         ],
         "title": "ProgramDetailResponseOut",
         "description": "Khop response cua `GET /api/v1/schools/{school_slug}/majors/{major_slug}` (S3) —\ngom TAT CA programs cung (school, major), dung schema.md §3."
@@ -1665,13 +1811,26 @@
               }
             ],
             "title": "Publisheddate"
+          },
+          "checkedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedat"
           }
         },
         "type": "object",
         "required": [
           "url",
           "docType",
-          "publishedDate"
+          "publishedDate",
+          "checkedAt"
         ],
         "title": "SourceOut",
         "description": "Khop `Source` domain.ts (F12) — chi gan duoc voi ban ghi CONG BO that\n(Nam 1); cac nam du phong la so tinh, khong co source_id that."

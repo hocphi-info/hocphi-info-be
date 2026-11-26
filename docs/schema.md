@@ -285,6 +285,19 @@ Các bước sau tốt nghiệp (đào tạo nghề, tập sự, thi, phí hội
 `false` — luôn kèm callout "nguồn ngoài đề án tuyển sinh" ở S3. Chi phí dạng
 khoảng `cost_min..cost_max` (CHECK `cost_max >= cost_min`).
 
+Bật thật từ 2026-11-27 (F10, bắt đầu từ Luật sư):
+- Chỉ lưu **lộ trình tối thiểu bắt buộc** để đủ điều kiện hành nghề. Không lưu lộ trình
+  nâng cao (nội trú, chuyên khoa) hay chi phí cơ hội. Phí định kỳ (đoàn phí) không là
+  một bước: ghi vào `note` của bước liên quan (cột thêm ở migration 0010) và **không
+  cộng vào tổng**.
+- Dữ liệu nạp từ `seeds/008_practice_license_majors.csv` (cờ của ngành) và
+  `seeds/009_post_grad_steps.csv` (các bước theo nghề, fan-out ra các ngành) qua
+  `scripts/seed_post_grad.py`. Hai CSV là nguồn sự thật **duy nhất** của cờ
+  `majors.requires_practice_license/practice_profession` và của bảng này
+  (authoritative: bước đổi thì soft-delete rồi chèn lại; ngành bị bỏ khỏi CSV thì
+  tắt cờ).
+- Ngày kiểm tra nguồn lưu ở `sources.checked_at` (`doc_type = quy_dinh_nghe`).
+
 ### `sources`
 Tài liệu gốc: `url`, `doc_type`, `page_ref`, `published_date`, `fetched_at`,
 `checked_by`, `checked_at`. Dùng chung cho `tuition_records`, `program_increase`,
@@ -341,8 +354,11 @@ Từ [`yeu-cau-san-pham.md`](../../hocphi-info/yeu-cau-san-pham.md) §8:
 - `total_course_range` = tính lại với `r_low`, `r_high`:
   - `published_roadmap` → biên hẹp (theo `roadmap_years_known`);
   - `default_estimate` → `r ± default_increase_band_pct` điểm %.
-- `total_with_license(major)` = `total_course` + Σ `post_grad_requirements.cost_*`
-  (hiển thị dạng khoảng).
+- `total_with_license(major)` = `total_course` + Σ `post_grad_requirements.cost_max`
+  (giữ cho client cũ như MCP). FE dùng object `postGrad` ở cấp trang (một lần cho
+  mỗi ngành, không lặp theo hệ đào tạo): `totalCostMin`/`totalCostMax` (Σ các bước),
+  `totalMonths` (Σ `duration_months` khác null), `hasUnknownDuration`, `checkedAt`
+  (cũ nhất). FE hiện "tổng học phí + (min–max)", không cộng gộp thành một số.
 
 `amount_year_1` lấy từ `tuition_records` năm `current_intake_year` nếu có; nếu
 chưa công bố thì lấy năm gần nhất rồi dự phóng tới `current_intake_year` (đánh dấu
