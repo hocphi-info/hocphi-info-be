@@ -44,6 +44,33 @@ uv run python -m scripts.import_school_disclosure             # UPDATE 4 cột s
 Cột tạo ở migration `0008`. Prod: deploy rồi
 `fly ssh console -a hocphi-info-api -C "python -m scripts.import_school_disclosure"`.
 
+## `008_practice_license_majors.csv` + `009_post_grad_steps.csv` — chi phí hành nghề (F10)
+
+Dữ liệu tuyển chọn tay: những ngành dẫn tới một nghề cần cấp phép, và lộ trình
+**tối thiểu bắt buộc** của nghề đó sau tốt nghiệp. Nạp bằng
+`scripts/seed_post_grad.py`; `scripts.seed` cũng tự gọi ở bước cuối.
+
+- `008`: `major_slug,profession_key,profession_name`. Nhiều ngành có thể chung một
+  nghề (`luat` và `luat-kinh-te` cùng là `luat-su`). `profession_name` viết thường
+  vì FE ghép vào giữa câu ("Muốn hành nghề luật sư…").
+- `009`: `profession_key,step_order,step_name,provider,duration_months,cost_min,
+  cost_max,confidence,note,source_url,source_published_date,checked_on`.
+  - Mỗi bước phải có `cost_min`/`cost_max`; miễn phí thì ghi rõ `0`.
+  - `step_order` liên tục từ 1. Mỗi bước có `source_url`.
+  - `confidence` là `published_unverified` (lấy từ thông báo phí chính thức) hoặc
+    `estimated` (phí chưa ban hành; `note` ghi cách ước lượng).
+- Nghề có trong 008 mà chưa có bước nào: ngành vẫn bật cờ, FE chỉ hiện cảnh báo
+  "cần cấp phép, chi phí đang được tổng hợp", không hiện tổng.
+- Hai file là **authoritative**, khác các seed chỉ THÊM:
+  - ngành không còn trong 008 thì bị tắt cờ;
+  - bước khác CSV thì soft-delete rồi chèn lại;
+  - CSV giống DB thì không đụng gì.
+
+  Validate lỗi hoặc slug không tồn tại thì không ghi gì (một transaction).
+- Prod: commit CSV → `fly deploy` → `fly ssh console -a hocphi-info-api -C "python -m
+  scripts.seed_post_grad --dry-run"`, xem bộ đếm, rồi chạy lại không có `--dry-run`.
+- Thêm một nghề mới = thêm dòng vào 009 (và 008 nếu có ngành mới). Không cần sửa code.
+
 ## `*.jsonl` — output AI-crawler, batch **2026-09**
 
 Học phí thu thập bằng skill `.claude/skills/crawl-truong/` (Claude Code tự

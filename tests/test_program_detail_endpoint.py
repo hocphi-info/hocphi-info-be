@@ -62,8 +62,9 @@ async def test_get_program_detail_standard_years_4(db: AsyncSession) -> None:
 
     assert program["totalCourse"] == sum(a["amountPerYear"] for a in amounts)
     assert program["totalCourse"] == 145_077_660
-    # post_grad_requirements rong o Tuan 3 -> luon bang totalCourse.
+    # Ke toan khong can cap phep hanh nghe (seeds/008) -> bang totalCourse.
     assert program["totalWithLicense"] == program["totalCourse"]
+    assert body["postGrad"] is None
     assert program["increase"] is None
 
 

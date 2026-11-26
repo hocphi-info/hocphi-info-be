@@ -18,6 +18,10 @@ deu idempotent):
      => fan-out: 1 dong JSONL (1 muc cong bo o muc HE) sinh N `programs` +
      N `tuition_records`, moi nganh 1 bo (cung amount, cung source).
 
+  3. (cuoi) chi phi hanh nghe sau tot nghiep — seeds/008 + 009 (CSV tuyen
+     chon tay), xem scripts/seed_post_grad.py. AUTHORITATIVE nhu 004/005: CSV
+     la nguon su that duy nhat cho co `requires_practice_license` + cac buoc.
+
   0. (truoc buoc 2) taxonomy — phan loai nganh theo danh muc Bo GD&DT, 3 file CSV:
      seeds/004_taxonomy.csv (nut cay), 005_major_taxonomy.csv (nganh -> ma 7 so),
      006_major_aliases.csv (ten goi khac). Xem seeds/README.md. LUU Y khac cac
@@ -52,6 +56,7 @@ from sqlalchemy import select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from scripts import seed_post_grad
 from scripts.seed_majors_mapping import ROW_TO_DISPLAY_NAME, ROW_TO_MAJOR_SLUG
 
 SEEDS_DIR = Path(__file__).resolve().parent.parent / "seeds"
@@ -352,6 +357,9 @@ async def main() -> None:
         total_skipped += skipped
 
     print(f"Tong: nap {total_loaded} muc, bo qua {total_skipped} muc.")
+    # Sau jsonl (khong phu thuoc chuong trinh, chi can `majors` tu 002) — xem
+    # scripts/seed_post_grad.py: co nganh + buoc hanh nghe la AUTHORITATIVE.
+    await seed_post_grad.run()
     await engine.dispose()
     print("Hoan tat.")
 

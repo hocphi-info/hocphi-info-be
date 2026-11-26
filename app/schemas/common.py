@@ -13,7 +13,7 @@ khong con viet tay `domain.ts` cho phan khop API. Sua model o day -> chay
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -123,6 +123,9 @@ class SourceOut(CamelModel):
     url: str
     doc_type: SourceDocType
     published_date: date | None
+    # Ngay nguoi van hanh kiem tra lai nguon gan nhat (`sources.checked_at`) —
+    # hien co cho nguon quy dinh nghe (F10); nguon hoc phi de null.
+    checked_at: datetime | None = None
 
 
 class TuitionRecordOut(CamelModel):
@@ -238,6 +241,39 @@ class ProgramDetailOut(CamelModel):
     total_with_license: int
 
 
+class PostGradStepOut(CamelModel):
+    """1 buoc trong lo trinh TOI THIEU de duoc hanh nghe (F10) — gan theo NGANH,
+    du lieu tu seeds/009 (scripts/seed_post_grad.py)."""
+
+    step_order: int
+    step_name: str
+    provider: str | None
+    # null = khong co thoi luong co dinh (vd thi theo dot).
+    duration_months: int | None
+    cost_min: int
+    cost_max: int
+    confidence: ConfidenceLevel
+    note: str | None
+    source: SourceOut | None
+
+
+class PostGradOut(CamelModel):
+    """Chi phi hanh nghe sau tot nghiep cua nganh (F10) — 1 lan / trang, KHONG lap
+    theo tung he dao tao (khac `total_course`). `steps` rong = nganh can cap phep
+    nhung chua co so lieu (FE chi hien canh bao, khong hien tong)."""
+
+    profession: str
+    steps: list[PostGradStepOut]
+    total_cost_min: int
+    total_cost_max: int
+    # Tong `duration_months` khac null; `has_unknown_duration` = co buoc null
+    # (FE ghi "it nhat khoang ...").
+    total_months: int
+    has_unknown_duration: bool
+    # `checked_at` CU nhat trong cac nguon cua cac buoc (null khi chua co buoc).
+    checked_at: datetime | None
+
+
 class ProgramDetailResponseOut(CamelModel):
     """Khop response cua `GET /api/v1/schools/{school_slug}/majors/{major_slug}` (S3) —
     gom TAT CA programs cung (school, major), dung schema.md §3."""
@@ -248,3 +284,5 @@ class ProgramDetailResponseOut(CamelModel):
     # Nganh cung nhom nganh co du lieu (toi da 6); rong khi nganh chua phan loai
     # hoac nhom chi co 1 nganh.
     related_majors: list[RelatedMajorOut]
+    # null = nganh khong can cap phep hanh nghe (`requires_practice_license` false).
+    post_grad: PostGradOut | None
