@@ -1216,6 +1216,10 @@
             "type": "integer",
             "title": "Totalcostmax"
           },
+          "hasUnknownCost": {
+            "type": "boolean",
+            "title": "Hasunknowncost"
+          },
           "totalMonths": {
             "type": "integer",
             "title": "Totalmonths"
@@ -1243,6 +1247,7 @@
           "steps",
           "totalCostMin",
           "totalCostMax",
+          "hasUnknownCost",
           "totalMonths",
           "hasUnknownDuration",
           "checkedAt"
@@ -1283,11 +1288,25 @@
             "title": "Durationmonths"
           },
           "costMin": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Costmin"
           },
           "costMax": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Costmax"
           },
           "confidence": {

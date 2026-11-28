@@ -427,6 +427,10 @@ class PostGradRequirement(Base, TimestampSoftDelete):
             postgresql_where=text("deleted_at IS NULL"),
         ),
         CheckConstraint("cost_max >= cost_min", name="ck_postgrad_cost_range"),
+        # Ca 2 NULL = chi phi chua cong bo (migration 0011), khong phai mien phi.
+        CheckConstraint(
+            "(cost_min IS NULL) = (cost_max IS NULL)", name="ck_postgrad_cost_known"
+        ),
     )
 
     major_id: Mapped[str] = mapped_column(Text, ForeignKey("majors.id"), nullable=False)
@@ -434,8 +438,8 @@ class PostGradRequirement(Base, TimestampSoftDelete):
     step_name: Mapped[str] = mapped_column(Text, nullable=False)
     provider: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_months: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
-    cost_min: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    cost_max: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    cost_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    cost_max: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     confidence: Mapped[enums.ConfidenceLevel] = mapped_column(
         _pg_enum(enums.ConfidenceLevel, enums.CONFIDENCE_LEVEL),
         nullable=False,

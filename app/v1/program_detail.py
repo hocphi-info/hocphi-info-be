@@ -168,8 +168,9 @@ async def load_post_grad(session: AsyncSession, major: Major) -> PostGradOut | N
     return PostGradOut(
         profession=major.practice_profession,
         steps=steps,
-        total_cost_min=sum(s.cost_min for s in steps),
-        total_cost_max=sum(s.cost_max for s in steps),
+        total_cost_min=sum(s.cost_min or 0 for s in steps),
+        total_cost_max=sum(s.cost_max or 0 for s in steps),
+        has_unknown_cost=any(s.cost_min is None for s in steps),
         total_months=sum(s.duration_months or 0 for s in steps),
         has_unknown_duration=any(s.duration_months is None for s in steps),
         checked_at=min(checked) if checked else None,

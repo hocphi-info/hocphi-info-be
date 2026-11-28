@@ -17,7 +17,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.factories import seed_minimal
 
-_EXTRA = (("luat", 25_000_000), ("y-khoa", 50_000_000))
+_EXTRA = (
+    ("luat", 25_000_000),
+    ("y-khoa", 50_000_000),
+    ("dieu-duong", 30_000_000),
+)
 
 
 async def _seed() -> None:
@@ -71,14 +75,15 @@ async def test_major_without_license_has_null_post_grad(db: AsyncSession) -> Non
 
 async def test_flagged_major_without_data_has_empty_steps(db: AsyncSession) -> None:
     await _seed()
-    body = await _detail("y-khoa")
+    body = await _detail("dieu-duong")
 
     assert body["major"]["requiresPracticeLicense"] is True
     assert body["postGrad"] == {
-        "profession": "bác sĩ",
+        "profession": "điều dưỡng",
         "steps": [],
         "totalCostMin": 0,
         "totalCostMax": 0,
+        "hasUnknownCost": False,
         "totalMonths": 0,
         "hasUnknownDuration": False,
         "checkedAt": None,
@@ -98,8 +103,9 @@ async def test_law_major_returns_steps_and_range(db: AsyncSession) -> None:
     assert [s["stepOrder"] for s in post_grad["steps"]] == [
         s.step_order for s in expected
     ]
-    assert post_grad["totalCostMin"] == sum(s.cost_min for s in expected)
-    assert post_grad["totalCostMax"] == sum(s.cost_max for s in expected)
+    assert post_grad["totalCostMin"] == sum(s.cost_min or 0 for s in expected)
+    assert post_grad["totalCostMax"] == sum(s.cost_max or 0 for s in expected)
+    assert post_grad["hasUnknownCost"] is False
     assert post_grad["totalMonths"] == sum(s.duration_months or 0 for s in expected)
     assert post_grad["hasUnknownDuration"] == any(
         s.duration_months is None for s in expected
@@ -112,6 +118,26 @@ async def test_law_major_returns_steps_and_range(db: AsyncSession) -> None:
         min(s.checked_on for s in expected).isoformat()
     )
     # Dinh nghia cu giu nguyen cho MCP: tong hoc phi + Σ cost_max.
+    program = body["programs"][0]
+    assert program["totalWithLicense"] == (
+        program["totalCourse"] + post_grad["totalCostMax"]
+    )
+
+
+async def test_doctor_path_marks_unknown_cost_step(db: AsyncSession) -> None:
+    """Phi ky kiem tra danh gia nang luc (HDYKQG) chua cong bo: buoc co cost null,
+    tong chi cong cac buoc da biet, co `hasUnknownCost`."""
+    await _seed()
+    body = await _detail("y-khoa")
+    _, steps_csv = parse_csvs()
+    expected = steps_csv["bac-si"]
+
+    post_grad = body["postGrad"]
+    assert post_grad["profession"] == "bác sĩ"
+    unknown = [s for s in post_grad["steps"] if s["costMin"] is None]
+    assert unknown and all(s["costMax"] is None and s["note"] for s in unknown)
+    assert post_grad["hasUnknownCost"] is True
+    assert post_grad["totalCostMax"] == sum(s.cost_max or 0 for s in expected)
     program = body["programs"][0]
     assert program["totalWithLicense"] == (
         program["totalCourse"] + post_grad["totalCostMax"]
