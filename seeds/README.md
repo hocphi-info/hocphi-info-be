@@ -56,6 +56,10 @@ Dữ liệu tuyển chọn tay: những ngành dẫn tới một nghề cần c�
 - `009`: `profession_key,step_order,step_name,provider,duration_months,cost_min,
   cost_max,confidence,note,source_url,source_published_date,checked_on`.
   - Mỗi bước phải có `cost_min`/`cost_max`; miễn phí thì ghi rõ `0`.
+  - Ngoại lệ duy nhất: **để trống cả hai cột** khi cơ quan có thẩm quyền chưa ban
+    hành mức thu (vd phí kỳ kiểm tra đánh giá năng lực của bác sĩ). Khi đó `note`
+    bắt buộc phải giải thích. FE hiện "Chưa công bố", tổng chỉ cộng các bước đã
+    biết và ghi "chưa gồm khoản chưa công bố" (migration 0011).
   - `step_order` liên tục từ 1. Mỗi bước có `source_url`.
   - `confidence` là `published_unverified` (lấy từ thông báo phí chính thức) hoặc
     `estimated` (phí chưa ban hành; `note` ghi cách ước lượng).

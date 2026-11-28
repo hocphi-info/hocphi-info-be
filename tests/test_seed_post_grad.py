@@ -185,7 +185,8 @@ async def test_major_removed_from_csv_is_unflagged(
     [
         ({"source_url": ""}, "source_url"),
         ({"cost_min": "9", "cost_max": "1"}, "cost_min <= cost_max"),
-        ({"cost_min": ""}, "invalid literal"),
+        ({"cost_min": ""}, "cung co hoac cung trong"),
+        ({"cost_min": "", "cost_max": ""}, "note"),
         ({"confidence": "chac-chan"}, "chac-chan"),
         ({"step_order": "3"}, "lien tuc"),
         ({"profession_key": "khong-co"}, "khong co trong 008"),
@@ -223,6 +224,29 @@ async def test_dry_run_rolls_back(db: AsyncSession, csvs: tuple[Path, Path]) -> 
 
     assert counts.flagged == 3
     assert (await _major(db, "luat")).requires_practice_license is False
+
+
+async def test_unknown_cost_step_is_stored_as_null(
+    db: AsyncSession, csvs: tuple[Path, Path]
+) -> None:
+    await seed_minimal()
+    unknown = {
+        **_step("unk", 2),
+        "cost_min": "",
+        "cost_max": "",
+        "note": "Chua cong bo",
+    }
+    _write_all(csvs, _LAW, [_step("unk", 1), unknown])
+
+    await mod.run()
+    counts = await mod.run()  # chay lai voi buoc NULL van la no-op
+
+    steps = await _live_steps(db, "luat")
+    assert [(s.cost_min, s.cost_max) for s in steps] == [
+        (1_000_000, 2_000_000),
+        (None, None),
+    ]
+    assert counts.majors_restepped == 0
 
 
 def test_repo_csvs_are_valid() -> None:

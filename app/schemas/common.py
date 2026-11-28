@@ -250,8 +250,9 @@ class PostGradStepOut(CamelModel):
     provider: str | None
     # null = khong co thoi luong co dinh (vd thi theo dot).
     duration_months: int | None
-    cost_min: int
-    cost_max: int
+    # null ca 2 = chi phi chua cong bo (khong phai mien phi) — xem `note`.
+    cost_min: int | None
+    cost_max: int | None
     confidence: ConfidenceLevel
     note: str | None
     source: SourceOut | None
@@ -264,8 +265,11 @@ class PostGradOut(CamelModel):
 
     profession: str
     steps: list[PostGradStepOut]
+    # Tong cac buoc DA BIET chi phi; `has_unknown_cost` = con buoc chua cong bo
+    # (FE ghi "chua gom khoan chua cong bo").
     total_cost_min: int
     total_cost_max: int
+    has_unknown_cost: bool
     # Tong `duration_months` khac null; `has_unknown_duration` = co buoc null
     # (FE ghi "it nhat khoang ...").
     total_months: int

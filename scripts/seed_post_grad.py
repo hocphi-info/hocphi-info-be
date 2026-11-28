@@ -73,8 +73,9 @@ class StepRow:
     step_name: str
     provider: str | None
     duration_months: int | None
-    cost_min: int
-    cost_max: int
+    # None ca 2 = chi phi chua cong bo (vd phi ky kiem tra nang luc bac si).
+    cost_min: int | None
+    cost_max: int | None
     confidence: ConfidenceLevel
     note: str | None
     source_url: str
@@ -155,10 +156,11 @@ def parse_csvs() -> tuple[dict[str, tuple[str, str]], dict[str, list[StepRow]]]:
                 step_name=row["step_name"],
                 provider=row["provider"] or None,
                 duration_months=_opt_int(row["duration_months"]),
-                # Bat buoc co so: "mien phi" phai ghi ro 0 — de trong se bi hieu
-                # nham la 0d va keo tong xuong.
-                cost_min=int(row["cost_min"]),
-                cost_max=int(row["cost_max"]),
+                # "Mien phi" phai ghi ro 0. De trong CA 2 cot = chua cong bo
+                # (FE hien "Chua cong bo", khong cong vao tong) — chi dung khi co
+                # quan co tham quyen chua ban hanh muc thu, va `note` noi ro.
+                cost_min=_opt_int(row["cost_min"]),
+                cost_max=_opt_int(row["cost_max"]),
                 confidence=ConfidenceLevel(row["confidence"]),
                 note=row["note"] or None,
                 source_url=row["source_url"],
@@ -174,8 +176,13 @@ def parse_csvs() -> tuple[dict[str, tuple[str, str]], dict[str, list[StepRow]]]:
             continue
         if not step.step_name:
             errors.append(f"{where}: thieu step_name")
-        if not 0 <= step.cost_min <= step.cost_max:
-            errors.append(f"{where}: can 0 <= cost_min <= cost_max")
+        if (step.cost_min is None) != (step.cost_max is None):
+            errors.append(f"{where}: cost_min/cost_max phai cung co hoac cung trong")
+        elif step.cost_min is not None and step.cost_max is not None:
+            if not 0 <= step.cost_min <= step.cost_max:
+                errors.append(f"{where}: can 0 <= cost_min <= cost_max")
+        elif not step.note:
+            errors.append(f"{where}: chi phi chua cong bo thi `note` phai giai thich")
         if step.duration_months is not None and step.duration_months < 0:
             errors.append(f"{where}: duration_months am")
         if not step.source_url.startswith(VALID_URL_PREFIXES):

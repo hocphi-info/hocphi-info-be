@@ -297,6 +297,9 @@ Bật thật từ 2026-11-27 (F10, bắt đầu từ Luật sư):
   (authoritative: bước đổi thì soft-delete rồi chèn lại; ngành bị bỏ khỏi CSV thì
   tắt cờ).
 - Ngày kiểm tra nguồn lưu ở `sources.checked_at` (`doc_type = quy_dinh_nghe`).
+- `cost_min`/`cost_max` cùng NULL = chi phí **chưa công bố** (migration 0011, CHECK
+  `ck_postgrad_cost_known`), khác với `0` = miễn phí. API trả `hasUnknownCost`; tổng chỉ
+  cộng các bước đã biết.
 
 ### `sources`
 Tài liệu gốc: `url`, `doc_type`, `page_ref`, `published_date`, `fetched_at`,
